@@ -4,13 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mansion.craft POS</title>
+
+  <title>Mansion.craft POS v2</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -26,12 +23,6 @@
 
     header h1 {
       margin: 0;
-      font-size: 24px;
-    }
-
-    header p {
-      margin: 5px 0 0;
-      color: #bbb;
     }
 
     main {
@@ -44,11 +35,11 @@
       background: white;
       padding: 15px;
       border-radius: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
 
-    .status strong {
-      color: green;
+    #status {
+      font-weight: bold;
     }
 
     #products {
@@ -61,7 +52,7 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .product h3 {
@@ -70,13 +61,13 @@
 
     .category {
       color: #777;
-      font-size: 14px;
+      margin-bottom: 10px;
     }
 
     .price {
       font-size: 20px;
       font-weight: bold;
-      margin: 15px 0;
+      margin-bottom: 15px;
     }
 
     button {
@@ -93,328 +84,147 @@
       background: #333;
     }
 
-    #error {
+    .error {
       color: #b00020;
-      margin-top: 15px;
       white-space: pre-wrap;
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <h1>Mansion.craft</h1>
-    <p>POS v2</p>
-  </header>
+<header>
+  <h1>Mansion.craft</h1>
+  <p>POS v2</p>
+</header>
 
-  <main>
+<main>
 
-    <div class="status">
-      Database status:
-      <strong id="status">Connecting...</strong>
-      <div id="error"></div>
-    </div>
+  <div class="status">
+    Database status:
+    <span id="status">Connecting...</span>
 
-    <h2>Products</h2>
+    <div id="error" class="error"></div>
+  </div>
 
-    <div id="products">
-      Loading products...
-    </div>
+  <h2>Products</h2>
 
-  </main>
+  <div id="products">
+    Loading...
+  </div>
 
-  <script>
-    /*
-      TEMPORARY CONNECTION TEST
+</main>
 
-      We will replace these values with your
-      Supabase project information.
-    */
+<script>
 
-    const SUPABASE_URL = "YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+  // ==========================================
+  // SUPABASE CONNECTION
+  // ==========================================
 
-    async function loadProducts() {
+  const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
 
-      const status = document.getElementById("status");
-      const productsContainer = document.getElementById("products");
-      const errorContainer = document.getElementById("error");
+  const SUPABASE_ANON_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 
-      try {
 
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/products?select=*`,
-          {
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
+  // ==========================================
+  // LOAD PRODUCTS
+  // ==========================================
+
+  async function loadProducts() {
+
+    const status = document.getElementById("status");
+    const productsContainer = document.getElementById("products");
+    const errorContainer = document.getElementById("error");
+
+    try {
+
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?select=*`,
+        {
+          method: "GET",
+
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
           }
+        }
+      );
+
+      if (!response.ok) {
+
+        const errorText = await response.text();
+
+        throw new Error(
+          `Supabase error ${response.status}\n${errorText}`
         );
-
-        if (!response.ok) {
-          throw new Error(
-            `Supabase returned ${response.status}: ${await response.text()}`
-          );
-        }
-
-        const products = await response.json();
-
-        status.textContent = "Connected ✓";
-
-        productsContainer.innerHTML = "";
-
-        if (products.length === 0) {
-          productsContainer.innerHTML = "<p>No products found.</p>";
-          return;
-        }
-
-        products.forEach(product => {
-
-          const card = document.createElement("div");
-
-          card.className = "product";
-
-          card.innerHTML = `
-            <h3>${product.name}</h3>
-            <div class="category">${product.category || ""}</div>
-            <div class="price">฿${Number(product.price).toFixed(2)}</div>
-            <button onclick="addToCart('${product.name}')">
-              Add to Order
-            </button>
-          `;
-
-          productsContainer.appendChild(card);
-        });
-
-      } catch (error) {
-
-        status.textContent = "Connection failed";
-
-        errorContainer.textContent =
-          "Error:\n" + error.message;
-
-        productsContainer.innerHTML = "";
       }
-    }
 
-    function addToCart(productName) {
-      alert(productName + " added to order!");
-    }
+      const products = await response.json();
 
-    loadProducts();
-  </script>
+      status.textContent = "Connected ✓";
+      status.style.color = "green";
 
-</body>
-</html>
-``````html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mansion.craft POS</title>
+      productsContainer.innerHTML = "";
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+      if (products.length === 0) {
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #222;
-    }
+        productsContainer.innerHTML =
+          "<p>No products found.</p>";
 
-    header {
-      background: #111;
-      color: white;
-      padding: 20px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-
-    header p {
-      margin: 5px 0 0;
-      color: #bbb;
-    }
-
-    main {
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
-
-    .status {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-
-    .status strong {
-      color: green;
-    }
-
-    #products {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
-
-    .product {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .product h3 {
-      margin-top: 0;
-    }
-
-    .category {
-      color: #777;
-      font-size: 14px;
-    }
-
-    .price {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 15px 0;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #111;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #333;
-    }
-
-    #error {
-      color: #b00020;
-      margin-top: 15px;
-      white-space: pre-wrap;
-    }
-  </style>
-</head>
-
-<body>
-
-  <header>
-    <h1>Mansion.craft</h1>
-    <p>POS v2</p>
-  </header>
-
-  <main>
-
-    <div class="status">
-      Database status:
-      <strong id="status">Connecting...</strong>
-      <div id="error"></div>
-    </div>
-
-    <h2>Products</h2>
-
-    <div id="products">
-      Loading products...
-    </div>
-
-  </main>
-
-  <script>
-    /*
-      TEMPORARY CONNECTION TEST
-
-      We will replace these values with your
-      Supabase project information.
-    */
-
-    const SUPABASE_URL = "https://sqctsqeibedzmnuzofty.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_zce6mjM12T42swLTYNRR1w_FAkGah40";
-
-    async function loadProducts() {
-
-      const status = document.getElementById("status");
-      const productsContainer = document.getElementById("products");
-      const errorContainer = document.getElementById("error");
-
-      try {
-
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/products?select=*`,
-          {
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Supabase returned ${response.status}: ${await response.text()}`
-          );
-        }
-
-        const products = await response.json();
-
-        status.textContent = "Connected ✓";
-
-        productsContainer.innerHTML = "";
-
-        if (products.length === 0) {
-          productsContainer.innerHTML = "<p>No products found.</p>";
-          return;
-        }
-
-        products.forEach(product => {
-
-          const card = document.createElement("div");
-
-          card.className = "product";
-
-          card.innerHTML = `
-            <h3>${product.name}</h3>
-            <div class="category">${product.category || ""}</div>
-            <div class="price">฿${Number(product.price).toFixed(2)}</div>
-            <button onclick="addToCart('${product.name}')">
-              Add to Order
-            </button>
-          `;
-
-          productsContainer.appendChild(card);
-        });
-
-      } catch (error) {
-
-        status.textContent = "Connection failed";
-
-        errorContainer.textContent =
-          "Error:\n" + error.message;
-
-        productsContainer.innerHTML = "";
+        return;
       }
+
+      products.forEach(product => {
+
+        const card = document.createElement("div");
+
+        card.className = "product";
+
+        card.innerHTML = `
+          <h3>${product.name}</h3>
+
+          <div class="category">
+            ${product.category || ""}
+          </div>
+
+          <div class="price">
+            ฿${Number(product.price).toFixed(2)}
+          </div>
+
+          <button>
+            Add to Order
+          </button>
+        `;
+
+        productsContainer.appendChild(card);
+
+      });
+
     }
 
-    function addToCart(productName) {
-      alert(productName + " added to order!");
-    }
+    catch (error) {
 
-    loadProducts();
-  </script>
+      status.textContent = "Connection failed";
+      status.style.color = "#b00020";
+
+      productsContainer.innerHTML = "";
+
+      errorContainer.textContent =
+        error.message;
+
+      console.error(error);
+    }
+  }
+
+
+  // ==========================================
+  // START
+  // ==========================================
+
+  loadProducts();
+
+</script>
 
 </body>
 </html>
