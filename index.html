@@ -902,12 +902,34 @@ ${errorText}`
       }
 
 
-      const createdOrders =
-        await orderResponse.json();
+      const orderData =
+  await orderResponse.json();
 
+if (!orderResponse.ok) {
+  throw new Error(
+    orderData?.message ||
+    orderData?.error_description ||
+    JSON.stringify(orderData)
+  );
+}
 
-      const order =
-        createdOrders[0];
+const order =
+  Array.isArray(orderData)
+    ? orderData[0]
+    : orderData;
+
+if (!order || !order.id) {
+  console.error(
+    "Unexpected create_order response:",
+    orderData
+  );
+
+  throw new Error(
+    "Order was created, but the order ID was not returned."
+  );
+}
+
+const orderId = order.id;
 
 
       // ----------------------------------------
@@ -918,7 +940,7 @@ ${errorText}`
         cart.map(item => ({
 
           order_id:
-            order.id,
+            orderId,
 
           product_id:
             item.productId,
