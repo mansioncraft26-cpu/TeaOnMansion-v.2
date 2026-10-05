@@ -8,6 +8,10 @@
   <title>Mansion.craft POS v2</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -23,71 +27,167 @@
 
     header h1 {
       margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #aaa;
     }
 
     main {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 30px auto;
       padding: 0 20px;
+
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .status {
+      grid-column: 1 / -1;
+      padding: 12px 15px;
       background: white;
-      padding: 15px;
       border-radius: 10px;
-      margin-bottom: 25px;
     }
 
     #status {
       font-weight: bold;
+      color: green;
     }
+
+    #error {
+      color: #b00020;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    /* PRODUCTS */
 
     #products {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 15px;
     }
 
     .product {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 16px;
     }
 
     .product h3 {
-      margin-top: 0;
+      margin: 0 0 6px;
     }
 
     .category {
       color: #777;
+      font-size: 14px;
       margin-bottom: 10px;
     }
 
     .price {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: bold;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
 
     button {
-      width: 100%;
-      padding: 12px;
       border: none;
-      border-radius: 8px;
-      background: #111;
-      color: white;
+      border-radius: 7px;
+      padding: 10px 14px;
       cursor: pointer;
+      font-size: 14px;
     }
 
-    button:hover {
+    .add-button {
+      width: 100%;
+      background: #111;
+      color: white;
+    }
+
+    .add-button:hover {
       background: #333;
     }
 
-    .error {
+    /* CART */
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cart-item-name {
+      font-weight: bold;
+    }
+
+    .cart-item-price {
+      color: #666;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .quantity-controls button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      background: #eee;
+    }
+
+    .quantity {
+      min-width: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .remove-button {
+      background: none;
       color: #b00020;
-      white-space: pre-wrap;
-      margin-top: 10px;
+      padding: 5px;
+    }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 20px;
+      font-weight: bold;
+      padding-top: 20px;
+    }
+
+    .clear-button {
+      width: 100%;
+      margin-top: 15px;
+      background: #eee;
+    }
+
+    .empty-cart {
+      color: #777;
+      text-align: center;
+      padding: 30px 10px;
+    }
+
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -101,20 +201,57 @@
 
 <main>
 
+  <!-- DATABASE STATUS -->
+
   <div class="status">
     Database status:
     <span id="status">Connecting...</span>
 
-    <div id="error" class="error"></div>
+    <div id="error"></div>
   </div>
 
-  <h2>Products</h2>
 
-  <div id="products">
-    Loading...
-  </div>
+  <!-- PRODUCTS -->
+
+  <section class="section">
+
+    <h2>Products</h2>
+
+    <div id="products">
+      Loading products...
+    </div>
+
+  </section>
+
+
+  <!-- CART -->
+
+  <section class="section">
+
+    <h2>Current Order</h2>
+
+    <div id="cart">
+      <div class="empty-cart">
+        No items in order
+      </div>
+    </div>
+
+    <div class="cart-total">
+      <span>Total</span>
+      <span id="cart-total">฿0.00</span>
+    </div>
+
+    <button
+      class="clear-button"
+      onclick="clearCart()"
+    >
+      Clear Order
+    </button>
+
+  </section>
 
 </main>
+
 
 <script>
 
@@ -124,7 +261,17 @@
 
   const SUPABASE_URL = "https://sqctsqeibedzmnuzofty.supabase.co";
 
-  const SUPABASE_ANON_KEY = "sb_publishable_zce6mjM12T42swLTYNRR1w_FAkGah40";
+  const SUPABASE_ANON_KEY =
+    "sb_publishable_zce6mjM12T42swLTYNRR1w_FAkGah40";
+
+
+  // ==========================================
+  // APPLICATION DATA
+  // ==========================================
+
+  let products = [];
+
+  let cart = [];
 
 
   // ==========================================
@@ -134,8 +281,12 @@
   async function loadProducts() {
 
     const status = document.getElementById("status");
-    const productsContainer = document.getElementById("products");
-    const errorContainer = document.getElementById("error");
+
+    const productsContainer =
+      document.getElementById("products");
+
+    const errorContainer =
+      document.getElementById("error");
 
     try {
 
@@ -146,26 +297,36 @@
 
           headers: {
             "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            "Authorization":
+              `Bearer ${SUPABASE_ANON_KEY}`
           }
         }
       );
 
+
       if (!response.ok) {
 
-        const errorText = await response.text();
+        const errorText =
+          await response.text();
 
         throw new Error(
           `Supabase error ${response.status}\n${errorText}`
         );
       }
 
-      const products = await response.json();
 
-      status.textContent = "Connected ✓";
-      status.style.color = "green";
+      products = await response.json();
+
+
+      status.textContent =
+        "Connected ✓";
+
+      status.style.color =
+        "green";
+
 
       productsContainer.innerHTML = "";
+
 
       if (products.length === 0) {
 
@@ -175,14 +336,21 @@
         return;
       }
 
+
       products.forEach(product => {
 
-        const card = document.createElement("div");
+        const card =
+          document.createElement("div");
 
-        card.className = "product";
+        card.className =
+          "product";
+
 
         card.innerHTML = `
-          <h3>${product.name}</h3>
+
+          <h3>
+            ${product.name}
+          </h3>
 
           <div class="category">
             ${product.category || ""}
@@ -192,10 +360,15 @@
             ฿${Number(product.price).toFixed(2)}
           </div>
 
-          <button>
+          <button
+            class="add-button"
+            onclick="addToCart(${product.id})"
+          >
             Add to Order
           </button>
+
         `;
+
 
         productsContainer.appendChild(card);
 
@@ -205,13 +378,19 @@
 
     catch (error) {
 
-      status.textContent = "Connection failed";
-      status.style.color = "#b00020";
+      status.textContent =
+        "Connection failed";
 
-      productsContainer.innerHTML = "";
+      status.style.color =
+        "#b00020";
+
 
       errorContainer.textContent =
         error.message;
+
+
+      productsContainer.innerHTML = "";
+
 
       console.error(error);
     }
@@ -219,7 +398,236 @@
 
 
   // ==========================================
-  // START
+  // ADD PRODUCT TO CART
+  // ==========================================
+
+  function addToCart(productId) {
+
+    const product =
+      products.find(
+        p => p.id === productId
+      );
+
+
+    if (!product) {
+      return;
+    }
+
+
+    const existingItem =
+      cart.find(
+        item => item.productId === productId
+      );
+
+
+    if (existingItem) {
+
+      existingItem.quantity += 1;
+
+    } else {
+
+      cart.push({
+        productId: product.id,
+        name: product.name,
+        price: Number(product.price),
+        quantity: 1
+      });
+
+    }
+
+
+    renderCart();
+  }
+
+
+  // ==========================================
+  // CHANGE QUANTITY
+  // ==========================================
+
+  function changeQuantity(
+    productId,
+    amount
+  ) {
+
+    const item =
+      cart.find(
+        item => item.productId === productId
+      );
+
+
+    if (!item) {
+      return;
+    }
+
+
+    item.quantity += amount;
+
+
+    if (item.quantity <= 0) {
+
+      cart =
+        cart.filter(
+          item => item.productId !== productId
+        );
+
+    }
+
+
+    renderCart();
+  }
+
+
+  // ==========================================
+  // REMOVE ITEM
+  // ==========================================
+
+  function removeFromCart(productId) {
+
+    cart =
+      cart.filter(
+        item => item.productId !== productId
+      );
+
+
+    renderCart();
+  }
+
+
+  // ==========================================
+  // CLEAR CART
+  // ==========================================
+
+  function clearCart() {
+
+    cart = [];
+
+    renderCart();
+  }
+
+
+  // ==========================================
+  // RENDER CART
+  // ==========================================
+
+  function renderCart() {
+
+    const cartContainer =
+      document.getElementById("cart");
+
+    const totalElement =
+      document.getElementById("cart-total");
+
+
+    if (cart.length === 0) {
+
+      cartContainer.innerHTML = `
+        <div class="empty-cart">
+          No items in order
+        </div>
+      `;
+
+      totalElement.textContent =
+        "฿0.00";
+
+      return;
+    }
+
+
+    cartContainer.innerHTML = "";
+
+
+    let total = 0;
+
+
+    cart.forEach(item => {
+
+      const itemSubtotal =
+        item.price * item.quantity;
+
+
+      total += itemSubtotal;
+
+
+      const element =
+        document.createElement("div");
+
+      element.className =
+        "cart-item";
+
+
+      element.innerHTML = `
+
+        <div>
+
+          <div class="cart-item-name">
+            ${item.name}
+          </div>
+
+          <div class="cart-item-price">
+            ฿${item.price.toFixed(2)} each
+          </div>
+
+
+          <div class="quantity-controls">
+
+            <button
+              onclick="changeQuantity(
+                ${item.productId},
+                -1
+              )"
+            >
+              −
+            </button>
+
+
+            <span class="quantity">
+              ${item.quantity}
+            </span>
+
+
+            <button
+              onclick="changeQuantity(
+                ${item.productId},
+                1
+              )"
+            >
+              +
+            </button>
+
+
+            <button
+              class="remove-button"
+              onclick="removeFromCart(
+                ${item.productId}
+              )"
+            >
+              Remove
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div>
+          ฿${itemSubtotal.toFixed(2)}
+        </div>
+
+      `;
+
+
+      cartContainer.appendChild(element);
+
+    });
+
+
+    totalElement.textContent =
+      `฿${total.toFixed(2)}`;
+  }
+
+
+  // ==========================================
+  // START APP
   // ==========================================
 
   loadProducts();
