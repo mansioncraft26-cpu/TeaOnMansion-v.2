@@ -45,23 +45,15 @@
       gap: 25px;
     }
 
-    .section {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
     .status {
       grid-column: 1 / -1;
-      padding: 12px 15px;
       background: white;
+      padding: 15px;
       border-radius: 10px;
     }
 
     #status {
       font-weight: bold;
-      color: green;
     }
 
     #error {
@@ -70,11 +62,22 @@
       white-space: pre-wrap;
     }
 
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
     /* PRODUCTS */
 
     #products {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(
+        auto-fit,
+        minmax(180px, 1fr)
+      );
+
       gap: 15px;
     }
 
@@ -143,6 +146,7 @@
       align-items: center;
       gap: 8px;
       margin-top: 8px;
+      flex-wrap: wrap;
     }
 
     .quantity-controls button {
@@ -159,9 +163,9 @@
     }
 
     .remove-button {
-      background: none;
+      background: none !important;
       color: #b00020;
-      padding: 5px;
+      width: auto !important;
     }
 
     .cart-total {
@@ -178,10 +182,47 @@
       background: #eee;
     }
 
+    .checkout-button {
+      width: 100%;
+      margin-top: 10px;
+      background: #111;
+      color: white;
+      font-size: 16px;
+      padding: 14px;
+    }
+
+    .checkout-button:hover {
+      background: #333;
+    }
+
+    .checkout-button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
     .empty-cart {
       color: #777;
       text-align: center;
       padding: 30px 10px;
+    }
+
+    .success {
+      background: #e9f7ef;
+      color: #176b3a;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: none;
+    }
+
+    .notes {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      margin-top: 15px;
+      resize: vertical;
+      font-family: inherit;
     }
 
     @media (max-width: 800px) {
@@ -204,11 +245,24 @@
   <!-- DATABASE STATUS -->
 
   <div class="status">
+
     Database status:
-    <span id="status">Connecting...</span>
+    <span id="status">
+      Connecting...
+    </span>
 
     <div id="error"></div>
+
   </div>
+
+
+  <!-- SUCCESS MESSAGE -->
+
+  <div
+    id="success"
+    class="success"
+    style="grid-column: 1 / -1;"
+  ></div>
 
 
   <!-- PRODUCTS -->
@@ -231,15 +285,42 @@
     <h2>Current Order</h2>
 
     <div id="cart">
+
       <div class="empty-cart">
         No items in order
       </div>
+
     </div>
 
+
+    <textarea
+      id="order-notes"
+      class="notes"
+      rows="3"
+      placeholder="Order notes (optional)"
+    ></textarea>
+
+
     <div class="cart-total">
+
       <span>Total</span>
-      <span id="cart-total">฿0.00</span>
+
+      <span id="cart-total">
+        ฿0.00
+      </span>
+
     </div>
+
+
+    <button
+      class="checkout-button"
+      id="checkout-button"
+      onclick="checkout()"
+      disabled
+    >
+      Checkout
+    </button>
+
 
     <button
       class="clear-button"
@@ -259,7 +340,8 @@
   // SUPABASE CONNECTION
   // ==========================================
 
-  const SUPABASE_URL = "https://sqctsqeibedzmnuzofty.supabase.co";
+  const SUPABASE_URL =
+    "https://sqctsqeibedzmnuzofty.supabase.co";
 
   const SUPABASE_ANON_KEY =
     "sb_publishable_zce6mjM12T42swLTYNRR1w_FAkGah40";
@@ -280,13 +362,15 @@
 
   async function loadProducts() {
 
-    const status = document.getElementById("status");
+    const status =
+      document.getElementById("status");
 
     const productsContainer =
       document.getElementById("products");
 
     const errorContainer =
       document.getElementById("error");
+
 
     try {
 
@@ -297,6 +381,7 @@
 
           headers: {
             "apikey": SUPABASE_ANON_KEY,
+
             "Authorization":
               `Bearer ${SUPABASE_ANON_KEY}`
           }
@@ -315,7 +400,8 @@
       }
 
 
-      products = await response.json();
+      products =
+        await response.json();
 
 
       status.textContent =
@@ -325,7 +411,8 @@
         "green";
 
 
-      productsContainer.innerHTML = "";
+      productsContainer.innerHTML =
+        "";
 
 
       if (products.length === 0) {
@@ -389,7 +476,8 @@
         error.message;
 
 
-      productsContainer.innerHTML = "";
+      productsContainer.innerHTML =
+        "";
 
 
       console.error(error);
@@ -398,7 +486,7 @@
 
 
   // ==========================================
-  // ADD PRODUCT TO CART
+  // ADD TO CART
   // ==========================================
 
   function addToCart(productId) {
@@ -416,7 +504,8 @@
 
     const existingItem =
       cart.find(
-        item => item.productId === productId
+        item =>
+          item.productId === productId
       );
 
 
@@ -427,10 +516,19 @@
     } else {
 
       cart.push({
-        productId: product.id,
-        name: product.name,
-        price: Number(product.price),
-        quantity: 1
+
+        productId:
+          product.id,
+
+        name:
+          product.name,
+
+        price:
+          Number(product.price),
+
+        quantity:
+          1
+
       });
 
     }
@@ -451,7 +549,8 @@
 
     const item =
       cart.find(
-        item => item.productId === productId
+        item =>
+          item.productId === productId
       );
 
 
@@ -467,9 +566,9 @@
 
       cart =
         cart.filter(
-          item => item.productId !== productId
+          item =>
+            item.productId !== productId
         );
-
     }
 
 
@@ -485,7 +584,8 @@
 
     cart =
       cart.filter(
-        item => item.productId !== productId
+        item =>
+          item.productId !== productId
       );
 
 
@@ -501,7 +601,29 @@
 
     cart = [];
 
+    document.getElementById(
+      "order-notes"
+    ).value = "";
+
     renderCart();
+  }
+
+
+  // ==========================================
+  // CALCULATE TOTAL
+  // ==========================================
+
+  function calculateTotal() {
+
+    return cart.reduce(
+      (total, item) => {
+
+        return total +
+          (item.price * item.quantity);
+
+      },
+      0
+    );
   }
 
 
@@ -517,23 +639,37 @@
     const totalElement =
       document.getElementById("cart-total");
 
+    const checkoutButton =
+      document.getElementById(
+        "checkout-button"
+      );
+
 
     if (cart.length === 0) {
 
       cartContainer.innerHTML = `
+
         <div class="empty-cart">
           No items in order
         </div>
+
       `;
+
 
       totalElement.textContent =
         "฿0.00";
+
+
+      checkoutButton.disabled =
+        true;
+
 
       return;
     }
 
 
-    cartContainer.innerHTML = "";
+    cartContainer.innerHTML =
+      "";
 
 
     let total = 0;
@@ -542,7 +678,8 @@
     cart.forEach(item => {
 
       const itemSubtotal =
-        item.price * item.quantity;
+        item.price *
+        item.quantity;
 
 
       total += itemSubtotal;
@@ -550,6 +687,7 @@
 
       const element =
         document.createElement("div");
+
 
       element.className =
         "cart-item";
@@ -564,17 +702,19 @@
           </div>
 
           <div class="cart-item-price">
-            ฿${item.price.toFixed(2)} each
+            ฿${item.price.toFixed(2)}
+            each
           </div>
-
 
           <div class="quantity-controls">
 
             <button
-              onclick="changeQuantity(
-                ${item.productId},
-                -1
-              )"
+              onclick="
+                changeQuantity(
+                  ${item.productId},
+                  -1
+                )
+              "
             >
               −
             </button>
@@ -586,10 +726,12 @@
 
 
             <button
-              onclick="changeQuantity(
-                ${item.productId},
-                1
-              )"
+              onclick="
+                changeQuantity(
+                  ${item.productId},
+                  1
+                )
+              "
             >
               +
             </button>
@@ -597,9 +739,11 @@
 
             <button
               class="remove-button"
-              onclick="removeFromCart(
-                ${item.productId}
-              )"
+              onclick="
+                removeFromCart(
+                  ${item.productId}
+                )
+              "
             >
               Remove
             </button>
@@ -623,6 +767,282 @@
 
     totalElement.textContent =
       `฿${total.toFixed(2)}`;
+
+
+    checkoutButton.disabled =
+      false;
+  }
+
+
+  // ==========================================
+  // CREATE ORDER NUMBER
+  // ==========================================
+
+  function createOrderNumber() {
+
+    const now =
+      new Date();
+
+
+    const year =
+      now.getFullYear();
+
+
+    const month =
+      String(
+        now.getMonth() + 1
+      ).padStart(2, "0");
+
+
+    const day =
+      String(
+        now.getDate()
+      ).padStart(2, "0");
+
+
+    const time =
+      String(
+        now.getTime()
+      ).slice(-6);
+
+
+    return `MC-${year}${month}${day}-${time}`;
+  }
+
+
+  // ==========================================
+  // CHECKOUT
+  // ==========================================
+
+  async function checkout() {
+
+    if (cart.length === 0) {
+      return;
+    }
+
+
+    const checkoutButton =
+      document.getElementById(
+        "checkout-button"
+      );
+
+
+    const errorContainer =
+      document.getElementById("error");
+
+
+    const successContainer =
+      document.getElementById("success");
+
+
+    checkoutButton.disabled =
+      true;
+
+
+    errorContainer.textContent =
+      "";
+
+
+    successContainer.style.display =
+      "none";
+
+
+    try {
+
+      const subtotal =
+        calculateTotal();
+
+
+      const orderNumber =
+        createOrderNumber();
+
+
+      const notes =
+        document.getElementById(
+          "order-notes"
+        ).value.trim();
+
+
+      // ----------------------------------------
+      // CREATE ORDER
+      // ----------------------------------------
+
+      const orderResponse =
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/orders`,
+          {
+            method: "POST",
+
+            headers: {
+
+              "apikey":
+                SUPABASE_ANON_KEY,
+
+              "Authorization":
+                `Bearer ${SUPABASE_ANON_KEY}`,
+
+              "Content-Type":
+                "application/json",
+
+              "Prefer":
+                "return=representation"
+            },
+
+            body: JSON.stringify({
+
+              order_number:
+                orderNumber,
+
+              order_type:
+                "delivery",
+
+              status:
+                "completed",
+
+              subtotal:
+                subtotal,
+
+              delivery_fee:
+                0,
+
+              platform_fee:
+                0,
+
+              total:
+                subtotal,
+
+              notes:
+                notes || null
+
+            })
+          }
+        );
+
+
+      if (!orderResponse.ok) {
+
+        const errorText =
+          await orderResponse.text();
+
+        throw new Error(
+          `Order creation failed:
+${orderResponse.status}
+${errorText}`
+        );
+      }
+
+
+      const createdOrders =
+        await orderResponse.json();
+
+
+      const order =
+        createdOrders[0];
+
+
+      // ----------------------------------------
+      // CREATE ORDER ITEMS
+      // ----------------------------------------
+
+      const orderItems =
+        cart.map(item => ({
+
+          order_id:
+            order.id,
+
+          product_id:
+            item.productId,
+
+          product_name:
+            item.name,
+
+          quantity:
+            item.quantity,
+
+          unit_price:
+            item.price,
+
+          subtotal:
+            item.price *
+            item.quantity
+
+        }));
+
+
+      const itemsResponse =
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/order_items`,
+          {
+            method: "POST",
+
+            headers: {
+
+              "apikey":
+                SUPABASE_ANON_KEY,
+
+              "Authorization":
+                `Bearer ${SUPABASE_ANON_KEY}`,
+
+              "Content-Type":
+                "application/json",
+
+              "Prefer":
+                "return=minimal"
+            },
+
+            body:
+              JSON.stringify(orderItems)
+          }
+        );
+
+
+      if (!itemsResponse.ok) {
+
+        const errorText =
+          await itemsResponse.text();
+
+        throw new Error(
+          `Order items failed:
+${itemsResponse.status}
+${errorText}`
+        );
+      }
+
+
+      // ----------------------------------------
+      // SUCCESS
+      // ----------------------------------------
+
+      successContainer.textContent =
+        `Order ${orderNumber} completed successfully.`;
+
+      successContainer.style.display =
+        "block";
+
+
+      cart = [];
+
+
+      document.getElementById(
+        "order-notes"
+      ).value = "";
+
+
+      renderCart();
+
+    }
+
+    catch (error) {
+
+      errorContainer.textContent =
+        error.message;
+
+
+      console.error(error);
+
+      checkoutButton.disabled =
+        false;
+    }
   }
 
 
