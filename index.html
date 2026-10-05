@@ -867,57 +867,27 @@
       // CREATE ORDER
       // ----------------------------------------
 
-      const orderResponse =
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/orders`,
-          {
-            method: "POST",
-
-            headers: {
-
-              "apikey":
-                SUPABASE_ANON_KEY,
-
-              "Authorization":
-                `Bearer ${SUPABASE_ANON_KEY}`,
-
-              "Content-Type":
-                "application/json",
-
-              "Prefer":
-                "return=representation"
-            },
-
-            body: JSON.stringify({
-
-              order_number:
-                orderNumber,
-
-              order_type:
-                "delivery",
-
-              status:
-                "completed",
-
-              subtotal:
-                subtotal,
-
-              delivery_fee:
-                0,
-
-              platform_fee:
-                0,
-
-              total:
-                subtotal,
-
-              notes:
-                notes || null
-
-            })
-          }
-        );
-
+      const orderResponse = await fetch(
+  `${SUPABASE_URL}/rest/v1/rpc/create_order`,
+  {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      p_order_number: orderNumber,
+      p_order_type: "delivery",
+      p_status: "completed",
+      p_subtotal: subtotal,
+      p_delivery_fee: 0,
+      p_platform_fee: 0,
+      p_total: subtotal,
+      p_notes: notes || null
+    })
+  }
+);
 
       if (!orderResponse.ok) {
 
