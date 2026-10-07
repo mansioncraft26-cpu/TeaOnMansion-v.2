@@ -651,18 +651,29 @@ textarea:focus {
 
     <div class="cart-total">
 
-      <span>Total</span>
+  <span>Total</span>
 
-      <span id="cart-total">
-        ฿0.00
-      </span>
+  <span id="cart-total">
+    ฿0.00
+  </span>
 
-    </div>
+</div>
 
-    <button
-      class="clear-button"
-      onclick="clearCart()"
-    >
+<button
+  class="checkout-button"
+  id="checkout-button"
+  onclick="checkout()"
+  disabled
+>
+  Create Order
+</button>
+
+<button
+  class="clear-button"
+  onclick="clearCart()"
+>
+  Clear Order
+</button>
       Clear Order
     </button>
 
