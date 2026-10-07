@@ -776,6 +776,44 @@ textarea:focus {
     }
   }
 
+  async function updateOrderStatus(orderId, newStatus) {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/update_order_status`,
+      {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_order_id: orderId,
+          p_status: newStatus
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.message ||
+        data?.error_description ||
+        JSON.stringify(data)
+      );
+    }
+
+    console.log("Order status updated:", data);
+
+    await loadTodayOrders();
+
+  } catch (error) {
+    console.error("Update order status error:", error);
+    alert("Could not update order status: " + error.message);
+  }
+}
+  
   // ==========================================
 // LOAD TODAY'S ORDERS
 // ==========================================
@@ -971,11 +1009,41 @@ ${errorText}`
 
         <div>
 
-          <span class="order-status">
-            ${status}
-          </span>
+  <select
+    class="order-status-select"
+    onchange="updateOrderStatus(${order.id}, this.value)"
+  >
+    <option value="new" ${status === "new" ? "selected" : ""}>
+      New
+    </option>
 
-        </div>
+    <option value="preparing" ${status === "preparing" ? "selected" : ""}>
+      Preparing
+    </option>
+
+    <option value="ready" ${status === "ready" ? "selected" : ""}>
+      Ready
+    </option>
+
+    <option value="picked_up" ${status === "picked_up" ? "selected" : ""}>
+      Picked Up
+    </option>
+
+    <option value="completed" ${status === "completed" ? "selected" : ""}>
+      Completed
+    </option>
+
+    <option value="cancelled" ${status === "cancelled" ? "selected" : ""}>
+      Cancelled
+    </option>
+
+    <option value="refunded" ${status === "refunded" ? "selected" : ""}>
+      Refunded
+    </option>
+
+  </select>
+
+</div>
 
 
         <div class="order-total">
