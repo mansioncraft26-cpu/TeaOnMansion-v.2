@@ -965,7 +965,13 @@ ${errorText}`
 
 
       row.className =
-        "order-row";
+  "order-row";
+
+row.style.cursor = "pointer";
+
+row.onclick = () => {
+  showOrderDetails(order.id);
+};
 
 
       const orderDate =
@@ -1081,6 +1087,83 @@ ${errorText}`
 
 }
 
+  async function showOrderDetails(orderId) {
+  try {
+    const orderResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=*`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+
+    const orders = await orderResponse.json();
+
+    if (!orderResponse.ok) {
+      throw new Error(
+        orders?.message ||
+        orders?.error_description ||
+        JSON.stringify(orders)
+      );
+    }
+
+    if (!orders.length) {
+      alert("Order not found.");
+      return;
+    }
+
+    const order = orders[0];
+
+    const itemsResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&select=*`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+
+    const items = await itemsResponse.json();
+
+    if (!itemsResponse.ok) {
+      throw new Error(
+        items?.message ||
+        items?.error_description ||
+        JSON.stringify(items)
+      );
+    }
+
+    let itemText = "";
+
+    items.forEach(item => {
+      itemText +=
+        `${item.product_name} × ${item.quantity} — ฿${Number(item.subtotal || 0).toFixed(2)}\n`;
+    });
+
+    alert(
+      `ORDER DETAILS\n\n` +
+      `Order: ${order.order_number}\n` +
+      `Source: ${order.order_source || order.order_type || "direct"}\n` +
+      `Customer: ${order.customer_name || "-"}\n` +
+      `Address: ${order.customer_address || "-"}\n` +
+      `Platform Order: ${order.platform_order_number || "-"}\n` +
+      `Payment: ${order.payment_method || "-"}\n` +
+      `Status: ${order.status || "-"}\n\n` +
+      `ITEMS\n` +
+      `${itemText || "-"}\n` +
+      `Notes: ${order.notes || "-"}\n\n` +
+      `Total: ฿${Number(order.total || 0).toFixed(2)}`
+    );
+
+  } catch (error) {
+    console.error("Order details error:", error);
+    alert("Could not load order details: " + error.message);
+  }
+}
+  
   // ==========================================
   // ADD TO CART
   // ==========================================
