@@ -6,7 +6,110 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Mansion.craft POS v2</title>
+/* PRODUCT CUSTOMIZATION MODAL */
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.product-modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 12px;
+  padding: 22px;
+  box-sizing: border-box;
+}
+
+.product-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.product-modal-header h2 {
+  margin: 0 0 5px;
+}
+
+.modal-close {
+  width: 35px;
+  height: 35px;
+  border: none;
+  background: #eee;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.option-group {
+  margin-bottom: 18px;
+}
+
+.option-group-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.option-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 7px;
+  cursor: pointer;
+}
+
+.option-choice:hover {
+  background: #f7f7f7;
+}
+
+.option-choice input {
+  width: auto;
+}
+
+.option-price {
+  font-size: 13px;
+  color: #666;
+}
+
+.modal-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.modal-price {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.modal-bottom button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+  
   <style>
     
     /* NEW ORDER FORM */
@@ -1170,51 +1273,17 @@ row.onclick = () => {
 
   function addToCart(productId) {
 
-    const product =
-      products.find(
-        p => p.id === productId
-      );
+  const product = products.find(
+    p => p.id === productId
+  );
 
-
-    if (!product) {
-      return;
-    }
-
-
-    const existingItem =
-      cart.find(
-        item =>
-          item.productId === productId
-      );
-
-
-    if (existingItem) {
-
-      existingItem.quantity += 1;
-
-    } else {
-
-      cart.push({
-
-        productId:
-          product.id,
-
-        name:
-          product.name,
-
-        price:
-          Number(product.price),
-
-        quantity:
-          1
-
-      });
-
-    }
-
-
-    renderCart();
+  if (!product) {
+    alert("Product not found.");
+    return;
   }
+
+  openProductModal(product);
+}
 
 
   // ==========================================
@@ -1254,6 +1323,323 @@ row.onclick = () => {
     renderCart();
   }
 
+  let selectedProduct = null;
+let selectedProductOptions = [];
+
+
+async function openProductModal(product) {
+
+  selectedProduct = product;
+  selectedProductOptions = [];
+
+  document.getElementById("modal-product-name").textContent =
+    product.name;
+
+  document.getElementById("modal-product-description").textContent =
+    product.description || "";
+
+  document.getElementById("item-note").value = "";
+
+  const modal =
+    document.getElementById("product-modal");
+
+  const container =
+    document.getElementById("product-options-container");
+
+  container.innerHTML = "Loading options...";
+
+  modal.style.display = "flex";
+
+  try {
+
+    const connectionResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/product_option_categories?product_id=eq.${product.id}&select=category_id`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+
+    const connections =
+      await connectionResponse.json();
+
+    if (!connectionResponse.ok) {
+      throw new Error(
+        connections?.message ||
+        JSON.stringify(connections)
+      );
+    }
+
+    if (!connections.length) {
+      container.innerHTML =
+        "<p>No options available.</p>";
+
+      updateModalPrice();
+
+      return;
+    }
+
+    const categoryIds =
+      connections.map(item => item.category_id);
+
+    const categoriesResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/option_categories?id=in.(${categoryIds.join(",")})&is_active=eq.true&select=*`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+
+    const categories =
+      await categoriesResponse.json();
+
+    if (!categoriesResponse.ok) {
+      throw new Error(
+        categories?.message ||
+        JSON.stringify(categories)
+      );
+    }
+
+    const optionsResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/product_options?category_id=in.(${categoryIds.join(",")})&is_active=eq.true&select=*`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+
+    const options =
+      await optionsResponse.json();
+
+    if (!optionsResponse.ok) {
+      throw new Error(
+        options?.message ||
+        JSON.stringify(options)
+      );
+    }
+
+    container.innerHTML = "";
+
+    categories.forEach(category => {
+
+      const categoryOptions =
+        options.filter(
+          option =>
+            option.category_id === category.id
+        );
+
+      if (!categoryOptions.length) {
+        return;
+      }
+
+      const group =
+        document.createElement("div");
+
+      group.className =
+        "option-group";
+
+      const title =
+        document.createElement("div");
+
+      title.className =
+        "option-group-title";
+
+      title.textContent =
+        category.name;
+
+      group.appendChild(title);
+
+
+      categoryOptions.forEach(option => {
+
+        const label =
+          document.createElement("label");
+
+        label.className =
+          "option-choice";
+
+        const checked =
+          option.is_default ? "checked" : "";
+
+        const extraPrice =
+          Number(option.price_adjustment || 0);
+
+        label.innerHTML = `
+          <span>
+            <input
+              type="radio"
+              name="option-category-${category.id}"
+              value="${option.id}"
+              data-category-id="${category.id}"
+              data-option-name="${option.name}"
+              data-price="${extraPrice}"
+              ${checked}
+            >
+
+            ${option.name}
+          </span>
+
+          <span class="option-price">
+            ${
+              extraPrice > 0
+                ? `+฿${extraPrice.toFixed(2)}`
+                : ""
+            }
+          </span>
+        `;
+
+        group.appendChild(label);
+
+      });
+
+      container.appendChild(group);
+
+    });
+
+    updateModalPrice();
+
+    container
+      .querySelectorAll("input[type='radio']")
+      .forEach(input => {
+
+        input.addEventListener(
+          "change",
+          updateModalPrice
+        );
+
+      });
+
+  } catch (error) {
+
+    console.error(
+      "Product options error:",
+      error
+    );
+
+    container.innerHTML =
+      `<p>Could not load options.</p>`;
+
+    alert(
+      "Could not load product options: " +
+      error.message
+    );
+
+  }
+
+}
+  function updateModalPrice() {
+
+  if (!selectedProduct) {
+    return;
+  }
+
+  let total =
+    Number(selectedProduct.price || 0);
+
+  const selectedOptions =
+    document.querySelectorAll(
+      "#product-options-container input:checked"
+    );
+
+  selectedOptions.forEach(input => {
+
+    total +=
+      Number(input.dataset.price || 0);
+
+  });
+
+  document.getElementById(
+    "modal-product-price"
+  ).textContent =
+    `฿${total.toFixed(2)}`;
+
+}
+  function addCustomizedProductToCart() {
+
+  if (!selectedProduct) {
+    return;
+  }
+
+  const selectedOptions =
+    Array.from(
+      document.querySelectorAll(
+        "#product-options-container input:checked"
+      )
+    );
+
+  const options = selectedOptions.map(input => ({
+    categoryId:
+      Number(input.dataset.categoryId),
+
+    name:
+      input.dataset.optionName,
+
+    price:
+      Number(input.dataset.price || 0)
+  }));
+
+  const itemNote =
+    document.getElementById(
+      "item-note"
+    ).value.trim();
+
+  let itemPrice =
+    Number(selectedProduct.price || 0);
+
+  options.forEach(option => {
+    itemPrice += option.price;
+  });
+
+  cart.push({
+
+    cartId:
+      Date.now() +
+      Math.random(),
+
+    productId:
+      selectedProduct.id,
+
+    productName:
+      selectedProduct.name,
+
+    basePrice:
+      Number(selectedProduct.price || 0),
+
+    unitPrice:
+      itemPrice,
+
+    quantity:
+      1,
+
+    options:
+      options,
+
+    note:
+      itemNote
+
+  });
+
+  closeProductModal();
+
+  renderCart();
+
+}
+  function closeProductModal() {
+
+  document.getElementById(
+    "product-modal"
+  ).style.display = "none";
+
+  selectedProduct = null;
+  selectedProductOptions = [];
+
+}
 
   // ==========================================
   // REMOVE ITEM
@@ -1785,5 +2171,73 @@ ${errorText}`
 </script>
 
 </body>
+  <!-- PRODUCT CUSTOMIZATION MODAL -->
+<div id="product-modal" class="modal-overlay" style="display: none;">
+
+  <div class="product-modal">
+
+    <div class="product-modal-header">
+
+      <div>
+        <h2 id="modal-product-name">
+          Product
+        </h2>
+
+        <div id="modal-product-description">
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onclick="closeProductModal()"
+        class="modal-close"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div id="product-options-container">
+    </div>
+
+
+    <label>
+      Item Note
+    </label>
+
+    <textarea
+      id="item-note"
+      rows="3"
+      placeholder="Example: less ice, no straw..."
+    ></textarea>
+
+
+    <div class="modal-bottom">
+
+      <div>
+        <strong>Total</strong>
+
+        <div
+          id="modal-product-price"
+          class="modal-price"
+        >
+          ฿0.00
+        </div>
+      </div>
+
+
+      <button
+        type="button"
+        onclick="addCustomizedProductToCart()"
+      >
+        Add to Cart
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 </html>
 ```
