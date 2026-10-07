@@ -1438,14 +1438,40 @@ const orderNumber =
     },
     body: JSON.stringify({
   p_order_number: orderNumber,
-  p_order_type: orderSource,
-  p_status: "new",
-  p_subtotal: subtotal,
-  p_delivery_fee: 0,
-  p_platform_fee: 0,
-  p_total: subtotal,
-  p_notes: notes || null
-  })
+
+  p_order_type:
+    orderSource,
+
+  p_status:
+    "new",
+
+  p_subtotal:
+    subtotal,
+
+  p_delivery_fee:
+    0,
+
+  p_platform_fee:
+    0,
+
+  p_total:
+    subtotal,
+
+  p_notes:
+    notes || null,
+
+  p_customer_name:
+    customerName || null,
+
+  p_customer_address:
+    customerAddress || null,
+
+  p_platform_order_number:
+    platformOrderNumber || null,
+
+  p_payment_method:
+    paymentMethod
+})
   }
 );
 
@@ -1566,7 +1592,7 @@ ${errorText}`
       // ----------------------------------------
 
       successContainer.textContent =
-        `Order ${orderNumber} completed successfully.`;
+        `Order ${orderNumber} created successfully.`;
 
       successContainer.style.display =
         "block";
