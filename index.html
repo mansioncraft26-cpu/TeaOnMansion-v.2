@@ -632,53 +632,6 @@ textarea:focus {
     Current Order
   </h3>
 
-  <div id="cart">
-
-    <div class="empty-cart">
-      No items in order
-    </div>
-
-  </div>
-
-
-  <textarea
-    id="order-notes"
-    class="notes"
-    rows="3"
-    placeholder="Order notes (optional)"
-  ></textarea>
-
-
-  <div class="cart-total">
-
-    <span>Total</span>
-
-    <span id="cart-total">
-      ฿0.00
-    </span>
-
-  </div>
-
-
-  <button
-    class="checkout-button"
-    id="checkout-button"
-    onclick="checkout()"
-    disabled
-  >
-    Create Order
-  </button>
-
-
-  <button
-    class="clear-button"
-    onclick="clearCart()"
-  >
-    Clear Order
-  </button>
-
-</section>
-
     <div id="cart">
 
       <div class="empty-cart">
@@ -705,17 +658,6 @@ textarea:focus {
       </span>
 
     </div>
-
-
-    <button
-      class="checkout-button"
-      id="checkout-button"
-      onclick="checkout()"
-      disabled
-    >
-      Checkout
-    </button>
-
 
     <button
       class="clear-button"
@@ -1606,367 +1548,52 @@ async function openProductModal(product) {
   // CHANGE QUANTITY
   // ==========================================
 
-  function changeQuantity(
-    productId,
-    amount
-  ) {
+  function changeQuantity(cartId, amount) {
 
-    const item =
-      cart.find(
+  const item =
+    cart.find(
+      item =>
+        String(item.cartId) === String(cartId)
+    );
+
+
+  if (!item) {
+    return;
+  }
+
+
+  item.quantity += amount;
+
+
+  if (item.quantity <= 0) {
+
+    cart =
+      cart.filter(
         item =>
-          item.productId === productId
+          String(item.cartId) !== String(cartId)
       );
-
-
-    if (!item) {
-      return;
-    }
-
-
-    item.quantity += amount;
-
-
-    if (item.quantity <= 0) {
-
-      cart =
-        cart.filter(
-          item =>
-            item.productId !== productId
-        );
-    }
-
-
-    renderCart();
-  }
-
-  selectedProduct = product;
-  selectedProductOptions = [];
-
-  document.getElementById("modal-product-name").textContent =
-    product.name;
-
-  document.getElementById("modal-product-description").textContent =
-    product.description || "";
-
-  document.getElementById("item-note").value = "";
-
-  const modal =
-    document.getElementById("product-modal");
-
-  const container =
-    document.getElementById("product-options-container");
-
-  container.innerHTML = "Loading options...";
-
-  modal.style.display = "flex";
-
-  try {
-
-    const connectionResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/product_option_categories?product_id=eq.${product.id}&select=category_id`,
-      {
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-
-    const connections =
-      await connectionResponse.json();
-
-    if (!connectionResponse.ok) {
-      throw new Error(
-        connections?.message ||
-        JSON.stringify(connections)
-      );
-    }
-
-    if (!connections.length) {
-      container.innerHTML =
-        "<p>No options available.</p>";
-
-      updateModalPrice();
-
-      return;
-    }
-
-    const categoryIds =
-      connections.map(item => item.category_id);
-
-    const categoriesResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/option_categories?id=in.(${categoryIds.join(",")})&is_active=eq.true&select=*`,
-      {
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-
-    const categories =
-      await categoriesResponse.json();
-
-    if (!categoriesResponse.ok) {
-      throw new Error(
-        categories?.message ||
-        JSON.stringify(categories)
-      );
-    }
-
-    const optionsResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/product_options?category_id=in.(${categoryIds.join(",")})&is_active=eq.true&select=*`,
-      {
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-
-    const options =
-      await optionsResponse.json();
-
-    if (!optionsResponse.ok) {
-      throw new Error(
-        options?.message ||
-        JSON.stringify(options)
-      );
-    }
-
-    container.innerHTML = "";
-
-    categories.forEach(category => {
-
-      const categoryOptions =
-        options.filter(
-          option =>
-            option.category_id === category.id
-        );
-
-      if (!categoryOptions.length) {
-        return;
-      }
-
-      const group =
-        document.createElement("div");
-
-      group.className =
-        "option-group";
-
-      const title =
-        document.createElement("div");
-
-      title.className =
-        "option-group-title";
-
-      title.textContent =
-        category.name;
-
-      group.appendChild(title);
-
-
-      categoryOptions.forEach(option => {
-
-        const label =
-          document.createElement("label");
-
-        label.className =
-          "option-choice";
-
-        const checked =
-          option.is_default ? "checked" : "";
-
-        const extraPrice =
-          Number(option.price_adjustment || 0);
-
-        label.innerHTML = `
-          <span>
-            <input
-              type="radio"
-              name="option-category-${category.id}"
-              value="${option.id}"
-              data-category-id="${category.id}"
-              data-option-name="${option.name}"
-              data-price="${extraPrice}"
-              ${checked}
-            >
-
-            ${option.name}
-          </span>
-
-          <span class="option-price">
-            ${
-              extraPrice > 0
-                ? `+฿${extraPrice.toFixed(2)}`
-                : ""
-            }
-          </span>
-        `;
-
-        group.appendChild(label);
-
-      });
-
-      container.appendChild(group);
-
-    });
-
-    updateModalPrice();
-
-    container
-      .querySelectorAll("input[type='radio']")
-      .forEach(input => {
-
-        input.addEventListener(
-          "change",
-          updateModalPrice
-        );
-
-      });
-
-  } catch (error) {
-
-    console.error(
-      "Product options error:",
-      error
-    );
-
-    container.innerHTML =
-      `<p>Could not load options.</p>`;
-
-    alert(
-      "Could not load product options: " +
-      error.message
-    );
 
   }
 
-}
-  function updateModalPrice() {
-
-  if (!selectedProduct) {
-    return;
-  }
-
-  let total =
-    Number(selectedProduct.price || 0);
-
-  const selectedOptions =
-    document.querySelectorAll(
-      "#product-options-container input:checked"
-    );
-
-  selectedOptions.forEach(input => {
-
-    total +=
-      Number(input.dataset.price || 0);
-
-  });
-
-  document.getElementById(
-    "modal-product-price"
-  ).textContent =
-    `฿${total.toFixed(2)}`;
-
-}
-  function addCustomizedProductToCart() {
-
-  if (!selectedProduct) {
-    return;
-  }
-
-  const selectedOptions =
-    Array.from(
-      document.querySelectorAll(
-        "#product-options-container input:checked"
-      )
-    );
-
-  const options = selectedOptions.map(input => ({
-    categoryId:
-      Number(input.dataset.categoryId),
-
-    name:
-      input.dataset.optionName,
-
-    price:
-      Number(input.dataset.price || 0)
-  }));
-
-  const itemNote =
-    document.getElementById(
-      "item-note"
-    ).value.trim();
-
-  let itemPrice =
-    Number(selectedProduct.price || 0);
-
-  options.forEach(option => {
-    itemPrice += option.price;
-  });
-
-  cart.push({
-
-    cartId:
-      Date.now() +
-      Math.random(),
-
-    productId:
-      selectedProduct.id,
-
-    productName:
-      selectedProduct.name,
-
-    basePrice:
-      Number(selectedProduct.price || 0),
-
-    unitPrice:
-      itemPrice,
-
-    quantity:
-      1,
-
-    options:
-      options,
-
-    note:
-      itemNote
-
-  });
-
-  closeProductModal();
 
   renderCart();
-
-}
-  function closeProductModal() {
-
-  document.getElementById(
-    "product-modal"
-  ).style.display = "none";
-
-  selectedProduct = null;
-  selectedProductOptions = [];
-
 }
 
   // ==========================================
   // REMOVE ITEM
   // ==========================================
 
-  function removeFromCart(productId) {
+  function removeFromCart(cartId) {
 
-    cart =
-      cart.filter(
-        item =>
-          item.productId !== productId
-      );
+  cart =
+    cart.filter(
+      item =>
+        String(item.cartId) !== String(cartId)
+    );
 
 
-    renderCart();
-  }
-
+  renderCart();
+}
 
   // ==========================================
   // CLEAR CART
@@ -1990,16 +1617,16 @@ async function openProductModal(product) {
 
   function calculateTotal() {
 
-    return cart.reduce(
-      (total, item) => {
+  return cart.reduce(
+    (total, item) => {
 
-        return total +
-          (item.price * item.quantity);
+      return total +
+        (item.unitPrice * item.quantity);
 
-      },
-      0
-    );
-  }
+    },
+    0
+  );
+}
 
 
   // ==========================================
@@ -2008,145 +1635,167 @@ async function openProductModal(product) {
 
   function renderCart() {
 
-    const cartContainer =
-      document.getElementById("cart");
+  const cartContainer =
+    document.getElementById("cart");
 
-    const totalElement =
-      document.getElementById("cart-total");
+  const totalElement =
+    document.getElementById("cart-total");
 
-    const checkoutButton =
-      document.getElementById(
-        "checkout-button"
-      );
+  const checkoutButton =
+    document.getElementById("checkout-button");
 
 
-    if (cart.length === 0) {
+  if (cart.length === 0) {
 
-      cartContainer.innerHTML = `
+    cartContainer.innerHTML = `
+      <div class="empty-cart">
+        No items in order
+      </div>
+    `;
 
-        <div class="empty-cart">
-          No items in order
-        </div>
+    totalElement.textContent = "฿0.00";
 
-      `;
+    checkoutButton.disabled = true;
 
-
-      totalElement.textContent =
-        "฿0.00";
-
-
-      checkoutButton.disabled =
-        true;
-
-
-      return;
-    }
-
-
-    cartContainer.innerHTML =
-      "";
-
-
-    let total = 0;
-
-
-    cart.forEach(item => {
-
-      const itemSubtotal =
-        item.price *
-        item.quantity;
-
-
-      total += itemSubtotal;
-
-
-      const element =
-        document.createElement("div");
-
-
-      element.className =
-        "cart-item";
-
-
-      element.innerHTML = `
-
-        <div>
-
-          <div class="cart-item-name">
-            ${item.name}
-          </div>
-
-          <div class="cart-item-price">
-            ฿${item.price.toFixed(2)}
-            each
-          </div>
-
-          <div class="quantity-controls">
-
-            <button
-              onclick="
-                changeQuantity(
-                  ${item.productId},
-                  -1
-                )
-              "
-            >
-              −
-            </button>
-
-
-            <span class="quantity">
-              ${item.quantity}
-            </span>
-
-
-            <button
-              onclick="
-                changeQuantity(
-                  ${item.productId},
-                  1
-                )
-              "
-            >
-              +
-            </button>
-
-
-            <button
-              class="remove-button"
-              onclick="
-                removeFromCart(
-                  ${item.productId}
-                )
-              "
-            >
-              Remove
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div>
-          ฿${itemSubtotal.toFixed(2)}
-        </div>
-
-      `;
-
-
-      cartContainer.appendChild(element);
-
-    });
-
-
-    totalElement.textContent =
-      `฿${total.toFixed(2)}`;
-
-
-    checkoutButton.disabled =
-      false;
+    return;
   }
+
+
+  cartContainer.innerHTML = "";
+
+  let total = 0;
+
+
+  cart.forEach(item => {
+
+    const itemSubtotal =
+      item.unitPrice * item.quantity;
+
+    total += itemSubtotal;
+
+
+    const element =
+      document.createElement("div");
+
+    element.className =
+      "cart-item";
+
+
+    const optionsText =
+      item.options && item.options.length
+        ? item.options
+            .map(option => option.name)
+            .join(" • ")
+        : "";
+
+
+    const noteText =
+      item.note
+        ? `Note: ${item.note}`
+        : "";
+
+
+    element.innerHTML = `
+
+      <div>
+
+        <div class="cart-item-name">
+          ${item.productName}
+        </div>
+
+
+        ${
+          optionsText
+            ? `
+              <div class="cart-item-price">
+                ${optionsText}
+              </div>
+            `
+            : ""
+        }
+
+
+        ${
+          noteText
+            ? `
+              <div class="cart-item-price">
+                ${noteText}
+              </div>
+            `
+            : ""
+        }
+
+
+        <div class="cart-item-price">
+          ฿${item.unitPrice.toFixed(2)} each
+        </div>
+
+
+        <div class="quantity-controls">
+
+          <button
+            onclick="
+              changeQuantity(
+                '${item.cartId}',
+                -1
+              )
+            "
+          >
+            −
+          </button>
+
+
+          <span class="quantity">
+            ${item.quantity}
+          </span>
+
+
+          <button
+            onclick="
+              changeQuantity(
+                '${item.cartId}',
+                1
+              )
+            "
+          >
+            +
+          </button>
+
+
+          <button
+            class="remove-button"
+            onclick="
+              removeFromCart(
+                '${item.cartId}'
+              )
+            "
+          >
+            Remove
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div>
+        ฿${itemSubtotal.toFixed(2)}
+      </div>
+
+    `;
+
+
+    cartContainer.appendChild(element);
+
+  });
+
+
+  totalElement.textContent =
+    `฿${total.toFixed(2)}`;
+
+
+  checkoutButton.disabled = false;
+}
 
 
   // ==========================================
@@ -2379,17 +2028,17 @@ const orderId = order.id;
             item.productId,
 
           product_name:
-            item.name,
+  item.productName,
 
-          quantity:
-            item.quantity,
+quantity:
+  item.quantity,
 
-          unit_price:
-            item.price,
+unit_price:
+  item.unitPrice,
 
-          subtotal:
-            item.price *
-            item.quantity
+subtotal:
+  item.unitPrice *
+  item.quantity
 
         }));
 
