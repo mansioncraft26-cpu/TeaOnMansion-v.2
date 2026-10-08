@@ -1141,7 +1141,13 @@ row.onclick = () => {
 }
 
   async function showOrderDetails(orderId) {
+
   try {
+
+    // ----------------------------------------
+    // GET ORDER
+    // ----------------------------------------
+
     const orderResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=*`,
       {
@@ -1162,34 +1168,82 @@ row.onclick = () => {
       );
     }
 
-        let itemText = "";
+    const order = orders[0];
+
+    if (!order) {
+      throw new Error("Order not found.");
+    }
+
+
+    // ----------------------------------------
+    // GET ORDER ITEMS
+    // ----------------------------------------
+
+    const itemsResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&select=*`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+
+    const items = await itemsResponse.json();
+
+    if (!itemsResponse.ok) {
+      throw new Error(
+        items?.message ||
+        items?.error_description ||
+        JSON.stringify(items)
+      );
+    }
+
+
+    // ----------------------------------------
+    // DISPLAY ITEMS
+    // ----------------------------------------
+
+    let itemText = "";
 
     items.forEach(item => {
 
       let optionsText = "";
 
       if (item.options && item.options.length) {
+
         optionsText =
           item.options
             .map(option => option.name)
             .join(" • ");
+
       }
 
       itemText +=
         `${item.product_name} × ${item.quantity} — ฿${Number(item.subtotal || 0).toFixed(2)}\n`;
 
       if (optionsText) {
+
         itemText +=
           `  Options: ${optionsText}\n`;
+
       }
 
       if (item.item_note) {
+
         itemText +=
           `  Note: ${item.item_note}\n`;
+
       }
 
       itemText += "\n";
+
     });
+
+
+    // ----------------------------------------
+    // SHOW ORDER DETAILS
+    // ----------------------------------------
 
     alert(
       `ORDER DETAILS\n\n` +
@@ -1199,12 +1253,14 @@ row.onclick = () => {
       `Address: ${order.customer_address || "-"}\n` +
       `Platform Order: ${order.platform_order_number || "-"}\n` +
       `Payment: ${order.payment_method || "-"}\n` +
-      `Status: ${order.status || "-"}\n\n` +
+      `Status: ${order.status || "-"}\n` +
+      `Stock Deducted: ${order.stock_deducted ? "true" : "false"}\n\n` +
       `ITEMS\n` +
       `${itemText || "-"}\n` +
       `Notes: ${order.notes || "-"}\n\n` +
       `Total: ฿${Number(order.total || 0).toFixed(2)}`
     );
+
 
   } catch (error) {
 
@@ -1217,7 +1273,9 @@ row.onclick = () => {
       "Could not load order details: " +
       error.message
     );
+
   }
+
 }
 
   // ==========================================
