@@ -1162,32 +1162,82 @@ row.onclick = () => {
       );
     }
 
-    if (!orders.length) {
-      alert("Order not found.");
-      return;
-    }
+        let itemText = "";
 
-    const order = orders[0];
+    items.forEach(item => {
 
-    const itemsResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}&select=*`,
-      {
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        }
+      let optionsText = "";
+
+      if (item.options && item.options.length) {
+        optionsText =
+          item.options
+            .map(option => option.name)
+            .join(" • ");
       }
+
+      itemText +=
+        `${item.product_name} × ${item.quantity} — ฿${Number(item.subtotal || 0).toFixed(2)}\n`;
+
+      if (optionsText) {
+        itemText +=
+          `  Options: ${optionsText}\n`;
+      }
+
+      if (item.item_note) {
+        itemText +=
+          `  Note: ${item.item_note}\n`;
+      }
+
+      itemText += "\n";
+    });
+
+    alert(
+      `ORDER DETAILS\n\n` +
+      `Order: ${order.order_number}\n` +
+      `Source: ${order.order_source || order.order_type || "direct"}\n` +
+      `Customer: ${order.customer_name || "-"}\n` +
+      `Address: ${order.customer_address || "-"}\n` +
+      `Platform Order: ${order.platform_order_number || "-"}\n` +
+      `Payment: ${order.payment_method || "-"}\n` +
+      `Status: ${order.status || "-"}\n\n` +
+      `ITEMS\n` +
+      `${itemText || "-"}\n` +
+      `Notes: ${order.notes || "-"}\n\n` +
+      `Total: ฿${Number(order.total || 0).toFixed(2)}`
     );
 
-    const items = await itemsResponse.json();
+  } catch (error) {
 
-    if (!itemsResponse.ok) {
-      throw new Error(
-        items?.message ||
-        items?.error_description ||
-        JSON.stringify(items)
-      );
-    }
+    console.error(
+      "Order details error:",
+      error
+    );
+
+    alert(
+      "Could not load order details: " +
+      error.message
+    );
+  }
+}
+
+
+// ==========================================
+// ADD TO CART
+// ==========================================
+
+function addToCart(productId) {
+
+  const product = products.find(
+    p => p.id === productId
+  );
+
+  if (!product) {
+    alert("Product not found.");
+    return;
+  }
+
+  openProductModal(product);
+}
   
   // ==========================================
   // ADD TO CART
@@ -2095,6 +2145,8 @@ ${errorText}`
 
   loadProducts();
   loadTodayOrders();
+
+</sript>
   
   <!-- PRODUCT CUSTOMIZATION MODAL -->
 <div id="product-modal" class="modal-overlay" style="display: none;">
