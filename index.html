@@ -1188,93 +1188,6 @@ row.onclick = () => {
         JSON.stringify(items)
       );
     }
-
-    // ----------------------------------------
-// DEDUCT INVENTORY
-// ----------------------------------------
-
-const stockResponse = await fetch(
-  `${SUPABASE_URL}/rest/v1/rpc/deduct_order_stock`,
-  {
-    method: "POST",
-
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-
-      "Authorization":
-        `Bearer ${SUPABASE_ANON_KEY}`,
-
-      "Content-Type":
-        "application/json"
-    },
-
-    body: JSON.stringify({
-      p_order_id: orderId
-    })
-  }
-);
-
-
-if (!stockResponse.ok) {
-
-  const errorText =
-    await stockResponse.text();
-
-  throw new Error(
-    `Inventory deduction failed:
-${stockResponse.status}
-${errorText}`
-  );
-}
-    
-    let itemText = "";
-
-    items.forEach(item => {
-
-  let optionsText = "";
-
-  if (item.options && item.options.length) {
-    optionsText =
-      item.options
-        .map(option => option.name)
-        .join(" • ");
-  }
-
-  itemText +=
-    `${item.product_name} × ${item.quantity} — ฿${Number(item.subtotal || 0).toFixed(2)}\n`;
-
-  if (optionsText) {
-    itemText +=
-      `  Options: ${optionsText}\n`;
-  }
-
-  if (item.item_note) {
-    itemText +=
-      `  Note: ${item.item_note}\n`;
-  }
-
-  itemText += "\n";
-});
-    alert(
-      `ORDER DETAILS\n\n` +
-      `Order: ${order.order_number}\n` +
-      `Source: ${order.order_source || order.order_type || "direct"}\n` +
-      `Customer: ${order.customer_name || "-"}\n` +
-      `Address: ${order.customer_address || "-"}\n` +
-      `Platform Order: ${order.platform_order_number || "-"}\n` +
-      `Payment: ${order.payment_method || "-"}\n` +
-      `Status: ${order.status || "-"}\n\n` +
-      `ITEMS\n` +
-      `${itemText || "-"}\n` +
-      `Notes: ${order.notes || "-"}\n\n` +
-      `Total: ฿${Number(order.total || 0).toFixed(2)}`
-    );
-
-  } catch (error) {
-    console.error("Order details error:", error);
-    alert("Could not load order details: " + error.message);
-  }
-}
   
   // ==========================================
   // ADD TO CART
@@ -2154,7 +2067,40 @@ ${itemsResponse.status}
 ${errorText}`
         );
       }
+// ----------------------------------------
+// DEDUCT INVENTORY
+// ----------------------------------------
 
+const stockResponse = await fetch(
+  `${SUPABASE_URL}/rest/v1/rpc/deduct_order_stock`,
+  {
+    method: "POST",
+
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization":
+        `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type":
+        "application/json"
+    },
+
+    body: JSON.stringify({
+      p_order_id: orderId
+    })
+  }
+);
+
+if (!stockResponse.ok) {
+
+  const errorText =
+    await stockResponse.text();
+
+  throw new Error(
+    `Inventory deduction failed:
+${stockResponse.status}
+${errorText}`
+  );
+}
 
       // ----------------------------------------
       // SUCCESS
