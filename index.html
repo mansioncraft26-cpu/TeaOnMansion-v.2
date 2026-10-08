@@ -1192,10 +1192,31 @@ row.onclick = () => {
     let itemText = "";
 
     items.forEach(item => {
-      itemText +=
-        `${item.product_name} × ${item.quantity} — ฿${Number(item.subtotal || 0).toFixed(2)}\n`;
-    });
 
+  let optionsText = "";
+
+  if (item.options && item.options.length) {
+    optionsText =
+      item.options
+        .map(option => option.name)
+        .join(" • ");
+  }
+
+  itemText +=
+    `${item.product_name} × ${item.quantity} — ฿${Number(item.subtotal || 0).toFixed(2)}\n`;
+
+  if (optionsText) {
+    itemText +=
+      `  Options: ${optionsText}\n`;
+  }
+
+  if (item.item_note) {
+    itemText +=
+      `  Note: ${item.item_note}\n`;
+  }
+
+  itemText += "\n";
+});
     alert(
       `ORDER DETAILS\n\n` +
       `Order: ${order.order_number}\n` +
