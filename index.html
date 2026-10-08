@@ -1189,6 +1189,44 @@ row.onclick = () => {
       );
     }
 
+    // ----------------------------------------
+// DEDUCT INVENTORY
+// ----------------------------------------
+
+const stockResponse = await fetch(
+  `${SUPABASE_URL}/rest/v1/rpc/deduct_order_stock`,
+  {
+    method: "POST",
+
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+
+      "Authorization":
+        `Bearer ${SUPABASE_ANON_KEY}`,
+
+      "Content-Type":
+        "application/json"
+    },
+
+    body: JSON.stringify({
+      p_order_id: orderId
+    })
+  }
+);
+
+
+if (!stockResponse.ok) {
+
+  const errorText =
+    await stockResponse.text();
+
+  throw new Error(
+    `Inventory deduction failed:
+${stockResponse.status}
+${errorText}`
+  );
+}
+    
     let itemText = "";
 
     items.forEach(item => {
