@@ -1815,330 +1815,280 @@ async function openProductModal(product) {
 
 
   // ==========================================
-  // CHECKOUT
-  // ==========================================
+// CHECKOUT
+// ==========================================
 
-  async function checkout() {
+async function checkout() {
 
-    if (cart.length === 0) {
-      return;
+  if (cart.length === 0) {
+    return;
+  }
+
+  const checkoutButton =
+    document.getElementById("checkout-button");
+
+  const errorContainer =
+    document.getElementById("error");
+
+  const successContainer =
+    document.getElementById("success");
+
+  checkoutButton.disabled = true;
+  errorContainer.textContent = "";
+  successContainer.style.display = "none";
+
+  try {
+
+    const subtotal = calculateTotal();
+
+    const orderSource =
+      document.getElementById("order-source").value;
+
+    const customerName =
+      document.getElementById("customer-name").value.trim();
+
+    const customerAddress =
+      document.getElementById("customer-address").value.trim();
+
+    const platformOrderNumber =
+      document.getElementById("platform-order-number").value.trim();
+
+    const paymentMethod =
+      document.getElementById("payment-method").value;
+
+    const notes =
+      document.getElementById("order-notes").value.trim();
+
+    const orderNumber =
+      orderSource === "direct"
+        ? createOrderNumber()
+        : platformOrderNumber || createOrderNumber();
+
+
+    // ----------------------------------------
+    // CREATE ORDER
+    // ----------------------------------------
+
+    const orderResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/create_order`,
+      {
+        method: "POST",
+
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          p_order_number: orderNumber,
+          p_order_source: orderSource,
+          p_status: "new",
+          p_subtotal: subtotal,
+          p_delivery_fee: 0,
+          p_platform_fee: 0,
+          p_total: subtotal,
+          p_notes: notes || null,
+          p_customer_name: customerName || null,
+          p_customer_address: customerAddress || null,
+          p_platform_order_number:
+            platformOrderNumber || null,
+          p_payment_method: paymentMethod
+        })
+      }
+    );
+
+
+    if (!orderResponse.ok) {
+
+      const errorText =
+        await orderResponse.text();
+
+      throw new Error(
+        `Order creation failed:
+${orderResponse.status}
+${errorText}`
+      );
     }
 
 
-    const checkoutButton =
-      document.getElementById(
-        "checkout-button"
+    const orderData =
+      await orderResponse.json();
+
+
+    const order =
+      Array.isArray(orderData)
+        ? orderData[0]
+        : orderData;
+
+
+    if (!order || !order.id) {
+
+      console.error(
+        "Unexpected create_order response:",
+        orderData
+      );
+
+      throw new Error(
+        "Order was created, but the order ID was not returned."
+      );
+    }
+
+
+    const orderId = order.id;
+
+
+    // ----------------------------------------
+    // CREATE ORDER ITEMS
+    // ----------------------------------------
+
+    const orderItems =
+      cart.map(item => ({
+
+        order_id:
+          orderId,
+
+        product_id:
+          item.productId,
+
+        product_name:
+          item.productName,
+
+        quantity:
+          item.quantity,
+
+        unit_price:
+          item.unitPrice,
+
+        subtotal:
+          item.unitPrice *
+          item.quantity,
+
+        options:
+          item.options || [],
+
+        item_note:
+          item.note || null
+
+      }));
+
+
+    const itemsResponse =
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/order_items`,
+        {
+          method: "POST",
+
+          headers: {
+            "apikey":
+              SUPABASE_ANON_KEY,
+
+            "Authorization":
+              `Bearer ${SUPABASE_ANON_KEY}`,
+
+            "Content-Type":
+              "application/json",
+
+            "Prefer":
+              "return=minimal"
+          },
+
+          body:
+            JSON.stringify(orderItems)
+        }
       );
 
 
-    const errorContainer =
-      document.getElementById("error");
+    if (!itemsResponse.ok) {
 
+      const errorText =
+        await itemsResponse.text();
 
-    const successContainer =
-      document.getElementById("success");
-
-
-    checkoutButton.disabled =
-      true;
-
-
-    errorContainer.textContent =
-      "";
-
-
-    successContainer.style.display =
-      "none";
-
-
-    try {
-
-      const subtotal =
-  calculateTotal();
-
-
-const orderSource =
-  document.getElementById(
-    "order-source"
-  ).value;
-
-
-const customerName =
-  document.getElementById(
-    "customer-name"
-  ).value.trim();
-
-
-const customerAddress =
-  document.getElementById(
-    "customer-address"
-  ).value.trim();
-
-
-const platformOrderNumber =
-  document.getElementById(
-    "platform-order-number"
-  ).value.trim();
-
-
-const paymentMethod =
-  document.getElementById(
-    "payment-method"
-  ).value;
-
-
-const notes =
-  document.getElementById(
-    "order-notes"
-  ).value.trim();
-
-
-const orderNumber =
-  orderSource === "direct"
-    ? createOrderNumber()
-    : platformOrderNumber || createOrderNumber();
-
-
-      // ----------------------------------------
-      // CREATE ORDER
-      // ----------------------------------------
-
-      const orderResponse = await fetch(
-  `${SUPABASE_URL}/rest/v1/rpc/create_order`,
-  {
-    method: "POST",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-  p_order_number: orderNumber,
-
-  p_order_source:
-    orderSource,
-
-  p_status:
-    "new",
-
-  p_subtotal:
-    subtotal,
-
-  p_delivery_fee:
-    0,
-
-  p_platform_fee:
-    0,
-
-  p_total:
-    subtotal,
-
-  p_notes:
-    notes || null,
-
-  p_customer_name:
-    customerName || null,
-
-  p_customer_address:
-    customerAddress || null,
-
-  p_platform_order_number:
-    platformOrderNumber || null,
-
-  p_payment_method:
-    paymentMethod
-})
-  }
-);
-
-      if (!orderResponse.ok) {
-
-        const errorText =
-          await orderResponse.text();
-
-        throw new Error(
-          `Order creation failed:
-${orderResponse.status}
-${errorText}`
-        );
-      }
-
-
-      const orderData =
-  await orderResponse.json();
-
-if (!orderResponse.ok) {
-  throw new Error(
-    orderData?.message ||
-    orderData?.error_description ||
-    JSON.stringify(orderData)
-  );
-}
-
-const order =
-  Array.isArray(orderData)
-    ? orderData[0]
-    : orderData;
-
-if (!order || !order.id) {
-  console.error(
-    "Unexpected create_order response:",
-    orderData
-  );
-
-  throw new Error(
-    "Order was created, but the order ID was not returned."
-  );
-}
-
-const orderId = order.id;
-
-
-      // ----------------------------------------
-      // CREATE ORDER ITEMS
-      // ----------------------------------------
-
-      const orderItems =
-  cart.map(item => ({
-
-    order_id:
-      orderId,
-
-    product_id:
-      item.productId,
-
-    product_name:
-      item.productName,
-
-    quantity:
-      item.quantity,
-
-    unit_price:
-      item.unitPrice,
-
-    subtotal:
-      item.unitPrice *
-      item.quantity,
-
-    options:
-      item.options || [],
-
-    item_note:
-      item.note || null
-
-  }));
-
-
-      const itemsResponse =
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/order_items`,
-          {
-            method: "POST",
-
-            headers: {
-
-              "apikey":
-                SUPABASE_ANON_KEY,
-
-              "Authorization":
-                `Bearer ${SUPABASE_ANON_KEY}`,
-
-              "Content-Type":
-                "application/json",
-
-              "Prefer":
-                "return=minimal"
-            },
-
-            body:
-              JSON.stringify(orderItems)
-          }
-        );
-
-
-      if (!itemsResponse.ok) {
-
-        const errorText =
-          await itemsResponse.text();
-
-        throw new Error(
-          `Order items failed:
+      throw new Error(
+        `Order items failed:
 ${itemsResponse.status}
 ${errorText}`
-        );
-      }
-// ----------------------------------------
-// DEDUCT INVENTORY
-// ----------------------------------------
+      );
+    }
 
-const stockResponse = await fetch(
-  `${SUPABASE_URL}/rest/v1/rpc/deduct_order_stock`,
-  {
-    method: "POST",
 
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization":
-        `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type":
-        "application/json"
-    },
+    // ----------------------------------------
+    // DEDUCT INVENTORY
+    // ----------------------------------------
 
-    body: JSON.stringify({
-      p_order_id: orderId
-    })
-  }
-);
+    const stockResponse =
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/rpc/deduct_order_stock`,
+        {
+          method: "POST",
 
-if (!stockResponse.ok) {
+          headers: {
+            "apikey":
+              SUPABASE_ANON_KEY,
 
-  const errorText =
-    await stockResponse.text();
+            "Authorization":
+              `Bearer ${SUPABASE_ANON_KEY}`,
 
-  throw new Error(
-    `Inventory deduction failed:
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              p_order_id: orderId
+            })
+        }
+      );
+
+
+    if (!stockResponse.ok) {
+
+      const errorText =
+        await stockResponse.text();
+
+      throw new Error(
+        `Inventory deduction failed:
 ${stockResponse.status}
 ${errorText}`
-  );
-}
-
-      // ----------------------------------------
-      // SUCCESS
-      // ----------------------------------------
-
-      successContainer.textContent =
-        `Order ${orderNumber} created successfully.`;
-
-      successContainer.style.display =
-        "block";
-
-
-      cart = [];
-
-
-      document.getElementById(
-        "order-notes"
-      ).value = "";
-
-
-      renderCart();
-
+      );
     }
 
-    catch (error) {
 
-      errorContainer.textContent =
-        error.message;
+    // ----------------------------------------
+    // SUCCESS
+    // ----------------------------------------
+
+    successContainer.textContent =
+      `Order ${orderNumber} created successfully.`;
+
+    successContainer.style.display =
+      "block";
 
 
-      console.error(error);
+    cart = [];
 
-      checkoutButton.disabled =
-        false;
-    }
+
+    document.getElementById(
+      "order-notes"
+    ).value = "";
+
+
+    renderCart();
+
+    await loadTodayOrders();
+
+
+  } catch (error) {
+
+    errorContainer.textContent =
+      error.message;
+
+    console.error(error);
+
+    checkoutButton.disabled =
+      false;
   }
-
-
+}
   // ==========================================
   // START APP
   // ==========================================
