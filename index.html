@@ -2027,28 +2027,34 @@ const orderId = order.id;
       // ----------------------------------------
 
       const orderItems =
-        cart.map(item => ({
+  cart.map(item => ({
 
-          order_id:
-            orderId,
+    order_id:
+      orderId,
 
-          product_id:
-            item.productId,
+    product_id:
+      item.productId,
 
-          product_name:
-  item.productName,
+    product_name:
+      item.productName,
 
-quantity:
-  item.quantity,
+    quantity:
+      item.quantity,
 
-unit_price:
-  item.unitPrice,
+    unit_price:
+      item.unitPrice,
 
-subtotal:
-  item.unitPrice *
-  item.quantity
+    subtotal:
+      item.unitPrice *
+      item.quantity,
 
-        }));
+    options:
+      item.options || [],
+
+    item_note:
+      item.note || null
+
+  }));
 
 
       const itemsResponse =
