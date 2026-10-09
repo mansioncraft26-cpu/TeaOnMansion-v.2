@@ -628,7 +628,7 @@ textarea:focus {
           <form id="purchase-form" onsubmit="recordPurchase(event)">
             <label for="purchase-ingredient">Ingredient</label><select id="purchase-ingredient" required><option value="">Loading ingredients...</option></select>
             <label for="purchase-quantity">Quantity</label><input id="purchase-quantity" type="number" min="0.001" step="any" required placeholder="e.g. 1000">
-            <label for="purchase-unit-cost">Cost per unit (฿)</label><input id="purchase-unit-cost" type="number" min="0" step="any" required placeholder="e.g. 0.65">
+            <label for="purchase-package-cost">Total package price (฿)</label><input id="purchase-package-cost" type="number" min="0.01" step="0.01" required placeholder="e.g. 940.00"><p class="placeholder-note">Enter the total price paid for the quantity above. POS calculates cost per g/ml automatically.</p>
             <label for="purchase-date">Purchase date</label><input id="purchase-date" type="date" required>
             <label for="purchase-supplier">Supplier</label><input id="purchase-supplier" type="text" placeholder="Optional">
             <label for="purchase-expiry">Expiry date</label><input id="purchase-expiry" type="date">
@@ -663,6 +663,16 @@ textarea:focus {
             </table>
           </div>
           <div id="recipe-breakdowns" style="margin-top:24px"></div>
+          <hr style="margin:28px 0;border:0;border-top:1px solid #eee">
+          <div class="orders-header"><div><h2>Recipe Editor</h2><p>Create or update the ingredient quantities used for each drink.</p></div></div>
+          <form id="recipe-editor-form" onsubmit="saveRecipeEditor(event)">
+            <label for="recipe-product">Product</label><select id="recipe-product" required><option value="">Loading products…</option></select>
+            <label for="recipe-product-name">Product name</label><input id="recipe-product-name" type="text" required placeholder="e.g. Matcha Latte">
+            <label for="recipe-product-price">Selling price (฿)</label><input id="recipe-product-price" type="number" min="0.01" step="0.01" required>
+            <div id="recipe-editor-lines"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button type="button" class="refresh-orders-button" onclick="addRecipeEditorLine()">+ Add ingredient</button><button type="submit" class="checkout-button" id="recipe-save-button">Save product & recipe</button></div>
+            <div id="recipe-editor-message" style="margin-top:12px"></div>
+          </form>
         </div>
       </section>
 
@@ -2256,9 +2266,10 @@ ${errorText}`
 
   function updatePurchaseTotal() {
     const quantity = Number(document.getElementById("purchase-quantity").value || 0);
-    const cost = Number(document.getElementById("purchase-unit-cost").value || 0);
+    const total = Number(document.getElementById("purchase-package-cost").value || 0);
+    const unitCost = quantity > 0 ? total / quantity : 0;
     document.getElementById("purchase-total").textContent =
-      `Total purchase cost: ฿${(quantity * cost).toFixed(2)}`;
+      `Calculated unit cost: ฿${unitCost.toFixed(4)} per ingredient unit · Total: ฿${total.toFixed(2)}`;
   }
 
   async function recordPurchase(event) {
@@ -2267,19 +2278,20 @@ ${errorText}`
     const message = document.getElementById("purchase-message");
     const ingredientId = Number(document.getElementById("purchase-ingredient").value);
     const quantity = Number(document.getElementById("purchase-quantity").value);
-    const unitCost = Number(document.getElementById("purchase-unit-cost").value);
+    const totalCost = Number(document.getElementById("purchase-package-cost").value);
+    const unitCost = quantity > 0 ? totalCost / quantity : 0;
 
-    if (!ingredientId || quantity <= 0 || unitCost < 0) {
+    if (!ingredientId || quantity <= 0 || totalCost <= 0 || !Number.isFinite(unitCost)) {
       message.style.color = "#b00020";
-      message.textContent = "Choose an ingredient and enter a valid quantity and unit cost.";
+      message.textContent = "Choose an ingredient and enter a valid quantity and total package price.";
       return;
     }
 
     button.disabled = true;
     message.style.color = "#555";
-    message.textContent = "Recording purchase...";
+    message.textContent = "Recording purchase and updating weighted-average cost…";
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/record_purchase`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/record_purchase_weighted_avg`, {
         method: "POST",
         headers: {
           "apikey": SUPABASE_ANON_KEY,
@@ -2300,12 +2312,13 @@ ${errorText}`
       if (!response.ok) throw new Error(result?.message || result?.details || JSON.stringify(result));
 
       message.style.color = "#18794e";
-      message.textContent = `Purchase recorded successfully. Total: ฿${(quantity * unitCost).toFixed(2)}.`;
+      message.textContent = `Purchase recorded. Total: ฿${totalCost.toFixed(2)}; new unit purchase price: ฿${unitCost.toFixed(4)}. Weighted-average cost was updated by Supabase.`;
       document.getElementById("purchase-form").reset();
       document.getElementById("purchase-date").value = new Date().toLocaleDateString("en-CA");
       updatePurchaseTotal();
       await loadInventory();
       await loadPurchaseHistory();
+      await loadMarginsAndRecipes();
     } catch (error) {
       message.style.color = "#b00020";
       message.textContent = `Could not record purchase: ${error.message}`;
@@ -2373,7 +2386,7 @@ ${errorText}`
   }
 
   document.getElementById("purchase-quantity").addEventListener("input", updatePurchaseTotal);
-  document.getElementById("purchase-unit-cost").addEventListener("input", updatePurchaseTotal);
+  document.getElementById("purchase-package-cost").addEventListener("input", updatePurchaseTotal);
 
   // ==========================================
   // MARGINS & RECIPE COSTING
@@ -2533,6 +2546,78 @@ ${errorText}`
     }
   }
 
+
+  // Recipe editor: saves through a transactional Supabase RPC (SQL supplied separately).
+  let recipeEditorProducts = [];
+  let recipeEditorIngredients = [];
+
+  async function initializeRecipeEditor() {
+    const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` };
+    const [pr, ir, rr] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=id.asc`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,name,unit,cost_per_unit,is_active&is_active=eq.true&order=name.asc`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/recipes?select=*`, { headers })
+    ]);
+    recipeEditorProducts = await pr.json(); recipeEditorIngredients = await ir.json();
+    const recipes = await rr.json();
+    if (!pr.ok || !ir.ok || !rr.ok) throw new Error("Could not load product, ingredient, or recipe data. Check Supabase SELECT policies.");
+    const select = document.getElementById("recipe-product");
+    select.innerHTML = '<option value="">Select product…</option>' + recipeEditorProducts.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || p.product_name || `Product #${p.id}`)}</option>`).join("");
+    select.onchange = () => {
+      const product = recipeEditorProducts.find(p => Number(p.id) === Number(select.value));
+      if (!product) return;
+      document.getElementById("recipe-product-name").value = product.name || product.product_name || "";
+      document.getElementById("recipe-product-price").value = Number(product.price ?? product.selling_price ?? 0);
+      const lines = recipes.filter(r => Number(r.product_id) === Number(product.id));
+      document.getElementById("recipe-editor-lines").innerHTML = "";
+      if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity));
+      else addRecipeEditorLine();
+    };
+  }
+
+  function addRecipeEditorLine(ingredientId = "", quantity = "") {
+    const wrap = document.getElementById("recipe-editor-lines");
+    const row = document.createElement("div");
+    row.className = "recipe-editor-row";
+    row.style.cssText = "display:grid;grid-template-columns:minmax(180px,2fr) minmax(90px,1fr) auto;gap:10px;align-items:end;margin-top:12px";
+    row.innerHTML = `<div><label>Ingredient</label><select class="recipe-line-ingredient" required><option value="">Select ingredient…</option>${recipeEditorIngredients.map(i => `<option value="${Number(i.id)}">${escapeHtml(i.name)} (${escapeHtml(i.unit || "unit")})</option>`).join("")}</select></div><div><label>Quantity</label><input class="recipe-line-quantity" type="number" min="0.001" step="any" required placeholder="e.g. 3"></div><button type="button" class="clear-button" aria-label="Remove ingredient">Remove</button>`;
+    row.querySelector(".recipe-line-ingredient").value = ingredientId === null ? "" : String(ingredientId);
+    row.querySelector(".recipe-line-quantity").value = quantity;
+    row.querySelector("button").onclick = () => row.remove();
+    wrap.appendChild(row);
+  }
+
+  async function saveRecipeEditor(event) {
+    event.preventDefault();
+    const message = document.getElementById("recipe-editor-message");
+    const button = document.getElementById("recipe-save-button");
+    const productId = Number(document.getElementById("recipe-product").value);
+    const name = document.getElementById("recipe-product-name").value.trim();
+    const price = Number(document.getElementById("recipe-product-price").value);
+    const rows = [...document.querySelectorAll(".recipe-editor-row")];
+    const recipe = rows.map(row => ({ ingredient_id: Number(row.querySelector(".recipe-line-ingredient").value), quantity: Number(row.querySelector(".recipe-line-quantity").value) }));
+    if (!productId || !name || price <= 0 || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
+      message.style.color = "#b00020";
+      message.textContent = "Select a product, enter a valid name and price, and add unique ingredients with positive quantities.";
+      return;
+    }
+    button.disabled = true; message.textContent = "Saving product and recipe…"; message.style.color = "#555";
+    try {
+      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" };
+      const saveProductRecipe = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_product_and_recipe`, { method: "POST", headers, body: JSON.stringify({ p_product_id: productId, p_name: name, p_price: price, p_recipe: recipe }) });
+      const saveResult = await saveProductRecipe.json();
+      if (!saveProductRecipe.ok) throw new Error(saveResult?.message || saveResult?.details || JSON.stringify(saveResult));
+      message.style.color = "#18794e"; message.textContent = "Product and recipe saved.";
+      await loadProducts(); await loadMarginsAndRecipes(); await initializeRecipeEditor();
+      document.getElementById("recipe-product").value = String(productId);
+      document.getElementById("recipe-product").dispatchEvent(new Event("change"));
+    } catch (error) {
+      message.style.color = "#b00020";
+      message.textContent = `Save failed: ${error.message}. If Supabase reports a permission error, apply the SQL setup file first.`;
+      console.error("Save recipe editor error:", error);
+    } finally { button.disabled = false; }
+  }
+
   // ==========================================
   // START APP
   // ==========================================
@@ -2542,6 +2627,7 @@ ${errorText}`
   loadTodayOrders();
   loadInventory();
   loadPurchaseHistory();
+  initializeRecipeEditor().catch(error => { const m = document.getElementById("recipe-editor-message"); if (m) m.textContent = error.message; });
 
 </script>
   
