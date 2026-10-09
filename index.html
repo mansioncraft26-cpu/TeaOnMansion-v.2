@@ -617,12 +617,24 @@ textarea:focus {
         <section class="section" id="inventory-section">
           <div class="orders-header"><div><h2>Inventory</h2><p>Track ingredients and stock levels</p></div><button class="refresh-orders-button" onclick="loadInventory()">Refresh</button></div>
           <div id="inventory-summary">Loading inventory...</div>
-          <div style="overflow-x:auto;margin-top:20px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px">
+            <div><label for="inventory-category-filter">Filter by category</label><select id="inventory-category-filter" onchange="renderInventoryTable()"><option value="">All categories</option></select></div>
+          </div>
+          <div style="overflow-x:auto;margin-top:12px">
             <table class="inventory-table" style="width:100%;border-collapse:collapse">
-              <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:left">Status</th></tr></thead>
-              <tbody id="inventory-list"><tr><td colspan="4">Loading ingredients...</td></tr></tbody>
+              <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
+              <tbody id="inventory-list"><tr><td colspan="6">Loading ingredients...</td></tr></tbody>
             </table>
           </div>
+          <hr style="margin:25px 0;border:0;border-top:1px solid #eee">
+          <h3>Ingredient Categories</h3>
+          <p class="placeholder-note">Create categories such as Coffee, Tea & Matcha, Milk, Syrups, and Packaging. Assign a category to each ingredient from the inventory table.</p>
+          <form id="category-form" onsubmit="saveIngredientCategory(event)">
+            <label for="category-action">Action</label><select id="category-action" onchange="toggleCategoryRename()"><option value="add">Add new category</option><option value="rename">Rename category</option></select>
+            <div id="rename-category-wrap" style="display:none"><label for="category-existing">Category to rename</label><select id="category-existing"></select></div>
+            <label for="category-name">Category name</label><input id="category-name" required maxlength="80" placeholder="e.g. Matcha & Tea">
+            <button type="submit" class="refresh-orders-button" style="margin-top:12px">Save category</button><div id="category-message" style="margin-top:10px"></div>
+          </form>
           <hr style="margin:25px 0;border:0;border-top:1px solid #eee">
           <h3>Record Purchase</h3>
           <form id="purchase-form" onsubmit="recordPurchase(event)">
@@ -666,7 +678,7 @@ textarea:focus {
           <hr style="margin:28px 0;border:0;border-top:1px solid #eee">
           <div class="orders-header"><div><h2>Recipe Editor</h2><p>Create or update the ingredient quantities used for each drink.</p></div></div>
           <form id="recipe-editor-form" onsubmit="saveRecipeEditor(event)">
-            <label for="recipe-product">Product</label><select id="recipe-product" required><option value="">Loading products…</option></select>
+            <label for="recipe-product">Product</label><select id="recipe-product" required><option value="">Loading products…</option></select><p class="placeholder-note">Choose an existing product to edit it, or choose “+ New product” to create a product and its recipe.</p>
             <label for="recipe-product-name">Product name</label><input id="recipe-product-name" type="text" required placeholder="e.g. Matcha Latte">
             <label for="recipe-product-price">Selling price (฿)</label><input id="recipe-product-price" type="number" min="0.01" step="0.01" required>
             <div id="recipe-editor-lines"></div>
@@ -2201,61 +2213,98 @@ ${errorText}`
 
   let inventoryIngredients = [];
 
+  let inventoryCategories = [];
+
   async function loadInventory() {
     const list = document.getElementById("inventory-list");
     const summary = document.getElementById("inventory-summary");
     const select = document.getElementById("purchase-ingredient");
-
-    list.innerHTML = '<tr><td colspan="4">Loading ingredients...</td></tr>';
+    list.innerHTML = '<tr><td colspan="6">Loading ingredients...</td></tr>';
     summary.textContent = "Loading inventory...";
     select.innerHTML = '<option value="">Loading ingredients...</option>';
-
     try {
-      const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/ingredients?select=*&is_active=eq.true&order=name.asc`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.message || JSON.stringify(data));
-
-      inventoryIngredients = data;
-      list.innerHTML = "";
+      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` };
+      const [ir, cr] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=*&is_active=eq.true&order=name.asc`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/ingredient_categories?select=id,name&order=name.asc`, { headers })
+      ]);
+      const data = await ir.json(); const cats = await cr.json();
+      if (!ir.ok) throw new Error(data?.message || JSON.stringify(data));
+      if (!cr.ok) throw new Error(cats?.message || "Could not load ingredient categories. Run the latest SQL setup first.");
+      inventoryIngredients = data; inventoryCategories = cats;
+      const filter = document.getElementById("inventory-category-filter");
+      const oldFilter = filter.value;
+      filter.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join("");
+      if (cats.some(c => c.name === oldFilter)) filter.value = oldFilter;
+      const categorySelect = document.getElementById("category-existing");
+      categorySelect.innerHTML = cats.map(c => `<option value="${Number(c.id)}">${escapeHtml(c.name)}</option>`).join("");
       select.innerHTML = '<option value="">Select ingredient</option>';
-
-      if (!data.length) {
-        list.innerHTML = '<tr><td colspan="4">No active ingredients found.</td></tr>';
-      }
-
-      let lowCount = 0;
-      data.forEach(ingredient => {
-        const stock = Number(ingredient.current_stock || 0);
-        const minimum = Number(ingredient.minimum_stock || 0);
-        const low = stock <= minimum;
-        if (low) lowCount++;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${escapeHtml(ingredient.name)}</td>
-          <td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td>
-          <td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td>
-          <td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}</td>
-        `;
-        list.appendChild(tr);
-
-        const option = document.createElement("option");
-        option.value = ingredient.id;
-        option.textContent = `${ingredient.name} (${ingredient.unit})`;
-        select.appendChild(option);
-      });
-
-      summary.innerHTML = `<strong>${data.length}</strong> active ingredients &nbsp; · &nbsp; <strong class="${lowCount ? "stock-low" : "stock-ok"}">${lowCount}</strong> low-stock items`;
-      loadDashboardStats();
+      data.forEach(ingredient => { const o=document.createElement("option"); o.value=ingredient.id; o.textContent=`${ingredient.name} (${ingredient.unit})`; select.appendChild(o); });
+      renderInventoryTable();
     } catch (error) {
-      list.innerHTML = `<tr><td colspan="4" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
-      summary.textContent = "Could not load inventory.";
-      select.innerHTML = '<option value="">Could not load ingredients</option>';
+      list.innerHTML = `<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
+      summary.textContent = "Could not load inventory."; select.innerHTML = '<option value="">Could not load ingredients</option>';
       console.error("Inventory load error:", error);
     }
+  }
+
+  function renderInventoryTable() {
+    const list = document.getElementById("inventory-list");
+    const summary = document.getElementById("inventory-summary");
+    if (!list) return;
+    const filter = document.getElementById("inventory-category-filter")?.value || "";
+    const rows = inventoryIngredients.filter(i => !filter || (i.category || "Uncategorized") === filter);
+    list.innerHTML = "";
+    let lowCount = 0;
+    if (!rows.length) list.innerHTML = '<tr><td colspan="6">No ingredients in this category.</td></tr>';
+    rows.forEach(ingredient => {
+      const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), low = stock <= minimum;
+      if (low) lowCount++;
+      const tr = document.createElement("tr");
+      const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
+      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}</td><td><button type="button" class="refresh-orders-button" onclick="editIngredientCategory(${Number(ingredient.id)})">Edit</button></td>`;
+      list.appendChild(tr);
+    });
+    const allLow = inventoryIngredients.filter(i => Number(i.current_stock || 0) <= Number(i.minimum_stock || 0)).length;
+    summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
+  }
+
+  async function assignIngredientCategory(ingredientId, categoryName) {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_ingredient_category`, { method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({p_ingredient_id:ingredientId,p_category_name:categoryName || null}) });
+      const result = await response.json(); if (!response.ok) throw new Error(result?.message || JSON.stringify(result));
+      const item = inventoryIngredients.find(i => Number(i.id) === ingredientId); if (item) item.category = categoryName || null;
+      renderInventoryTable();
+    } catch (error) { alert(`Could not update ingredient category: ${error.message}`); await loadInventory(); }
+  }
+
+  function editIngredientCategory(ingredientId) {
+    const item = inventoryIngredients.find(i => Number(i.id) === ingredientId); if (!item) return;
+    const next = prompt(`Change category for ${item.name}. Enter an existing category name, or leave blank for Uncategorized:`, item.category || "");
+    if (next === null) return;
+    const match = inventoryCategories.find(c => c.name.toLowerCase() === next.trim().toLowerCase());
+    if (!next.trim()) assignIngredientCategory(ingredientId, "");
+    else if (match) assignIngredientCategory(ingredientId, match.name);
+    else alert("That category does not exist yet. Add it in Ingredient Categories first.");
+  }
+
+  function toggleCategoryRename() {
+    document.getElementById("rename-category-wrap").style.display = document.getElementById("category-action").value === "rename" ? "block" : "none";
+  }
+
+  async function saveIngredientCategory(event) {
+    event.preventDefault();
+    const message = document.getElementById("category-message");
+    const action = document.getElementById("category-action").value;
+    const name = document.getElementById("category-name").value.trim();
+    const categoryId = action === "rename" ? Number(document.getElementById("category-existing").value) : null;
+    if (!name) { message.textContent = "Enter a category name."; return; }
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_ingredient_category`, { method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({p_action:action,p_category_id:categoryId,p_name:name}) });
+      const result = await response.json(); if (!response.ok) throw new Error(result?.message || JSON.stringify(result));
+      message.style.color = "#18794e"; message.textContent = action === "add" ? "Category added." : "Category renamed; assigned ingredients were updated.";
+      document.getElementById("category-name").value = ""; await loadInventory();
+    } catch (error) { message.style.color = "#b00020"; message.textContent = `Could not save category: ${error.message}. Run the latest SQL setup first.`; }
   }
 
   function escapeHtml(value) {
@@ -2562,16 +2611,20 @@ ${errorText}`
     const recipes = await rr.json();
     if (!pr.ok || !ir.ok || !rr.ok) throw new Error("Could not load product, ingredient, or recipe data. Check Supabase SELECT policies.");
     const select = document.getElementById("recipe-product");
-    select.innerHTML = '<option value="">Select product…</option>' + recipeEditorProducts.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || p.product_name || `Product #${p.id}`)}</option>`).join("");
+    select.innerHTML = '<option value="">Select product…</option><option value="new">+ New product</option>' + recipeEditorProducts.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || p.product_name || `Product #${p.id}`)}</option>`).join("");
     select.onchange = () => {
+      const linesWrap = document.getElementById("recipe-editor-lines"); linesWrap.innerHTML = "";
+      if (select.value === "new") {
+        document.getElementById("recipe-product-name").value = "";
+        document.getElementById("recipe-product-price").value = "";
+        addRecipeEditorLine(); return;
+      }
       const product = recipeEditorProducts.find(p => Number(p.id) === Number(select.value));
       if (!product) return;
       document.getElementById("recipe-product-name").value = product.name || product.product_name || "";
       document.getElementById("recipe-product-price").value = Number(product.price ?? product.selling_price ?? 0);
       const lines = recipes.filter(r => Number(r.product_id) === Number(product.id));
-      document.getElementById("recipe-editor-lines").innerHTML = "";
-      if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity));
-      else addRecipeEditorLine();
+      if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity)); else addRecipeEditorLine();
     };
   }
 
@@ -2591,12 +2644,13 @@ ${errorText}`
     event.preventDefault();
     const message = document.getElementById("recipe-editor-message");
     const button = document.getElementById("recipe-save-button");
-    const productId = Number(document.getElementById("recipe-product").value);
+    const selectedProduct = document.getElementById("recipe-product").value;
+    const productId = selectedProduct === "new" ? null : Number(selectedProduct);
     const name = document.getElementById("recipe-product-name").value.trim();
     const price = Number(document.getElementById("recipe-product-price").value);
     const rows = [...document.querySelectorAll(".recipe-editor-row")];
     const recipe = rows.map(row => ({ ingredient_id: Number(row.querySelector(".recipe-line-ingredient").value), quantity: Number(row.querySelector(".recipe-line-quantity").value) }));
-    if (!productId || !name || price <= 0 || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
+    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
       message.style.color = "#b00020";
       message.textContent = "Select a product, enter a valid name and price, and add unique ingredients with positive quantities.";
       return;
@@ -2607,9 +2661,10 @@ ${errorText}`
       const saveProductRecipe = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_product_and_recipe`, { method: "POST", headers, body: JSON.stringify({ p_product_id: productId, p_name: name, p_price: price, p_recipe: recipe }) });
       const saveResult = await saveProductRecipe.json();
       if (!saveProductRecipe.ok) throw new Error(saveResult?.message || saveResult?.details || JSON.stringify(saveResult));
-      message.style.color = "#18794e"; message.textContent = "Product and recipe saved.";
+      const savedProductId = Number(saveResult?.product_id ?? productId);
+      message.style.color = "#18794e"; message.textContent = selectedProduct === "new" ? "New product and recipe created." : "Product and recipe saved.";
       await loadProducts(); await loadMarginsAndRecipes(); await initializeRecipeEditor();
-      document.getElementById("recipe-product").value = String(productId);
+      document.getElementById("recipe-product").value = String(savedProductId);
       document.getElementById("recipe-product").dispatchEvent(new Event("change"));
     } catch (error) {
       message.style.color = "#b00020";
