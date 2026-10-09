@@ -535,8 +535,7 @@ textarea:focus {
     <div class="sidebar-label">WORKSPACE</div>
     <nav aria-label="Main navigation">
       <button class="nav-button active" data-page="dashboard-page" onclick="showPage('dashboard-page','Dashboard','Overview of your cafe')">▦ <span>Dashboard</span></button>
-      <button class="nav-button" data-page="orders-page" onclick="showPage('orders-page','Orders','Manage today’s orders and create new orders')">▣ <span>Orders</span></button>
-      <button class="nav-button" data-page="products-page" onclick="showPage('products-page','Products','Manage your cafe menu and customize drinks')">☕ <span>Products</span></button>
+      <button class="nav-button" data-page="orders-page" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')">▣ <span>Orders</span></button>
       <button class="nav-button" data-page="inventory-page" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')">▤ <span>Inventory</span></button>
       <button class="nav-button" data-page="margins-page" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')">◫ <span>Margins &amp; Recipes</span></button>
       <button class="nav-button" data-page="purchases-page" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')">↻ <span>Purchases</span></button>
@@ -560,7 +559,7 @@ textarea:focus {
           <div class="section">
             <div class="orders-header"><div><h2>Quick actions</h2><p>Jump to common tasks</p></div></div>
             <div class="page-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-              <button class="checkout-button" onclick="showPage('orders-page','Orders','Manage today’s orders and create new orders'); document.getElementById('new-order-section').scrollIntoView({behavior:'smooth',block:'start'});">+ Create Order</button>
+              <button class="checkout-button" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders'); document.getElementById('new-order-section').scrollIntoView({behavior:'smooth',block:'start'});">+ Create Order</button>
               <button class="checkout-button" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels');">+ Record Purchase</button>
             </div>
           </div>
@@ -577,6 +576,15 @@ textarea:focus {
       </section>
 
       <section class="page" id="orders-page">
+        <div class="section" style="margin-bottom:22px">
+          <div class="orders-header">
+            <div>
+              <h2>Products</h2>
+              <p>Select a drink to add it to your order below.</p>
+            </div>
+          </div>
+          <div id="products">Loading products...</div>
+        </div>
         <div class="section today-orders">
           <div class="orders-header">
             <div><h2>Today's Orders</h2><div class="orders-summary"><span id="today-order-count">0 orders</span><span id="today-sales">฿0.00</span></div></div>
@@ -603,13 +611,6 @@ textarea:focus {
           <button class="checkout-button" id="checkout-button" onclick="checkout()" disabled>Create Order</button>
           <button class="clear-button" onclick="clearCart()">Clear Order</button>
         </section>
-      </section>
-
-      <section class="page" id="products-page">
-        <div class="section">
-          <h2>Products</h2>
-          <div id="products">Loading products...</div>
-        </div>
       </section>
 
       <section class="page" id="inventory-page">
