@@ -678,7 +678,125 @@ textarea:focus {
 
 </main>
 
+<!-- INVENTORY -->
+<section class="section today-orders" id="inventory-section">
 
+  <div class="orders-header">
+    <div>
+      <h2>Inventory</h2>
+      <p>Track ingredients and stock levels</p>
+    </div>
+
+    <button
+      class="refresh-orders-button"
+      onclick="loadInventory()"
+    >
+      Refresh
+    </button>
+  </div>
+
+  <div id="inventory-summary">
+    Loading inventory...
+  </div>
+
+  <div style="overflow-x:auto; margin-top:20px;">
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:10px;">Ingredient</th>
+          <th style="text-align:right; padding:10px;">Stock</th>
+          <th style="text-align:right; padding:10px;">Minimum</th>
+          <th style="text-align:left; padding:10px;">Status</th>
+        </tr>
+      </thead>
+
+      <tbody id="inventory-list">
+        <tr>
+          <td colspan="4" style="padding:10px;">
+            Loading ingredients...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr style="margin:25px 0; border:0; border-top:1px solid #eee;">
+
+  <h3>Record Purchase</h3>
+
+  <form id="purchase-form" onsubmit="recordPurchase(event)">
+
+    <label for="purchase-ingredient">Ingredient</label>
+    <select id="purchase-ingredient" required>
+      <option value="">Loading ingredients...</option>
+    </select>
+
+    <label for="purchase-quantity">Quantity</label>
+    <input
+      id="purchase-quantity"
+      type="number"
+      min="0.001"
+      step="any"
+      required
+      placeholder="e.g. 1000"
+    >
+
+    <label for="purchase-unit-cost">Cost per unit (฿)</label>
+    <input
+      id="purchase-unit-cost"
+      type="number"
+      min="0"
+      step="any"
+      required
+      placeholder="e.g. 0.65"
+    >
+
+    <label for="purchase-date">Purchase date</label>
+    <input
+      id="purchase-date"
+      type="date"
+      required
+    >
+
+    <label for="purchase-supplier">Supplier</label>
+    <input
+      id="purchase-supplier"
+      type="text"
+      placeholder="Optional"
+    >
+
+    <label for="purchase-expiry">Expiry date</label>
+    <input
+      id="purchase-expiry"
+      type="date"
+    >
+
+    <label for="purchase-notes">Notes</label>
+    <textarea
+      id="purchase-notes"
+      class="notes"
+      rows="3"
+      placeholder="Optional"
+    ></textarea>
+
+    <p id="purchase-total">
+      Total purchase cost: ฿0.00
+    </p>
+
+    <button
+      type="submit"
+      class="checkout-button"
+      id="purchase-submit"
+    >
+      Record Purchase
+    </button>
+
+    <div id="purchase-message" style="margin-top:12px;"></div>
+
+  </form>
+
+</section>
+  
 <script>
 
   // ==========================================
