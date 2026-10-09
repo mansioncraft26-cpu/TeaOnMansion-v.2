@@ -642,14 +642,27 @@ textarea:focus {
 
       <section class="page" id="margins-page">
         <div class="section">
-          <h2>Margins &amp; Recipes</h2>
-          <p class="placeholder-note">Track menu item profitability and build detailed recipe cost breakdowns.</p>
-          <p>Next: connect each product to its recipe, calculate ingredient cost from current ingredient unit costs, then show selling price, estimated cost, gross profit, and gross margin.</p>
-          <div class="stat-grid">
-            <div class="stat-card"><div class="stat-label">Products with recipes</div><div class="stat-value">—</div></div>
-            <div class="stat-card"><div class="stat-label">Average gross margin</div><div class="stat-value">—</div></div>
-            <div class="stat-card"><div class="stat-label">Cost coverage</div><div class="stat-value">Not calculated</div></div>
+          <div class="orders-header">
+            <div>
+              <h2>Margins &amp; Recipes</h2>
+              <p>Track menu item profitability and review ingredient cost breakdowns.</p>
+            </div>
+            <button class="refresh-orders-button" onclick="loadMarginsAndRecipes()">Refresh</button>
           </div>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-label">Products with recipes</div><div class="stat-value" id="margin-recipe-count">—</div></div>
+            <div class="stat-card"><div class="stat-label">Average gross margin</div><div class="stat-value" id="margin-average">—</div></div>
+            <div class="stat-card"><div class="stat-label">Cost coverage</div><div class="stat-value" id="margin-coverage">Loading…</div></div>
+          </div>
+          <p class="placeholder-note">Estimated ingredient cost uses each recipe quantity multiplied by the ingredient's current cost per unit. It excludes cups, lids, labor, platform fees, rent, and other overhead unless you add them to your cost model.</p>
+          <div id="margins-message" class="placeholder-note">Loading recipe costs…</div>
+          <div style="overflow-x:auto;margin-top:16px">
+            <table class="inventory-table" style="width:100%;border-collapse:collapse">
+              <thead><tr><th style="text-align:left">Product</th><th style="text-align:right">Selling price</th><th style="text-align:right">Ingredient cost</th><th style="text-align:right">Gross profit</th><th style="text-align:right">Margin</th><th style="text-align:left">Recipe</th></tr></thead>
+              <tbody id="margins-list"><tr><td colspan="6">Loading products and recipes…</td></tr></tbody>
+            </table>
+          </div>
+          <div id="recipe-breakdowns" style="margin-top:24px"></div>
         </div>
       </section>
 
@@ -2355,11 +2368,170 @@ ${errorText}`
     document.getElementById("page-subtitle").textContent = subtitle;
     if (pageId === "inventory-page") loadInventory();
     if (pageId === "purchases-page") loadPurchaseHistory();
+    if (pageId === "margins-page") loadMarginsAndRecipes();
     if (pageId === "dashboard-page") loadDashboardStats();
   }
 
   document.getElementById("purchase-quantity").addEventListener("input", updatePurchaseTotal);
   document.getElementById("purchase-unit-cost").addEventListener("input", updatePurchaseTotal);
+
+  // ==========================================
+  // MARGINS & RECIPE COSTING
+  // ==========================================
+
+  async function loadMarginsAndRecipes() {
+    const tbody = document.getElementById("margins-list");
+    const breakdowns = document.getElementById("recipe-breakdowns");
+    const message = document.getElementById("margins-message");
+    const recipeCount = document.getElementById("margin-recipe-count");
+    const averageMargin = document.getElementById("margin-average");
+    const coverage = document.getElementById("margin-coverage");
+
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6">Loading products and recipes…</td></tr>';
+    breakdowns.innerHTML = "";
+    message.textContent = "Calculating estimated ingredient costs…";
+
+    try {
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      };
+
+      const [productsResponse, recipesResponse, ingredientsResponse] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=id.asc`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/recipes?select=*`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,name,unit,cost_per_unit,is_active`, { headers })
+      ]);
+
+      const [productsData, recipesData, ingredientsData] = await Promise.all([
+        productsResponse.json(), recipesResponse.json(), ingredientsResponse.json()
+      ]);
+
+      if (!productsResponse.ok) throw new Error(productsData?.message || JSON.stringify(productsData));
+      if (!recipesResponse.ok) throw new Error(recipesData?.message || JSON.stringify(recipesData));
+      if (!ingredientsResponse.ok) throw new Error(ingredientsData?.message || JSON.stringify(ingredientsData));
+
+      const activeIngredients = ingredientsData.filter(item => item.is_active !== false);
+      const ingredientById = new Map(activeIngredients.map(item => [Number(item.id), item]));
+      const recipesByProduct = new Map();
+
+      recipesData.forEach(recipe => {
+        const key = Number(recipe.product_id);
+        if (!recipesByProduct.has(key)) recipesByProduct.set(key, []);
+        recipesByProduct.get(key).push(recipe);
+      });
+
+      tbody.innerHTML = "";
+      let productsWithRecipe = 0;
+      let productsWithCompleteCost = 0;
+      const margins = [];
+      const money = value => `฿${Number(value || 0).toFixed(2)}`;
+
+      productsData.forEach(product => {
+        const productId = Number(product.id);
+        const recipe = recipesByProduct.get(productId) || [];
+        const price = Number(product.price ?? product.selling_price ?? 0);
+        const hasRecipe = recipe.length > 0;
+        if (hasRecipe) productsWithRecipe++;
+
+        let cost = 0;
+        let complete = hasRecipe;
+        const detailLines = [];
+
+        recipe.forEach(line => {
+          const ingredient = ingredientById.get(Number(line.ingredient_id));
+          const quantity = Number(line.quantity || 0);
+
+          if (!ingredient) {
+            complete = false;
+            detailLines.push({
+              name: `Ingredient #${line.ingredient_id}`,
+              quantity,
+              unit: "",
+              unitCost: null,
+              lineCost: null,
+              missing: true
+            });
+            return;
+          }
+
+          const unitCost = Number(ingredient.cost_per_unit || 0);
+          cost += quantity * unitCost;
+          detailLines.push({
+            name: ingredient.name,
+            quantity,
+            unit: ingredient.unit || "",
+            unitCost,
+            lineCost: quantity * unitCost,
+            missing: false
+          });
+        });
+
+        // A zero unit cost is allowed in the database but should be visibly flagged as potentially incomplete.
+        if (detailLines.some(line => line.missing || line.unitCost === 0)) complete = false;
+        const grossProfit = price - cost;
+        const margin = price > 0 ? (grossProfit / price) * 100 : null;
+        if (hasRecipe && complete && price > 0) {
+          productsWithCompleteCost++;
+          margins.push(margin);
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(product.name || product.product_name || `Product #${product.id}`)}</td>
+          <td style="text-align:right">${money(price)}</td>
+          <td style="text-align:right">${hasRecipe ? money(cost) : "—"}</td>
+          <td style="text-align:right">${hasRecipe ? money(grossProfit) : "—"}</td>
+          <td style="text-align:right">${hasRecipe && price > 0 ? `${margin.toFixed(1)}%` : "—"}</td>
+          <td>${hasRecipe ? (complete ? '<span class="stock-ok">Costed</span>' : '<span class="stock-low">Check costs</span>') : '<span class="stock-low">No recipe</span>'}</td>
+        `;
+        tbody.appendChild(tr);
+
+        if (hasRecipe) {
+          const card = document.createElement("div");
+          card.className = "stat-card";
+          card.style.marginTop = "12px";
+          const detailRows = detailLines.map(line => `
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(line.name)}</td>
+              <td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${line.quantity.toLocaleString()} ${escapeHtml(line.unit)}</td>
+              <td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${line.unitCost === null ? "Missing ingredient" : money(line.unitCost) + (line.unit ? ` / ${escapeHtml(line.unit)}` : "")}</td>
+              <td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${line.lineCost === null ? "—" : money(line.lineCost)}</td>
+            </tr>
+          `).join("");
+
+          card.innerHTML = `
+            <h3 style="margin-top:0">${escapeHtml(product.name || product.product_name || `Product #${product.id}`)} — Recipe breakdown</h3>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead><tr><th style="text-align:left;padding:8px">Ingredient</th><th style="text-align:right;padding:8px">Recipe quantity</th><th style="text-align:right;padding:8px">Unit cost</th><th style="text-align:right;padding:8px">Line cost</th></tr></thead>
+                <tbody>${detailRows}</tbody>
+              </table>
+            </div>
+            <p style="margin-bottom:0"><strong>Ingredient cost:</strong> ${money(cost)} &nbsp; · &nbsp; <strong>Selling price:</strong> ${money(price)} &nbsp; · &nbsp; <strong>Estimated gross profit:</strong> ${money(grossProfit)}</p>
+            ${complete ? "" : '<p class="stock-low" style="margin-bottom:0">Some ingredient costs are zero or missing. Update ingredient cost/unit or recipe mapping for a reliable estimate.</p>'}
+          `;
+          breakdowns.appendChild(card);
+        }
+      });
+
+      if (!productsData.length) {
+        tbody.innerHTML = '<tr><td colspan="6">No products found.</td></tr>';
+      }
+
+      recipeCount.textContent = `${productsWithRecipe} / ${productsData.length}`;
+      averageMargin.textContent = margins.length
+        ? `${(margins.reduce((sum, value) => sum + value, 0) / margins.length).toFixed(1)}%`
+        : "—";
+      coverage.textContent = `${productsWithCompleteCost} / ${productsData.length}`;
+      message.textContent = "Recipe costs loaded. Products marked “Check costs” may have missing or zero ingredient costs.";
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
+      message.textContent = "Could not calculate recipe costs.";
+      console.error("Margins & Recipes error:", error);
+    }
+  }
 
   // ==========================================
   // START APP
