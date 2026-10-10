@@ -504,6 +504,13 @@ textarea:focus {
     .stat-card .stat-value { font-size: 27px; font-weight: bold; margin-top: 10px; }
     .placeholder-note { color: #777; font-size: 14px; line-height: 1.6; }
     #inventory-section { grid-column: auto; }
+    .inventory-split { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
+    .inventory-panel { background:#fff; border:1px solid #ececec; border-radius:12px; padding:18px; min-width:0; box-shadow:0 2px 8px rgba(0,0,0,.035); }
+    .inventory-panel h3 { margin-top:0; }
+    .inventory-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; }
+    .inventory-form-grid .full-width { grid-column:1 / -1; }
+    .inventory-form-grid input, .inventory-form-grid select, #category-form input, #category-form select, #purchase-form input, #purchase-form select { width:100%; box-sizing:border-box; }
+    @media (max-width: 900px) { .inventory-split { grid-template-columns:1fr; } }
     .inventory-table th, .inventory-table td { border-bottom: 1px solid #eee; padding: 12px 10px; }
     .inventory-table th { color: #666; font-size: 13px; }
     .stock-low { color: #b45309; font-weight: bold; }
@@ -522,8 +529,103 @@ textarea:focus {
       .stat-grid { grid-template-columns: 1fr; }
     }
 
-  </style>
-</head>
+
+    /* TeddyPOS-inspired layout system: clear page hierarchy, calm surfaces, aligned forms and tables */
+    :root { --app-bg:#f8f7f2; --surface:#fbfaf6; --line:#e7e3da; --ink:#111111; --muted:#626262; --accent:#e77900; }
+    body { background:var(--app-bg) !important; color:var(--ink); }
+    .section, .inventory-panel, .stat-card { background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:13px !important; box-shadow:none !important; }
+    .section { padding:22px !important; }
+    .inventory-panel { padding:20px !important; }
+    .orders-header { align-items:flex-start; padding-bottom:16px; border-bottom:1px solid var(--line); margin-bottom:18px; }
+    .orders-header h2, .inventory-panel h3 { letter-spacing:-.025em; }
+    .orders-header p, .placeholder-note { color:var(--muted); line-height:1.55; }
+    label { font-size:11px !important; text-transform:uppercase; letter-spacing:.09em; font-weight:600 !important; color:#575757; }
+    input, select, textarea { min-height:42px; border:1px solid var(--line) !important; border-radius:11px !important; box-shadow:0 1px 2px rgba(0,0,0,.03); color:#222; }
+    button { border-radius:10px !important; transition:background .15s ease, border-color .15s ease; }
+    .checkout-button, .refresh-orders-button { min-height:42px; }
+    .checkout-button { background:#303030 !important; color:#fff !important; }
+    .refresh-orders-button { background:#fff !important; color:#222 !important; border:1px solid var(--line) !important; }
+    table.inventory-table { border-collapse:separate !important; border-spacing:0; }
+    .inventory-table th { background:#f2f0e9; color:#595959; font-size:10px; text-transform:uppercase; letter-spacing:.09em; padding:13px 11px !important; border-bottom:1px solid var(--line); white-space:nowrap; }
+    .inventory-table td { padding:13px 11px !important; border-bottom:1px solid var(--line) !important; vertical-align:middle; }
+    .inventory-table tr:last-child td { border-bottom:0 !important; }
+    .inventory-split { grid-template-columns:minmax(340px,.95fr) minmax(0,1.25fr) !important; gap:24px !important; }
+    .inventory-split > .inventory-panel { order:2; }
+    .inventory-split > div:not(.inventory-panel) { order:1; }
+    .inventory-form-grid { gap:0 14px !important; }
+    .stat-grid { gap:14px !important; }
+    .stat-card { padding:18px !important; }
+    .stat-label { color:#666; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+    .stat-value { font-size:27px; letter-spacing:-.04em; }
+    #margins-page .section { padding:24px !important; }
+    #recipe-editor-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
+    #recipe-editor-form > label, #recipe-editor-form > select, #recipe-editor-form > p, #recipe-editor-form > #recipe-editor-lines, #recipe-editor-form > div { grid-column:1 / -1; }
+    #recipe-editor-form > label[for="recipe-product-name"], #recipe-editor-form > label[for="recipe-product-price"] { grid-column:auto; }
+    #recipe-editor-form > label[for="recipe-product"] + select, #recipe-editor-form > p { grid-column:1 / -1; }
+    .recipe-editor-row { display:grid; grid-template-columns:minmax(0,1fr) 130px auto; align-items:end; gap:12px; padding:14px; margin-top:12px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    #recipe-breakdowns .stat-card { margin-top:14px !important; }
+    @media(max-width:1000px) { .inventory-split { grid-template-columns:1fr !important; } .inventory-split > .inventory-panel, .inventory-split > div:not(.inventory-panel) { order:initial; } }
+    @media(max-width:650px) { #recipe-editor-form { grid-template-columns:1fr; } #recipe-editor-form > label, #recipe-editor-form > select, #recipe-editor-form > p, #recipe-editor-form > #recipe-editor-lines, #recipe-editor-form > div, #recipe-editor-form > label[for="recipe-product-name"], #recipe-editor-form > label[for="recipe-product-price"] { grid-column:1; } .recipe-editor-row { grid-template-columns:1fr; } .section { padding:15px !important; } }
+
+  
+
+/* Mansion.craft UI refinement — structural layout aligned to the supplied TeddyPOS screenshots */
+:root{
+ --mc-bg:#f8f7f2;--mc-card:#faf9f5;--mc-line:#e6e2d9;--mc-ink:#111;--mc-muted:#626262;--mc-orange:#e87900;--mc-soft:#f0eee7;
+}
+html{background:var(--mc-bg)} body{background:var(--mc-bg)!important;color:var(--mc-ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+.app-shell{grid-template-columns:80px minmax(0,1fr)!important;background:var(--mc-bg);}
+.sidebar{background:#fff!important;color:#303846!important;border-right:1px solid var(--mc-line);padding:12px 10px!important;display:flex;flex-direction:column;align-items:center;position:sticky;top:0;height:100vh;box-sizing:border-box;}
+.brand{width:100%;box-sizing:border-box;padding:0 0 18px!important;margin:0 0 12px!important;border-bottom:1px solid var(--mc-line)!important;text-align:center;}
+.brand h1{font-size:0!important;display:flex;justify-content:center;align-items:center;margin:auto;width:44px;height:44px;border-radius:13px;background:var(--mc-orange);color:#fff;}
+.brand h1:after{content:"☕";font-size:23px}.brand p,.sidebar-label{display:none!important}.sidebar nav{width:100%;display:flex;flex-direction:column;gap:7px;}
+.nav-button{position:relative;justify-content:center!important;width:58px!important;height:48px;padding:0!important;margin:0 auto!important;border:1px solid transparent!important;border-radius:13px!important;color:#394150!important;background:transparent!important;font-size:0!important;gap:0!important;}
+.nav-button span{display:none!important}.nav-button:first-letter{font-size:20px}.nav-button:hover{background:#f5f2ec!important;color:#111!important}.nav-button.active{background:#fff5e9!important;border-color:#f5b16e!important;color:var(--mc-orange)!important;box-shadow:none!important}.nav-button.active:before{content:"";position:absolute;left:-1px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--mc-orange);}
+.app-content{min-width:0;background:var(--mc-bg)}.app-header{background:var(--mc-bg)!important;border-bottom:1px solid var(--mc-line)!important;padding:25px 34px!important}.app-header h2{font-size:29px!important;letter-spacing:-.045em;font-weight:750}.app-header p{font-size:14px!important;color:var(--mc-muted)!important}.page-content{max-width:1600px!important;padding:26px 34px 42px!important}
+.section,.inventory-panel,.stat-card{background:var(--mc-card)!important;border:1px solid var(--mc-line)!important;border-radius:13px!important;box-shadow:none!important}.section{padding:24px!important}.inventory-panel{padding:20px!important;min-width:0}.orders-header{align-items:flex-start;padding-bottom:18px;border-bottom:1px solid var(--mc-line);margin-bottom:20px}.orders-header h2,.inventory-panel h3{letter-spacing:-.035em;font-weight:700}.orders-header p,.placeholder-note{color:var(--mc-muted)!important;line-height:1.55}
+label{font-size:10px!important;text-transform:uppercase;letter-spacing:.1em;font-weight:650!important;color:#555!important;margin-top:16px!important;margin-bottom:7px!important}
+input,select,textarea{box-sizing:border-box;min-height:42px;border:1px solid var(--mc-line)!important;border-radius:12px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.035)!important;color:#242424!important;padding:10px 12px!important;font-size:14px!important}
+input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outline-offset:1px;border-color:#e8a15b!important}button{font:inherit;cursor:pointer;border-radius:11px!important;min-height:40px;transition:background .15s,border-color .15s,transform .15s}button:active{transform:translateY(1px)}
+.checkout-button,.refresh-orders-button{padding:10px 15px!important;min-height:42px!important;font-size:13px!important;font-weight:600!important}.checkout-button{background:#303030!important;color:#fff!important;border:1px solid #303030!important}.checkout-button:hover{background:#111!important}.refresh-orders-button{background:#fff!important;color:#222!important;border:1px solid var(--mc-line)!important}.refresh-orders-button:hover{background:#f3f0e9!important}
+.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px!important;margin:20px 0!important}.stat-card{padding:18px!important}.stat-card .stat-label,.stat-label{font-size:10px!important;letter-spacing:.1em;text-transform:uppercase;color:#626262}.stat-card .stat-value{font-size:27px!important;letter-spacing:-.04em;margin-top:9px!important;font-weight:750}
+/* Inventory: forms on the left, stock table on the right, as in the reference */
+.inventory-split{display:grid!important;grid-template-columns:minmax(310px,.92fr) minmax(0,1.28fr)!important;gap:22px!important;align-items:start!important}
+.inventory-split>.inventory-panel{order:2!important}.inventory-split>div:not(.inventory-panel){order:1!important}
+#inventory-summary{margin:0 0 18px!important;color:var(--mc-muted)}
+.inventory-split .inventory-panel h3{font-size:17px;margin-bottom:8px}.inventory-form-grid{gap:0 13px!important}.inventory-form-grid .full-width{grid-column:1/-1}
+#inventory-category-filter{max-width:260px}.inventory-table{border-collapse:separate!important;border-spacing:0!important;font-size:13px!important;width:100%}.inventory-table th{background:#f0eee8!important;color:#5c5a55!important;font-size:10px!important;text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;padding:12px 10px!important;border-bottom:1px solid var(--mc-line)!important}.inventory-table td{padding:13px 10px!important;border-bottom:1px solid var(--mc-line)!important;vertical-align:middle;background:transparent}.inventory-table tr:last-child td{border-bottom:0!important}.inventory-table td button{min-height:31px!important;padding:5px 10px!important;font-size:12px!important}.stock-low{color:#a65a00!important}.stock-ok{color:#27704b!important}
+/* Margins & Recipes: categorized menu-margin table inspired by TeddyPOS */
+#margins-page>.section{padding:28px!important}#margins-page .orders-header h2{font-size:27px}#margins-page .stat-grid{margin-top:20px!important}
+.margin-menu-panel{border:1px solid var(--mc-line);border-radius:13px;overflow:hidden;background:var(--mc-card);margin-top:20px}
+.margin-menu-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:17px 21px;border-bottom:1px solid var(--mc-line)}
+.margin-menu-heading h3{font-size:16px;margin:0;font-weight:750;letter-spacing:-.025em}.margin-menu-actions{display:flex;gap:9px;flex-wrap:wrap}.margin-menu-actions button{min-height:37px!important;padding:7px 13px!important;font-size:12px!important}
+.margin-menu-table{border-collapse:collapse!important}.margin-menu-table th{background:var(--mc-card)!important;padding:12px 20px!important;border-bottom:1px solid #242424!important}.margin-menu-table td{padding:15px 20px!important;background:transparent!important;font-size:13px;border-bottom:1px solid var(--mc-line)!important}.margin-menu-table .margin-category-row td{background:#e7e5e1!important;color:#171717;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:10px 20px!important}.margin-category-row td span{color:#777;font-weight:500;letter-spacing:0}.margin-item-name{font-weight:500;min-width:210px}.margin-number{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}.margin-price,.margin-profit{color:#111;font-weight:650}.margin-bar-cell{display:flex;align-items:center;gap:10px;min-width:145px}.margin-bar{height:6px;flex:1;min-width:65px;background:#dedede;border-radius:0;overflow:hidden}.margin-bar span{height:100%;display:block;background:#333}.margin-bar-cell strong{font-size:11px;min-width:43px;font-variant-numeric:tabular-nums}.margin-row-actions{text-align:right;width:48px}.margin-edit-btn{border:0!important;background:transparent!important;color:#555!important;min-height:30px!important;width:30px;padding:0!important;font-size:17px!important}.margin-edit-btn:hover{background:#f0eee8!important;color:#111!important}
+#margins-page #recipe-breakdowns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}#margins-page #recipe-breakdowns .stat-card{margin:0!important}
+#margins-page hr{border-color:var(--mc-line)!important;margin:30px 0!important}#recipe-editor-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;padding:20px;border:1px solid var(--mc-line);border-radius:12px;background:#fff}
+#recipe-editor-form>label,#recipe-editor-form>select,#recipe-editor-form>p,#recipe-editor-form>#recipe-editor-lines,#recipe-editor-form>div{grid-column:1/-1}#recipe-editor-form>label[for="recipe-product-name"],#recipe-editor-form>label[for="recipe-product-price"]{grid-column:auto}#recipe-editor-form>label[for="recipe-product"]+select{grid-column:1/-1}
+.recipe-editor-row{display:grid;grid-template-columns:minmax(0,1fr) 125px auto;align-items:end;gap:12px;padding:14px;margin-top:12px;border:1px solid var(--mc-line);border-radius:11px;background:var(--mc-card)}
+@media(max-width:1100px){.inventory-split{grid-template-columns:1fr!important}.inventory-split>.inventory-panel,.inventory-split>div:not(.inventory-panel){order:initial!important}#margins-page #recipe-breakdowns{grid-template-columns:1fr}}
+@media(max-width:850px){.app-shell{grid-template-columns:1fr!important}.sidebar{position:relative;height:auto;padding:9px!important;display:block;overflow:visible}.brand{display:none}.sidebar nav{flex-direction:row;overflow-x:auto;justify-content:flex-start}.nav-button{flex:0 0 48px!important;width:48px!important;height:44px!important}.app-header{padding:18px!important}.page-content{padding:16px!important}.stat-grid{grid-template-columns:1fr!important}.inventory-split{grid-template-columns:1fr!important}}
+@media(max-width:600px){.section{padding:15px!important}#recipe-editor-form{grid-template-columns:1fr;padding:14px}#recipe-editor-form>*{grid-column:1!important}.recipe-editor-row{grid-template-columns:1fr}.orders-header{gap:12px}.app-header h2{font-size:24px!important}}
+
+
+    .inventory-tabs{display:flex;gap:24px;border-bottom:1px solid var(--mc-line,#e7e3da);margin:20px 0 18px;padding:0 2px}
+    .inventory-tab{border:0!important;background:transparent!important;border-radius:0!important;padding:12px 5px!important;color:#626262!important;font-size:14px!important;min-height:0!important;box-shadow:none!important;border-bottom:2px solid transparent!important;cursor:pointer}
+    .inventory-tab.active{color:#111!important;border-bottom-color:#111!important;font-weight:600!important}
+    .equipment-split{grid-template-columns:minmax(300px,.9fr) minmax(0,1.25fr)!important}
+    #inventory-equipment-workspace .inventory-panel{align-self:start}
+    @media(max-width:1000px){.equipment-split{grid-template-columns:1fr!important}}
+</style>
+<style>
+.equipment-dashboard{padding:0!important;overflow:hidden}.equipment-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px 12px}
+.equipment-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:8px 22px 20px;border-bottom:1px solid #e8e4dd}
+.equipment-toolbar select{min-width:155px;max-width:220px;padding:10px 12px;border:1px solid #e6e1d8;border-radius:12px;background:#fff;color:#252525}
+.equipment-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:20px 22px;border-bottom:1px solid #e8e4dd}
+.equipment-summary-card{padding:4px 22px;border-right:1px solid #e8e4dd;min-width:0}.equipment-summary-card:first-child{padding-left:0}.equipment-summary-card:last-child{border-right:0}
+.equipment-summary-value{font-size:27px;font-weight:750;letter-spacing:-.04em;margin:7px 0}.equipment-status{display:inline-block;padding:4px 8px;border:1px solid #e6e1d8;font-size:11px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.equipment-status.in-use{background:#f5f4ef}.equipment-status.retired{background:#eee9e5;color:#776a60}.equipment-table th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}.equipment-table td,.equipment-table th{padding:14px 12px;border-bottom:1px solid #e9e5de}
+@media(max-width:950px){.equipment-summary-grid{grid-template-columns:1fr;gap:12px}.equipment-summary-card,.equipment-summary-card:first-child{padding:10px 0;border-right:0;border-bottom:1px solid #e8e4dd}.equipment-summary-card:last-child{border-bottom:0}.equipment-toolbar{justify-content:flex-start}}
+</style></head>
 
 <body>
 <div class="app-shell">
@@ -615,49 +717,110 @@ textarea:focus {
 
       <section class="page" id="inventory-page">
         <section class="section" id="inventory-section">
-          <div class="orders-header"><div><h2>Inventory</h2><p>Track ingredients and stock levels</p></div><button class="refresh-orders-button" onclick="loadInventory()">Refresh</button></div>
+          <div class="orders-header"><div><div class="stat-label">MANSION.CRAFT · INVENTORY</div><h2>Inventory</h2><p>Manage ingredients, stock levels, categories, and restocks in one workspace.</p></div></div>
+          <div class="inventory-tabs" role="tablist" aria-label="Inventory sections">
+            <button type="button" class="inventory-tab active" id="inventory-tab-stock" onclick="switchInventoryTab('stock')">Stock Levels</button>
+            <button type="button" class="inventory-tab" id="inventory-tab-equipment" onclick="switchInventoryTab('equipment')">Equipment</button>
+          </div>
+          <div id="inventory-stock-workspace">
           <div id="inventory-summary">Loading inventory...</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px">
-            <div><label for="inventory-category-filter">Filter by category</label><select id="inventory-category-filter" onchange="renderInventoryTable()"><option value="">All categories</option></select></div>
+          <div class="inventory-split" style="margin-top:18px">
+            <div class="inventory-panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0">Stock Levels</h3><button type="button" class="refresh-orders-button" onclick="loadInventory()">Refresh</button></div>
+              <label for="inventory-category-filter">Category</label>
+              <select id="inventory-category-filter" onchange="renderInventoryTable()"><option value="">All categories</option></select>
+              <div style="overflow-x:auto;margin-top:12px">
+                <table class="inventory-table" style="width:100%;border-collapse:collapse">
+                  <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
+                  <tbody id="inventory-list"><tr><td colspan="6">Loading ingredients...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+            <div style="display:grid;gap:18px;min-width:0">
+              <div class="inventory-panel">
+                <h3 id="ingredient-form-title">Add Ingredient</h3>
+                <p class="placeholder-note">Create a new ingredient or select an existing one from the stock table and click Edit to update its details.</p>
+                <form id="ingredient-form" onsubmit="saveInventoryIngredient(event)">
+                  <input id="ingredient-edit-id" type="hidden">
+                  <div class="inventory-form-grid">
+                    <div class="full-width"><label for="ingredient-name">Ingredient name</label><input id="ingredient-name" required maxlength="120" placeholder="e.g. Matcha Powder"></div>
+                    <div><label for="ingredient-unit">Unit</label><select id="ingredient-unit" required><option value="g">g (grams)</option><option value="ml">ml (millilitres)</option><option value="pcs">pcs (pieces)</option><option value="unit">unit</option></select></div>
+                    <div><label for="ingredient-minimum">Minimum stock</label><input id="ingredient-minimum" type="number" min="0" step="any" value="0" required></div>
+                    <div><label for="ingredient-current-stock">Current stock</label><input id="ingredient-current-stock" type="number" step="any" value="0" required><p class="placeholder-note">Use only for initial stock or a manual stock correction.</p></div>
+                    <div><label for="ingredient-category">Category</label><select id="ingredient-category"><option value="">Uncategorized</option></select></div>
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button type="submit" class="checkout-button" id="ingredient-save-button">Add Ingredient</button><button type="button" class="refresh-orders-button" onclick="resetIngredientForm()">Clear / New</button></div>
+                  <div id="ingredient-form-message" style="margin-top:10px"></div>
+                </form>
+              </div>
+              <div class="inventory-panel">
+                <h3>Ingredient Categories</h3>
+                <p class="placeholder-note">Add a category or rename an existing one. Examples: Coffee, Matcha &amp; Tea, Milk, Syrups, Packaging.</p>
+                <form id="category-form" onsubmit="saveIngredientCategory(event)">
+                  <label for="category-action">Action</label><select id="category-action" onchange="toggleCategoryRename()"><option value="add">Add new category</option><option value="rename">Rename category</option></select>
+                  <div id="rename-category-wrap" style="display:none"><label for="category-existing">Category to rename</label><select id="category-existing"></select></div>
+                  <label for="category-name">Category name</label><input id="category-name" required maxlength="80" placeholder="e.g. Matcha &amp; Tea">
+                  <button type="submit" class="refresh-orders-button" style="margin-top:12px">Save category</button><div id="category-message" style="margin-top:10px"></div>
+                </form>
+              </div>
+              <div class="inventory-panel">
+                <h3>Record Purchase / Restock</h3>
+                <form id="purchase-form" onsubmit="recordPurchase(event)">
+                  <label for="purchase-ingredient">Ingredient</label><select id="purchase-ingredient" required><option value="">Loading ingredients...</option></select>
+                  <div class="inventory-form-grid">
+                    <div><label for="purchase-quantity">Quantity purchased</label><input id="purchase-quantity" type="number" min="0.001" step="any" required placeholder="e.g. 1000"></div>
+                    <div><label for="purchase-package-cost">Total package price (฿)</label><input id="purchase-package-cost" type="number" min="0.01" step="0.01" required placeholder="e.g. 940.00"></div>
+                    <div><label for="purchase-date">Purchase date</label><input id="purchase-date" type="date" required></div>
+                    <div><label for="purchase-supplier">Supplier</label><input id="purchase-supplier" type="text" placeholder="Optional"></div>
+                    <div><label for="purchase-expiry">Expiry date</label><input id="purchase-expiry" type="date"></div>
+                    <div class="full-width"><label for="purchase-notes">Notes</label><textarea id="purchase-notes" class="notes" rows="2" placeholder="Optional"></textarea></div>
+                  </div>
+                  <p id="purchase-total">Calculated unit cost: ฿0.0000</p><p class="placeholder-note">The POS calculates cost per g/ml and updates weighted-average cost.</p>
+                  <button type="submit" class="checkout-button" id="purchase-submit">Record Purchase</button><div id="purchase-message" style="margin-top:12px"></div>
+                </form>
+              </div>
+            </div>
           </div>
-          <div style="overflow-x:auto;margin-top:12px">
-            <table class="inventory-table" style="width:100%;border-collapse:collapse">
-              <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
-              <tbody id="inventory-list"><tr><td colspan="6">Loading ingredients...</td></tr></tbody>
-            </table>
-          </div>
-          <hr style="margin:25px 0;border:0;border-top:1px solid #eee">
-          <h3>Ingredient Categories</h3>
-          <p class="placeholder-note">Create categories such as Coffee, Tea & Matcha, Milk, Syrups, and Packaging. Assign a category to each ingredient from the inventory table.</p>
-          <form id="category-form" onsubmit="saveIngredientCategory(event)">
-            <label for="category-action">Action</label><select id="category-action" onchange="toggleCategoryRename()"><option value="add">Add new category</option><option value="rename">Rename category</option></select>
-            <div id="rename-category-wrap" style="display:none"><label for="category-existing">Category to rename</label><select id="category-existing"></select></div>
-            <label for="category-name">Category name</label><input id="category-name" required maxlength="80" placeholder="e.g. Matcha & Tea">
-            <button type="submit" class="refresh-orders-button" style="margin-top:12px">Save category</button><div id="category-message" style="margin-top:10px"></div>
-          </form>
-          <hr style="margin:25px 0;border:0;border-top:1px solid #eee">
-          <h3>Record Purchase</h3>
-          <form id="purchase-form" onsubmit="recordPurchase(event)">
-            <label for="purchase-ingredient">Ingredient</label><select id="purchase-ingredient" required><option value="">Loading ingredients...</option></select>
-            <label for="purchase-quantity">Quantity</label><input id="purchase-quantity" type="number" min="0.001" step="any" required placeholder="e.g. 1000">
-            <label for="purchase-package-cost">Total package price (฿)</label><input id="purchase-package-cost" type="number" min="0.01" step="0.01" required placeholder="e.g. 940.00"><p class="placeholder-note">Enter the total price paid for the quantity above. POS calculates cost per g/ml automatically.</p>
-            <label for="purchase-date">Purchase date</label><input id="purchase-date" type="date" required>
-            <label for="purchase-supplier">Supplier</label><input id="purchase-supplier" type="text" placeholder="Optional">
-            <label for="purchase-expiry">Expiry date</label><input id="purchase-expiry" type="date">
-            <label for="purchase-notes">Notes</label><textarea id="purchase-notes" class="notes" rows="3" placeholder="Optional"></textarea>
-            <p id="purchase-total">Total purchase cost: ฿0.00</p>
-            <button type="submit" class="checkout-button" id="purchase-submit">Record Purchase</button>
-            <div id="purchase-message" style="margin-top:12px"></div>
-          </form>
+          </div><!-- /inventory-stock-workspace -->
+          <section id="inventory-equipment-workspace" style="display:none;margin-top:20px">
+            <div class="inventory-split equipment-split">
+              <div style="display:grid;gap:18px;min-width:0">
+                <div class="inventory-panel">
+                  <h3 id="equipment-form-title">Add Equipment</h3>
+                  <p class="placeholder-note">Track reusable cafe tools and serviceware, such as milk pitchers, measuring jugs, glasses, shakers, and scales.</p>
+                  <form id="equipment-form" onsubmit="saveEquipment(event)">
+                    <input id="equipment-edit-id" type="hidden">
+                    <div class="inventory-form-grid">
+                      <div><label for="equipment-price">Unit price (฿)</label><input id="equipment-price" type="number" min="0" step="0.01" value="0" required></div>
+                      <div><label for="equipment-quantity">Quantity</label><input id="equipment-quantity" type="number" min="0" step="1" value="1" required></div>
+                      <div class="full-width"><label for="equipment-name">Equipment name</label><input id="equipment-name" required maxlength="120" placeholder="e.g. Stainless steel milk pitcher"></div>
+                      <div><label for="equipment-category">Category</label><select id="equipment-category"><option>Bar tools</option><option>Glassware</option><option>Measuring tools</option><option>Cleaning tools</option><option>Electrical equipment</option><option>Other</option></select></div>
+                      <div><label for="equipment-status">Status</label><select id="equipment-status"><option>In Use</option><option>Retired</option></select></div><div><label for="equipment-condition">Condition</label><select id="equipment-condition"><option>Good</option><option>Needs cleaning</option><option>Needs repair</option><option>Damaged</option></select></div>
+                      <div><label for="equipment-location">Storage location</label><input id="equipment-location" maxlength="120" placeholder="e.g. Drink station"></div>
+                      <div class="full-width"><label for="equipment-notes">Notes</label><textarea id="equipment-notes" class="notes" rows="2" placeholder="Size, capacity, purchase notes (optional)"></textarea></div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button type="submit" class="checkout-button" id="equipment-save-button">Add Equipment</button><button type="button" class="refresh-orders-button" onclick="resetEquipmentForm()">Clear / New</button></div>
+                    <div id="equipment-form-message" style="margin-top:10px"></div>
+                  </form>
+                </div>
+              </div>
+              <div class="inventory-panel equipment-dashboard">
+                <div class="equipment-topline"><div><div class="stat-label">REUSABLE ASSETS</div><h3 style="margin:4px 0 0">Equipment List</h3></div><button type="button" class="refresh-orders-button" onclick="loadEquipment()">↻ Refresh</button></div>
+                <div class="equipment-toolbar"><select id="equipment-filter-category" aria-label="Filter equipment category" onchange="renderEquipmentTable()"><option value="">All categories</option></select><button type="button" class="refresh-orders-button" onclick="manageEquipmentCategory()">Manage Categories</button><select id="equipment-filter-status" aria-label="Filter equipment status" onchange="renderEquipmentTable()"><option value="">All statuses</option><option value="In Use">In Use</option><option value="Retired">Retired</option></select><button type="button" class="refresh-orders-button" onclick="exportEquipmentCSV()">↓ Export CSV</button><button type="button" class="checkout-button" onclick="document.getElementById('equipment-name').focus()">＋ Add Equipment</button></div>
+                <div class="equipment-summary-grid"><div class="equipment-summary-card"><div class="stat-label">TOTAL EQUIPMENT VALUE</div><div class="equipment-summary-value" id="equipment-total-value">฿0.00</div><div class="placeholder-note" id="equipment-total-count">0 items</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE VALUE</div><div class="equipment-summary-value" id="equipment-inuse-value">฿0.00</div><div class="placeholder-note" id="equipment-inuse-count">0 items in use</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE − RETIRED</div><div class="equipment-summary-value" id="equipment-retired-value">฿0.00</div><div class="placeholder-note" id="equipment-retired-count">0 retired items · ฿0.00</div></div></div>
+                <div style="overflow-x:auto;margin-top:12px"><table class="inventory-table equipment-table" style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Equipment</th><th style="text-align:left">Category</th><th style="text-align:right">Qty</th><th style="text-align:left">Status</th><th style="text-align:left">Condition</th><th style="text-align:left">Location</th><th style="text-align:right">Unit price</th><th style="text-align:right">Total value</th><th>Actions</th></tr></thead><tbody id="equipment-list"><tr><td colspan="9">Loading equipment...</td></tr></tbody></table></div><div id="equipment-list-message" class="placeholder-note" style="margin-top:10px"></div>
+              </div>
+            </div>
+          </section>
         </section>
       </section>
 
-      <section class="page" id="margins-page">
+    <section class="page" id="margins-page">
         <div class="section">
           <div class="orders-header">
             <div>
-              <h2>Margins &amp; Recipes</h2>
-              <p>Track menu item profitability and review ingredient cost breakdowns.</p>
+              <div class="stat-label">MANSION.CRAFT · MENU COSTING</div><h2>Margins &amp; Recipes</h2>
+              <p>Manage drink recipes and understand the cost and gross profit of every cup.</p>
             </div>
             <button class="refresh-orders-button" onclick="loadMarginsAndRecipes()">Refresh</button>
           </div>
@@ -668,15 +831,18 @@ textarea:focus {
           </div>
           <p class="placeholder-note">Estimated ingredient cost uses each recipe quantity multiplied by the ingredient's current cost per unit. It excludes cups, lids, labor, platform fees, rent, and other overhead unless you add them to your cost model.</p>
           <div id="margins-message" class="placeholder-note">Loading recipe costs…</div>
-          <div style="overflow-x:auto;margin-top:16px">
-            <table class="inventory-table" style="width:100%;border-collapse:collapse">
-              <thead><tr><th style="text-align:left">Product</th><th style="text-align:right">Selling price</th><th style="text-align:right">Ingredient cost</th><th style="text-align:right">Gross profit</th><th style="text-align:right">Margin</th><th style="text-align:left">Recipe</th></tr></thead>
-              <tbody id="margins-list"><tr><td colspan="6">Loading products and recipes…</td></tr></tbody>
-            </table>
+          <div class="margin-menu-panel">
+            <div class="margin-menu-heading"><h3>Menu Margin Table</h3><div class="margin-menu-actions"><button type="button" class="refresh-orders-button" onclick="startNewMarginProduct()">＋ Add All Menu</button><button type="button" class="refresh-orders-button" onclick="exportMarginsCSV()">⇩ Export CSV</button></div></div>
+            <div style="overflow-x:auto">
+              <table class="inventory-table margin-menu-table" style="width:100%;border-collapse:collapse">
+                <thead><tr><th style="text-align:left">Item</th><th style="text-align:right">Cost</th><th style="text-align:right">Price</th><th style="text-align:right">Profit</th><th style="text-align:left">Margin</th><th aria-label="Actions"></th></tr></thead>
+                <tbody id="margins-list"><tr><td colspan="6">Loading products and recipes…</td></tr></tbody>
+              </table>
+            </div>
           </div>
           <div id="recipe-breakdowns" style="margin-top:24px"></div>
           <hr style="margin:28px 0;border:0;border-top:1px solid #eee">
-          <div class="orders-header"><div><h2>Recipe Editor</h2><p>Create or update the ingredient quantities used for each drink.</p></div></div>
+          <div class="orders-header"><div><div class="stat-label">PRODUCT SETUP</div><h2>Recipe Editor</h2><p>Select a drink, set its selling price, and define the ingredients used per cup.</p></div></div>
           <form id="recipe-editor-form" onsubmit="saveRecipeEditor(event)">
             <label for="recipe-product">Product</label><select id="recipe-product" required><option value="">Loading products…</option></select><p class="placeholder-note">Choose an existing product to edit it, or choose “+ New product” to create a product and its recipe.</p>
             <label for="recipe-product-name">Product name</label><input id="recipe-product-name" type="text" required placeholder="e.g. Matcha Latte">
@@ -2214,6 +2380,169 @@ ${errorText}`
   let inventoryIngredients = [];
 
   let inventoryCategories = [];
+  let equipmentItems = [];
+  let equipmentCategories = [];
+
+  function switchInventoryTab(tab) {
+    const stock = tab === "stock";
+    document.getElementById("inventory-stock-workspace").style.display = stock ? "block" : "none";
+    document.getElementById("inventory-equipment-workspace").style.display = stock ? "none" : "block";
+    document.getElementById("inventory-tab-stock").classList.toggle("active", stock);
+    document.getElementById("inventory-tab-equipment").classList.toggle("active", !stock);
+    if (!stock) loadEquipment();
+  }
+
+  async function loadEquipment() {
+    const list = document.getElementById("equipment-list");
+    const message = document.getElementById("equipment-list-message");
+    list.innerHTML = '<tr><td colspan="6">Loading equipment...</td></tr>';
+    message.textContent = "";
+    try {
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?select=*&order=name.asc`, { headers });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || "Could not load equipment. Run the equipment SQL setup first.");
+      equipmentItems = data;
+      await loadEquipmentCategories();
+      renderEquipmentTable();
+    } catch (error) {
+      list.innerHTML = '<tr><td colspan="6">Equipment could not be loaded.</td></tr>';
+      message.textContent = `${error.message}. Check that the equipment_items table and access policy have been created in Supabase.`;
+      console.error("Equipment load error:", error);
+    }
+  }
+
+  async function loadEquipmentCategories() {
+    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?select=id,name&order=name.asc`, { headers });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.message || "Could not load equipment categories. Run the latest equipment SQL setup.");
+    const defaults = ["Bar tools","Glassware","Measuring tools","Cleaning tools","Electrical equipment","Other"];
+    const names = [...new Set([...defaults, ...data.map(x => x.name), ...equipmentItems.map(x => x.category).filter(Boolean)])].sort((a,b)=>a.localeCompare(b));
+    equipmentCategories = names;
+    const currentCategory = document.getElementById("equipment-category").value;
+    const currentFilter = document.getElementById("equipment-filter-category").value;
+    document.getElementById("equipment-category").innerHTML = names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+    document.getElementById("equipment-filter-category").innerHTML = '<option value="">All categories</option>' + names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+    if (names.includes(currentCategory)) document.getElementById("equipment-category").value = currentCategory;
+    if (names.includes(currentFilter)) document.getElementById("equipment-filter-category").value = currentFilter;
+  }
+
+  async function manageEquipmentCategory() {
+    const action = prompt("Equipment categories\nType ADD to create a category or RENAME to change one:", "ADD");
+    if (!action) return;
+    const normalized = action.trim().toUpperCase();
+    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type":"application/json", Prefer:"return=representation" };
+    try {
+      if (normalized === "ADD") {
+        const name = prompt("New category name:");
+        if (!name || !name.trim()) return;
+        const clean = name.trim();
+        if (equipmentCategories.some(x=>x.toLowerCase()===clean.toLowerCase())) { alert("That category already exists."); return; }
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories`, {method:"POST",headers,body:JSON.stringify({name:clean})});
+        const result = await response.json();
+        if (!response.ok) throw new Error(result?.message || "Could not add category");
+      } else if (normalized === "RENAME") {
+        const oldName = prompt("Enter the category name exactly as it is now:\n" + equipmentCategories.join(", "));
+        if (!oldName) return;
+        if (!equipmentCategories.includes(oldName.trim())) { alert("Category not found."); return; }
+        const newName = prompt(`Rename “${oldName.trim()}” to:`, oldName.trim());
+        if (!newName || !newName.trim()) return;
+        const clean = newName.trim();
+        const match = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?name=eq.${encodeURIComponent(oldName.trim())}`, {headers});
+        const found = await match.json();
+        if (!match.ok) throw new Error(found?.message || "Could not find category");
+        if (!found.length) throw new Error("Category record not found. Run the latest SQL setup and refresh.");
+        const update = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?id=eq.${encodeURIComponent(found[0].id)}`, {method:"PATCH",headers,body:JSON.stringify({name:clean})});
+        if (!update.ok) { const err=await update.json(); throw new Error(err?.message || "Could not rename category"); }
+        const itemUpdate = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?category=eq.${encodeURIComponent(oldName.trim())}`, {method:"PATCH",headers,body:JSON.stringify({category:clean})});
+        if (!itemUpdate.ok) { const err=await itemUpdate.json(); throw new Error(err?.message || "Category renamed, but equipment assignments could not be updated"); }
+      } else { alert("Type ADD or RENAME."); return; }
+      await loadEquipment();
+      alert("Equipment categories updated.");
+    } catch (error) { alert(`Could not manage category: ${error.message}. Check Supabase permissions and run the latest SQL setup.`); }
+  }
+
+  function renderEquipmentTable() {
+    const list = document.getElementById("equipment-list");
+    const money = value => "฿" + Number(value || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    const valueOf = item => Number(item.quantity || 0) * Number(item.unit_price || 0);
+    const inUse = equipmentItems.filter(x => (x.status || "In Use") !== "Retired");
+    const retired = equipmentItems.filter(x => x.status === "Retired");
+    document.getElementById("equipment-total-value").textContent = money(equipmentItems.reduce((a,x)=>a+valueOf(x),0));
+    document.getElementById("equipment-total-count").textContent = `${equipmentItems.reduce((a,x)=>a+Number(x.quantity||0),0)} items`;
+    document.getElementById("equipment-inuse-value").textContent = money(inUse.reduce((a,x)=>a+valueOf(x),0));
+    document.getElementById("equipment-inuse-count").textContent = `${inUse.reduce((a,x)=>a+Number(x.quantity||0),0)} items in use`;
+    document.getElementById("equipment-retired-value").textContent = money(retired.reduce((a,x)=>a+valueOf(x),0));
+    document.getElementById("equipment-retired-count").textContent = `${retired.reduce((a,x)=>a+Number(x.quantity||0),0)} retired items · ${money(retired.reduce((a,x)=>a+valueOf(x),0))}`;
+    const category = document.getElementById("equipment-filter-category")?.value || "";
+    const status = document.getElementById("equipment-filter-status")?.value || "";
+    const filtered = equipmentItems.filter(x => (!category || (x.category || "Other") === category) && (!status || (x.status || "In Use") === status));
+    if (!filtered.length) { list.innerHTML = '<tr><td colspan="9">No equipment matches these filters.</td></tr>'; return; }
+    list.innerHTML = filtered.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong></td><td>${escapeHtml(item.category || "Other")}</td><td style="text-align:right">${Number(item.quantity || 0)}</td><td><span class="equipment-status ${item.status === "Retired" ? "retired" : "in-use"}">${escapeHtml(item.status || "In Use")}</span></td><td>${escapeHtml(item.condition || "Good")}</td><td>${escapeHtml(item.location || "—")}</td><td style="text-align:right">${money(item.unit_price)}</td><td style="text-align:right"><strong>${money(valueOf(item))}</strong></td><td style="white-space:nowrap"><button type="button" class="refresh-orders-button" onclick="editEquipment(${Number(item.id)})">Edit</button> <button type="button" class="refresh-orders-button" onclick="deleteEquipment(${Number(item.id)})">Delete</button></td></tr>`).join("");
+  }
+  function exportEquipmentCSV() {
+    const headers = ["Name","Category","Quantity","Status","Condition","Location","Unit price","Total value","Notes"];
+    const rows = equipmentItems.map(x => [x.name,x.category,x.quantity,x.status || "In Use",x.condition,x.location,x.unit_price || 0,Number(x.quantity||0)*Number(x.unit_price||0),x.notes].map(v => '"' + String(v ?? "").replace(/"/g,'""') + '"').join(","));
+    const blob = new Blob([[headers.join(","),...rows].join("\n")],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href=url; a.download="mansion-craft-equipment.csv"; a.click(); URL.revokeObjectURL(url);
+  }
+
+  function resetEquipmentForm() {
+    document.getElementById("equipment-form").reset();
+    document.getElementById("equipment-edit-id").value = "";
+    document.getElementById("equipment-quantity").value = "1";
+    document.getElementById("equipment-price").value = "0";
+    document.getElementById("equipment-status").value = "In Use";
+    document.getElementById("equipment-form-title").textContent = "Add Equipment";
+    document.getElementById("equipment-save-button").textContent = "Add Equipment";
+    document.getElementById("equipment-form-message").textContent = "";
+  }
+
+  function editEquipment(id) {
+    const item = equipmentItems.find(x => Number(x.id) === Number(id)); if (!item) return;
+    document.getElementById("equipment-edit-id").value = item.id;
+    document.getElementById("equipment-name").value = item.name || "";
+    document.getElementById("equipment-category").value = item.category || "Other";
+    document.getElementById("equipment-quantity").value = item.quantity ?? 1;
+    document.getElementById("equipment-price").value = item.unit_price ?? 0;
+    document.getElementById("equipment-status").value = item.status || "In Use";
+    document.getElementById("equipment-condition").value = item.condition || "Good";
+    document.getElementById("equipment-location").value = item.location || "";
+    document.getElementById("equipment-notes").value = item.notes || "";
+    document.getElementById("equipment-form-title").textContent = "Edit Equipment";
+    document.getElementById("equipment-save-button").textContent = "Save Changes";
+    document.getElementById("equipment-form-message").textContent = `Editing ${item.name}`;
+    document.getElementById("equipment-form").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  async function saveEquipment(event) {
+    event.preventDefault();
+    const id = document.getElementById("equipment-edit-id").value;
+    const payload = { name: document.getElementById("equipment-name").value.trim(), category: document.getElementById("equipment-category").value, quantity: Number(document.getElementById("equipment-quantity").value), unit_price: Number(document.getElementById("equipment-price").value || 0), status: document.getElementById("equipment-status").value, condition: document.getElementById("equipment-condition").value, location: document.getElementById("equipment-location").value.trim() || null, notes: document.getElementById("equipment-notes").value.trim() || null };
+    const message = document.getElementById("equipment-form-message");
+    try {
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type":"application/json", Prefer:"return=representation" };
+      const url = `${SUPABASE_URL}/rest/v1/equipment_items${id ? `?id=eq.${encodeURIComponent(id)}` : ""}`;
+      const response = await fetch(url, { method:id ? "PATCH" : "POST", headers, body:JSON.stringify(payload) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || "Could not save equipment");
+      message.textContent = id ? "Equipment updated successfully." : "Equipment added successfully.";
+      resetEquipmentForm(); await loadEquipment();
+      document.getElementById("equipment-form-message").textContent = message.textContent || "Saved.";
+    } catch (error) { message.textContent = `Could not save: ${error.message}`; }
+  }
+
+  async function deleteEquipment(id) {
+    const item = equipmentItems.find(x => Number(x.id) === Number(id));
+    if (!item || !confirm(`Delete equipment “${item.name}”?`)) return;
+    try {
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?id=eq.${encodeURIComponent(id)}`, { method:"DELETE", headers });
+      if (!response.ok) { const err = await response.json(); throw new Error(err?.message || "Delete failed"); }
+      await loadEquipment();
+    } catch (error) { alert(`Could not delete equipment: ${error.message}`); }
+  }
 
   async function loadInventory() {
     const list = document.getElementById("inventory-list");
@@ -2238,6 +2567,10 @@ ${errorText}`
       if (cats.some(c => c.name === oldFilter)) filter.value = oldFilter;
       const categorySelect = document.getElementById("category-existing");
       categorySelect.innerHTML = cats.map(c => `<option value="${Number(c.id)}">${escapeHtml(c.name)}</option>`).join("");
+      const ingredientCategory = document.getElementById("ingredient-category");
+      const selectedCategory = ingredientCategory.value;
+      ingredientCategory.innerHTML = '<option value="">Uncategorized</option>' + cats.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join("");
+      if (cats.some(c => c.name === selectedCategory)) ingredientCategory.value = selectedCategory;
       select.innerHTML = '<option value="">Select ingredient</option>';
       data.forEach(ingredient => { const o=document.createElement("option"); o.value=ingredient.id; o.textContent=`${ingredient.name} (${ingredient.unit})`; select.appendChild(o); });
       renderInventoryTable();
@@ -2262,11 +2595,64 @@ ${errorText}`
       if (low) lowCount++;
       const tr = document.createElement("tr");
       const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
-      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}</td><td><button type="button" class="refresh-orders-button" onclick="editIngredientCategory(${Number(ingredient.id)})">Edit</button></td>`;
+      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
       list.appendChild(tr);
     });
     const allLow = inventoryIngredients.filter(i => Number(i.current_stock || 0) <= Number(i.minimum_stock || 0)).length;
     summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
+  }
+
+  function resetIngredientForm() {
+    const form = document.getElementById("ingredient-form");
+    form.reset();
+    document.getElementById("ingredient-edit-id").value = "";
+    document.getElementById("ingredient-minimum").value = "0";
+    document.getElementById("ingredient-current-stock").value = "0";
+    document.getElementById("ingredient-form-title").textContent = "Add Ingredient";
+    document.getElementById("ingredient-save-button").textContent = "Add Ingredient";
+    document.getElementById("ingredient-form-message").textContent = "";
+  }
+
+  function editInventoryIngredient(ingredientId) {
+    const item = inventoryIngredients.find(i => Number(i.id) === Number(ingredientId));
+    if (!item) return;
+    document.getElementById("ingredient-edit-id").value = item.id;
+    document.getElementById("ingredient-name").value = item.name || "";
+    document.getElementById("ingredient-unit").value = item.unit || "g";
+    document.getElementById("ingredient-minimum").value = Number(item.minimum_stock || 0);
+    document.getElementById("ingredient-current-stock").value = Number(item.current_stock || 0);
+    document.getElementById("ingredient-category").value = item.category || "";
+    document.getElementById("ingredient-form-title").textContent = `Update Ingredient: ${item.name}`;
+    document.getElementById("ingredient-save-button").textContent = "Save Ingredient Changes";
+    document.getElementById("ingredient-form-message").textContent = "Editing existing ingredient. Changing current stock is a manual adjustment.";
+    document.getElementById("ingredient-form").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  async function saveInventoryIngredient(event) {
+    event.preventDefault();
+    const message = document.getElementById("ingredient-form-message");
+    const editId = document.getElementById("ingredient-edit-id").value;
+    const name = document.getElementById("ingredient-name").value.trim();
+    const unit = document.getElementById("ingredient-unit").value;
+    const minimum = Number(document.getElementById("ingredient-minimum").value);
+    const stock = Number(document.getElementById("ingredient-current-stock").value);
+    const category = document.getElementById("ingredient-category").value || null;
+    if (!name || !unit || !Number.isFinite(minimum) || minimum < 0 || !Number.isFinite(stock)) {
+      message.style.color = "#b00020"; message.textContent = "Enter a name, valid unit, non-negative minimum stock, and valid current stock."; return;
+    }
+    const button = document.getElementById("ingredient-save-button"); button.disabled = true;
+    message.style.color = "#555"; message.textContent = "Saving ingredient…";
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_inventory_ingredient`, {
+        method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json"},
+        body:JSON.stringify({p_ingredient_id:editId ? Number(editId) : null,p_name:name,p_unit:unit,p_minimum_stock:minimum,p_current_stock:stock,p_category:category})
+      });
+      const result = await response.json(); if (!response.ok) throw new Error(result?.message || result?.details || JSON.stringify(result));
+      message.style.color = "#18794e"; message.textContent = editId ? "Ingredient updated successfully." : "Ingredient added successfully.";
+      await loadInventory(); await loadMarginsAndRecipes();
+      if (!editId) resetIngredientForm();
+    } catch (error) { message.style.color = "#b00020"; message.textContent = `Could not save ingredient: ${error.message}. Run the updated SQL setup first.`; }
+    finally { button.disabled = false; }
   }
 
   async function assignIngredientCategory(ingredientId, categoryName) {
@@ -2488,9 +2874,22 @@ ${errorText}`
       let productsWithRecipe = 0;
       let productsWithCompleteCost = 0;
       const margins = [];
+      window.currentMarginExportRows = [];
       const money = value => `฿${Number(value || 0).toFixed(2)}`;
+      const groupedProducts = new Map();
 
       productsData.forEach(product => {
+        const category = String(product.category || product.product_category || product.menu_category || "Menu").trim() || "Menu";
+        if (!groupedProducts.has(category)) groupedProducts.set(category, []);
+        groupedProducts.get(category).push(product);
+      });
+
+      [...groupedProducts.entries()].forEach(([category, categoryProducts]) => {
+        const groupRow = document.createElement("tr");
+        groupRow.className = "margin-category-row";
+        groupRow.innerHTML = `<td colspan="6">${escapeHtml(category)} <span>· ${categoryProducts.length}</span></td>`;
+        tbody.appendChild(groupRow);
+        categoryProducts.forEach(product => {
         const productId = Number(product.id);
         const recipe = recipesByProduct.get(productId) || [];
         const price = Number(product.price ?? product.selling_price ?? 0);
@@ -2539,14 +2938,16 @@ ${errorText}`
           margins.push(margin);
         }
 
+        const productName = product.name || product.product_name || `Product #${product.id}`;
+        window.currentMarginExportRows.push({category, name:productName, cost:hasRecipe ? cost : null, price, profit:hasRecipe ? grossProfit : null, margin:hasRecipe && price > 0 ? margin : null, recipeStatus:hasRecipe ? (complete ? "Costed" : "Check costs") : "No recipe"});
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${escapeHtml(product.name || product.product_name || `Product #${product.id}`)}</td>
-          <td style="text-align:right">${money(price)}</td>
-          <td style="text-align:right">${hasRecipe ? money(cost) : "—"}</td>
-          <td style="text-align:right">${hasRecipe ? money(grossProfit) : "—"}</td>
-          <td style="text-align:right">${hasRecipe && price > 0 ? `${margin.toFixed(1)}%` : "—"}</td>
-          <td>${hasRecipe ? (complete ? '<span class="stock-ok">Costed</span>' : '<span class="stock-low">Check costs</span>') : '<span class="stock-low">No recipe</span>'}</td>
+          <td class="margin-item-name">${escapeHtml(productName)}</td>
+          <td class="margin-number">${hasRecipe ? money(cost) : "—"}</td>
+          <td class="margin-number margin-price">${money(price)}</td>
+          <td class="margin-number margin-profit">${hasRecipe ? money(grossProfit) : "—"}</td>
+          <td><div class="margin-bar-cell"><div class="margin-bar"><span style="width:${hasRecipe && price > 0 ? Math.max(0,Math.min(100,margin)) : 0}%"></span></div><strong>${hasRecipe && price > 0 ? `${margin.toFixed(1)}%` : "—"}</strong></div></td>
+          <td class="margin-row-actions"><button type="button" class="margin-edit-btn" title="Edit product and recipe" aria-label="Edit ${escapeHtml(productName)}" onclick="editMarginProduct(${Number(product.id)})">✎</button></td>
         `;
         tbody.appendChild(tr);
 
@@ -2576,6 +2977,7 @@ ${errorText}`
           `;
           breakdowns.appendChild(card);
         }
+        });
       });
 
       if (!productsData.length) {
@@ -2595,6 +2997,34 @@ ${errorText}`
     }
   }
 
+
+  function startNewMarginProduct() {
+    const select = document.getElementById("recipe-product");
+    if (!select) return;
+    select.value = "new";
+    select.dispatchEvent(new Event("change"));
+    document.getElementById("recipe-editor-form")?.scrollIntoView({behavior:"smooth", block:"start"});
+    document.getElementById("recipe-product-name")?.focus({preventScroll:true});
+  }
+
+  function editMarginProduct(productId) {
+    const select = document.getElementById("recipe-product");
+    if (!select) return;
+    select.value = String(productId);
+    select.dispatchEvent(new Event("change"));
+    document.getElementById("recipe-editor-form")?.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+
+  function exportMarginsCSV() {
+    const rows = window.currentMarginExportRows || [];
+    if (!rows.length) { alert("No margin data to export yet. Refresh the page first."); return; }
+    const quote = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const lines = [["Category","Item","Ingredient Cost (THB)","Selling Price (THB)","Gross Profit (THB)","Margin (%)","Recipe Status"], ...rows.map(r => [r.category,r.name,r.cost == null ? "" : r.cost.toFixed(2),r.price.toFixed(2),r.profit == null ? "" : r.profit.toFixed(2),r.margin == null ? "" : r.margin.toFixed(1),r.recipeStatus])];
+    const csv = "\uFEFF" + lines.map(row => row.map(quote).join(",")).join("\r\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "mansion-craft-menu-margins.csv"; a.click(); URL.revokeObjectURL(url);
+  }
 
   // Recipe editor: saves through a transactional Supabase RPC (SQL supplied separately).
   let recipeEditorProducts = [];
