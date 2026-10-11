@@ -580,7 +580,7 @@ html{background:var(--mc-bg)} body{background:var(--mc-bg)!important;color:var(-
 .brand h1{font-size:0!important;display:flex;justify-content:center;align-items:center;margin:auto;width:44px;height:44px;border-radius:13px;background:var(--mc-orange);color:#fff;}
 .brand h1:after{content:"☕";font-size:23px}.brand p,.sidebar-label{display:none!important}.sidebar nav{width:100%;display:flex;flex-direction:column;gap:7px;}
 .nav-button{position:relative;justify-content:center!important;width:58px!important;height:48px;padding:0!important;margin:0 auto!important;border:1px solid transparent!important;border-radius:13px!important;color:#394150!important;background:transparent!important;font-size:0!important;gap:0!important;}
-.nav-button span{display:none!important}.nav-button:first-letter{font-size:20px}.nav-button:hover{background:#f5f2ec!important;color:#111!important}.nav-button.active{background:#fff5e9!important;border-color:#f5b16e!important;color:var(--mc-orange)!important;box-shadow:none!important}.nav-button.active:before{content:"";position:absolute;left:-1px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--mc-orange);}
+.nav-button .nav-label{display:none!important}.nav-button .nav-icon{display:inline-flex!important;align-items:center;justify-content:center;font-size:21px!important;line-height:1;width:24px;height:24px;flex:0 0 24px;color:inherit;font-weight:500}.nav-button:hover{background:#f5f2ec!important;color:#111!important}.nav-button.active{background:#fff5e9!important;border-color:#f5b16e!important;color:var(--mc-orange)!important;box-shadow:none!important}.nav-button.active:before{content:"";position:absolute;left:-1px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--mc-orange);}
 .app-content{min-width:0;background:var(--mc-bg)}.app-header{background:var(--mc-bg)!important;border-bottom:1px solid var(--mc-line)!important;padding:25px 34px!important}.app-header h2{font-size:29px!important;letter-spacing:-.045em;font-weight:750}.app-header p{font-size:14px!important;color:var(--mc-muted)!important}.page-content{max-width:1600px!important;padding:26px 34px 42px!important}
 .section,.inventory-panel,.stat-card{background:var(--mc-card)!important;border:1px solid var(--mc-line)!important;border-radius:13px!important;box-shadow:none!important}.section{padding:24px!important}.inventory-panel{padding:20px!important;min-width:0}.orders-header{align-items:flex-start;padding-bottom:18px;border-bottom:1px solid var(--mc-line);margin-bottom:20px}.orders-header h2,.inventory-panel h3{letter-spacing:-.035em;font-weight:700}.orders-header p,.placeholder-note{color:var(--mc-muted)!important;line-height:1.55}
 label{font-size:10px!important;text-transform:uppercase;letter-spacing:.1em;font-weight:650!important;color:#555!important;margin-top:16px!important;margin-bottom:7px!important}
@@ -636,11 +636,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     </div>
     <div class="sidebar-label">WORKSPACE</div>
     <nav aria-label="Main navigation">
-      <button class="nav-button active" data-page="dashboard-page" onclick="showPage('dashboard-page','Dashboard','Overview of your cafe')">▦ <span>Dashboard</span></button>
-      <button class="nav-button" data-page="orders-page" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')">▣ <span>Orders</span></button>
-      <button class="nav-button" data-page="inventory-page" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')">▤ <span>Inventory</span></button>
-      <button class="nav-button" data-page="margins-page" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')">◫ <span>Margins &amp; Recipes</span></button>
-      <button class="nav-button" data-page="purchases-page" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')">↻ <span>Purchases</span></button>
+      <button class="nav-button active" data-page="dashboard-page" aria-label="Dashboard" title="Dashboard" onclick="showPage('dashboard-page','Dashboard','Overview of your cafe')"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-label">Dashboard</span></button>
+      <button class="nav-button" data-page="orders-page" aria-label="Orders" title="Orders" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')"><span class="nav-icon" aria-hidden="true">▣</span><span class="nav-label">Orders</span></button>
+      <button class="nav-button" data-page="inventory-page" aria-label="Inventory" title="Inventory" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')"><span class="nav-icon" aria-hidden="true">▤</span><span class="nav-label">Inventory</span></button>
+      <button class="nav-button" data-page="margins-page" aria-label="Margins & Recipes" title="Margins & Recipes" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')"><span class="nav-icon" aria-hidden="true">↗</span><span class="nav-label">Margins &amp; Recipes</span></button>
+      <button class="nav-button" data-page="purchases-page" aria-label="Purchases" title="Purchases" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')"><span class="nav-icon" aria-hidden="true">↻</span><span class="nav-label">Purchases</span></button>
     </nav>
   </aside>
 
@@ -727,8 +727,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div class="inventory-split" style="margin-top:18px">
             <div class="inventory-panel">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0">Stock Levels</h3><button type="button" class="refresh-orders-button" onclick="loadInventory()">Refresh</button></div>
-              <label for="inventory-category-filter">Category</label>
-              <select id="inventory-category-filter" onchange="renderInventoryTable()"><option value="">All categories</option></select>
+              <div class="inventory-toolbar" style="display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(150px,1fr) minmax(150px,1fr) auto;gap:10px;align-items:end;margin-top:14px">
+                <div><label for="inventory-search">Search ingredients</label><input id="inventory-search" type="search" placeholder="Search by name…" oninput="renderInventoryTable()"></div>
+                <div><label for="inventory-category-filter">Category</label><select id="inventory-category-filter" onchange="renderInventoryTable()"><option value="">All categories</option></select></div>
+                <div><label for="inventory-status-filter">Stock status</label><select id="inventory-status-filter" onchange="renderInventoryTable()"><option value="">All stock levels</option><option value="low">Low stock</option><option value="ok">In stock</option></select></div>
+                <button type="button" class="refresh-orders-button" onclick="exportInventoryCSV()">↓ Export CSV</button>
+              </div>
               <div style="overflow-x:auto;margin-top:12px">
                 <table class="inventory-table" style="width:100%;border-collapse:collapse">
                   <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
@@ -2586,7 +2590,16 @@ ${errorText}`
     const summary = document.getElementById("inventory-summary");
     if (!list) return;
     const filter = document.getElementById("inventory-category-filter")?.value || "";
-    const rows = inventoryIngredients.filter(i => !filter || (i.category || "Uncategorized") === filter);
+    const statusFilter = document.getElementById("inventory-status-filter")?.value || "";
+    const query = (document.getElementById("inventory-search")?.value || "").trim().toLowerCase();
+    const rows = inventoryIngredients.filter(i => {
+      const stock = Number(i.current_stock || 0), minimum = Number(i.minimum_stock || 0);
+      const low = stock <= minimum;
+      const matchesCategory = !filter || (i.category || "Uncategorized") === filter;
+      const matchesStatus = !statusFilter || (statusFilter === "low" ? low : !low);
+      const matchesQuery = !query || String(i.name || "").toLowerCase().includes(query);
+      return matchesCategory && matchesStatus && matchesQuery;
+    });
     list.innerHTML = "";
     let lowCount = 0;
     if (!rows.length) list.innerHTML = '<tr><td colspan="6">No ingredients in this category.</td></tr>';
@@ -2600,6 +2613,24 @@ ${errorText}`
     });
     const allLow = inventoryIngredients.filter(i => Number(i.current_stock || 0) <= Number(i.minimum_stock || 0)).length;
     summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
+  }
+
+  function exportInventoryCSV() {
+    const headers = ["id", "ingredient", "category", "unit", "current_stock", "minimum_stock", "status", "cost_per_unit"];
+    const filtered = (() => {
+      const category = document.getElementById("inventory-category-filter")?.value || "";
+      const status = document.getElementById("inventory-status-filter")?.value || "";
+      const query = (document.getElementById("inventory-search")?.value || "").trim().toLowerCase();
+      return inventoryIngredients.filter(i => {
+        const low = Number(i.current_stock || 0) <= Number(i.minimum_stock || 0);
+        return (!category || (i.category || "Uncategorized") === category) && (!status || (status === "low" ? low : !low)) && (!query || String(i.name || "").toLowerCase().includes(query));
+      });
+    })();
+    const cell = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const lines = [headers.map(cell).join(","), ...filtered.map(i => [i.id, i.name, i.category || "Uncategorized", i.unit, i.current_stock, i.minimum_stock, Number(i.current_stock || 0) <= Number(i.minimum_stock || 0) ? "Low stock" : "In stock", i.cost_per_unit].map(cell).join(","))];
+    const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "mansion-craft-inventory.csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
   function resetIngredientForm() {
