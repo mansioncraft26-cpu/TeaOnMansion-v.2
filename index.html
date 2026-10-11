@@ -587,7 +587,7 @@ label{font-size:10px!important;text-transform:uppercase;letter-spacing:.1em;font
 input,select,textarea{box-sizing:border-box;min-height:42px;border:1px solid var(--mc-line)!important;border-radius:12px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.035)!important;color:#242424!important;padding:10px 12px!important;font-size:14px!important}
 input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outline-offset:1px;border-color:#e8a15b!important}button{font:inherit;cursor:pointer;border-radius:11px!important;min-height:40px;transition:background .15s,border-color .15s,transform .15s}button:active{transform:translateY(1px)}
 .checkout-button,.refresh-orders-button{padding:10px 15px!important;min-height:42px!important;font-size:13px!important;font-weight:600!important}.checkout-button{background:#303030!important;color:#fff!important;border:1px solid #303030!important}.checkout-button:hover{background:#111!important}.refresh-orders-button{background:#fff!important;color:#222!important;border:1px solid var(--mc-line)!important}.refresh-orders-button:hover{background:#f3f0e9!important}
-.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px!important;margin:20px 0!important}.stat-card{padding:18px!important}.stat-card .stat-label,.stat-label{font-size:10px!important;letter-spacing:.1em;text-transform:uppercase;color:#626262}.stat-card .stat-value{font-size:27px!important;letter-spacing:-.04em;margin-top:9px!important;font-weight:750}
+.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px!important;margin:20px 0!important}.dashboard-financial-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.stat-card{padding:18px!important}.stat-card .stat-label,.stat-label{font-size:10px!important;letter-spacing:.1em;text-transform:uppercase;color:#626262}.stat-card .stat-value{font-size:27px!important;letter-spacing:-.04em;margin-top:9px!important;font-weight:750}
 /* Inventory: forms on the left, stock table on the right, as in the reference */
 .inventory-split{display:grid!important;grid-template-columns:minmax(310px,.92fr) minmax(0,1.28fr)!important;gap:22px!important;align-items:start!important}
 .inventory-split>.inventory-panel{order:2!important}.inventory-split>div:not(.inventory-panel){order:1!important}
@@ -677,9 +677,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 
     <div class="page-content">
       <section class="page active" id="dashboard-page">
-        <div class="stat-grid">
+        <div class="placeholder-note" style="margin-bottom:10px">Today's performance · Revenue and profit are calculated from today's orders. Profit is estimated from saved recipes and current ingredient costs.</div>
+        <div class="stat-grid dashboard-financial-grid">
+          <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value" id="dashboard-revenue">฿0.00</div></div>
+          <div class="stat-card"><div class="stat-label">Net to Cafe</div><div class="stat-value" id="dashboard-net">฿0.00</div></div>
+          <div class="stat-card"><div class="stat-label">Profit (After Cost)</div><div class="stat-value" id="dashboard-profit">฿0.00</div></div>
+          <div class="stat-card"><div class="stat-label">Platform Fees</div><div class="stat-value" id="dashboard-fees">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Today's Orders</div><div class="stat-value" id="dashboard-order-count">Loading…</div></div>
-          <div class="stat-card"><div class="stat-label">Today's Sales</div><div class="stat-value" id="dashboard-sales">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Database</div><div class="stat-value" style="font-size:18px" id="dashboard-db-status">Connecting…</div></div>
         </div>
         <div class="page-grid">
@@ -729,6 +733,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <textarea id="customer-address" class="notes" rows="3" placeholder="Delivery address"></textarea>
           <label>Delivery App Order Number</label>
           <input type="text" id="platform-order-number" placeholder="Optional for Direct orders">
+          <label>Platform Fee (฿)</label>
+          <input type="number" id="platform-fee-input" min="0" step="0.01" value="0" placeholder="0.00">
+          <p class="placeholder-note">Enter the fee charged by Grab or LINE MAN for this order. Direct orders can stay at 0.</p>
           <label>Payment Method</label>
           <select id="payment-method"><option value="cash">Cash</option><option value="promptpay">PromptPay / Bank transfer</option><option value="grab_payment">Grab payment</option><option value="lineman_payment">LINE MAN payment</option></select>
           <h3 style="margin-top:25px">Current Order</h3>
@@ -1300,7 +1307,7 @@ ${errorText}`
 
     todaySales.textContent =
       `฿${totalSales.toFixed(2)}`;
-    loadDashboardStats();
+    loadDashboardStats(orders);
 
 
     // ----------------------------------------
@@ -2292,7 +2299,7 @@ async function checkout() {
           p_status: "new",
           p_subtotal: subtotal,
           p_delivery_fee: 0,
-          p_platform_fee: 0,
+          p_platform_fee: Math.max(0, Number(document.getElementById("platform-fee-input")?.value || 0)),
           p_total: subtotal,
           p_notes: notes || null,
           p_customer_name: customerName || null,
@@ -2945,14 +2952,74 @@ ${errorText}`
     }
   }
 
-  async function loadDashboardStats() {
+  async function loadDashboardStats(ordersArg) {
     const count = document.getElementById("dashboard-order-count");
-    const sales = document.getElementById("dashboard-sales");
-    if (!count || !sales) return;
-    const sourceCount = document.getElementById("today-order-count");
-    const sourceSales = document.getElementById("today-sales");
-    count.textContent = sourceCount?.textContent || "0 orders";
-    sales.textContent = sourceSales?.textContent || "฿0.00";
+    const revenueEl = document.getElementById("dashboard-revenue");
+    const netEl = document.getElementById("dashboard-net");
+    const profitEl = document.getElementById("dashboard-profit");
+    const feesEl = document.getElementById("dashboard-fees");
+    if (!count || !revenueEl || !netEl || !profitEl || !feesEl) return;
+    const money = value => `฿${Number(value || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    try {
+      let orders = ordersArg;
+      if (!Array.isArray(orders)) {
+        const now = new Date();
+        const thailandDate = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit",day:"2-digit"}).format(now);
+        const start = new Date(`${thailandDate}T00:00:00+07:00`);
+        const end = new Date(start.getTime() + 86400000);
+        const orderResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&created_at=gte.${encodeURIComponent(start.toISOString())}&created_at=lt.${encodeURIComponent(end.toISOString())}&order=created_at.desc`, {headers: authHeaders()});
+        const orderData = await orderResponse.json();
+        if (!orderResponse.ok) throw new Error(orderData?.message || JSON.stringify(orderData));
+        orders = orderData;
+      }
+      // Cancelled/refunded orders are not treated as revenue.
+      const revenueOrders = orders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
+      const revenue = revenueOrders.reduce((sum, o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
+      const fees = revenueOrders.reduce((sum, o) => sum + Number(o.platform_fee || 0), 0);
+      const net = revenue - fees;
+      count.textContent = `${orders.length} ${orders.length === 1 ? "order" : "orders"}`;
+      revenueEl.textContent = money(revenue);
+      feesEl.textContent = money(fees);
+      netEl.textContent = money(net);
+      profitEl.textContent = "Calculating…";
+      if (!revenueOrders.length) { profitEl.textContent = money(0); return; }
+
+      const ids = revenueOrders.map(o => Number(o.id)).filter(Number.isFinite);
+      if (!ids.length) { profitEl.textContent = "—"; return; }
+      const headers = authHeaders();
+      const [itemsResponse, recipesResponse, ingredientsResponse] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_id,quantity&order_id=in.(${ids.join(",")})`, {headers}),
+        fetch(`${SUPABASE_URL}/rest/v1/recipes?select=product_id,ingredient_id,quantity`, {headers}),
+        fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,cost_per_unit,is_active`, {headers})
+      ]);
+      const [items, recipes, ingredients] = await Promise.all([itemsResponse.json(), recipesResponse.json(), ingredientsResponse.json()]);
+      if (!itemsResponse.ok) throw new Error(items?.message || JSON.stringify(items));
+      if (!recipesResponse.ok) throw new Error(recipes?.message || JSON.stringify(recipes));
+      if (!ingredientsResponse.ok) throw new Error(ingredients?.message || JSON.stringify(ingredients));
+      const ingredientCosts = new Map(ingredients.filter(i => i.is_active !== false).map(i => [Number(i.id), Number(i.cost_per_unit || 0)]));
+      const recipesByProduct = new Map();
+      recipes.forEach(r => { const key = Number(r.product_id); if (!recipesByProduct.has(key)) recipesByProduct.set(key, []); recipesByProduct.get(key).push(r); });
+      let ingredientCostTotal = 0;
+      let missingRecipe = false;
+      items.forEach(item => {
+        const recipe = recipesByProduct.get(Number(item.product_id)) || [];
+        if (!recipe.length) { missingRecipe = true; return; }
+        const qty = Number(item.quantity || 0);
+        recipe.forEach(r => {
+          const iid = Number(r.ingredient_id);
+          if (!ingredientCosts.has(iid)) { missingRecipe = true; return; }
+          ingredientCostTotal += Number(r.quantity || 0) * ingredientCosts.get(iid) * qty;
+        });
+      });
+      profitEl.textContent = money(net - ingredientCostTotal) + (missingRecipe ? "*" : "");
+      profitEl.title = missingRecipe ? "Estimated profit: some sold products do not have complete recipes/current ingredient costs, so the actual profit may be lower." : "Estimated profit after platform fees and recipe-based ingredient cost; excludes packaging, labor, rent, and other overhead.";
+    } catch (error) {
+      console.error("Dashboard metrics error:", error);
+      revenueEl.textContent = "—";
+      netEl.textContent = "—";
+      profitEl.textContent = "—";
+      feesEl.textContent = "—";
+    }
   }
 
   function showPage(pageId, title, subtitle) {
