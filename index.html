@@ -625,9 +625,33 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 .equipment-summary-value{font-size:27px;font-weight:750;letter-spacing:-.04em;margin:7px 0}.equipment-status{display:inline-block;padding:4px 8px;border:1px solid #e6e1d8;font-size:11px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .equipment-status.in-use{background:#f5f4ef}.equipment-status.retired{background:#eee9e5;color:#776a60}.equipment-table th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}.equipment-table td,.equipment-table th{padding:14px 12px;border-bottom:1px solid #e9e5de}
 @media(max-width:950px){.equipment-summary-grid{grid-template-columns:1fr;gap:12px}.equipment-summary-card,.equipment-summary-card:first-child{padding:10px 0;border-right:0;border-bottom:1px solid #e8e4dd}.equipment-summary-card:last-child{border-bottom:0}.equipment-toolbar{justify-content:flex-start}}
+
+/* Supabase Auth gate */
+.auth-overlay{position:fixed;inset:0;z-index:20000;background:rgba(28,25,22,.72);display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:100%;max-width:410px;background:#fff;border-radius:18px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.22);color:#24211e}
+.auth-card h2{margin:0 0 8px;font-size:25px}.auth-card p{color:#706960;line-height:1.5;margin:0 0 20px}
+.auth-card label{display:block;font-size:13px;font-weight:650;margin:14px 0 6px}.auth-card input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #d8d2c9;border-radius:10px;font:inherit}
+.auth-card button{width:100%;padding:12px;border:0;border-radius:10px;background:#27231f;color:#fff;font-weight:700;margin-top:16px;cursor:pointer}
+.auth-message{font-size:13px;min-height:18px;margin-top:12px;color:#a12622;overflow-wrap:anywhere}.auth-user{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:#706960}.auth-user button{border:1px solid #ddd5cb;background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer}
+.app-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
 </style></head>
 
 <body>
+
+<div id="auth-overlay" class="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <form id="auth-form" class="auth-card">
+    <h2 id="auth-title">Mansion.craft</h2>
+    <p>Sign in with your authorized cafe account to access POS and inventory.</p>
+    <label for="auth-email">Email</label>
+    <input id="auth-email" type="email" autocomplete="username" required placeholder="owner@example.com">
+    <label for="auth-password">Password</label>
+    <input id="auth-password" type="password" autocomplete="current-password" required placeholder="Your password">
+    <button id="auth-submit" type="submit">Sign in</button>
+    <div id="auth-message" class="auth-message" role="status" aria-live="polite"></div>
+  </form>
+</div>
+
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
@@ -648,6 +672,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     <header class="app-header">
       <h2 id="page-title">Dashboard</h2>
       <p id="page-subtitle">Overview of your cafe</p>
+      <div class="auth-user" id="auth-user" style="display:none"><span id="auth-user-email"></span><button type="button" onclick="signOutPOS()">Sign out</button></div>
     </header>
 
     <div class="page-content">
@@ -873,6 +898,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 
   // ==========================================
@@ -884,6 +910,97 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 
   const SUPABASE_ANON_KEY =
     "sb_publishable_zce6mjM12T42swLTYNRR1w_FAkGah40";
+
+
+  // Supabase Auth: all API calls use the signed-in user's access token.
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+  let authSession = null;
+  let appStarted = false;
+
+  function getAccessToken() {
+    if (!authSession || !authSession.access_token) {
+      throw new Error("Please sign in before using Mansion.craft POS.");
+    }
+    return authSession.access_token;
+  }
+
+  function authHeaders(extra = {}) {
+    return { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}`, ...extra };
+  }
+
+  function showAuthOverlay(show) {
+    const overlay = document.getElementById("auth-overlay");
+    if (overlay) overlay.style.display = show ? "flex" : "none";
+    const userBox = document.getElementById("auth-user");
+    const email = document.getElementById("auth-user-email");
+    if (userBox) userBox.style.display = !show && authSession ? "flex" : "none";
+    if (email) email.textContent = authSession?.user?.email || "";
+  }
+
+  async function startPOSAfterLogin() {
+    if (appStarted) return;
+    appStarted = true;
+    document.getElementById("purchase-date").value = new Date().toLocaleDateString("en-CA");
+    await Promise.allSettled([
+      loadProducts(), loadTodayOrders(), loadInventory(), loadPurchaseHistory(),
+      initializeRecipeEditor()
+    ]);
+  }
+
+  async function signOutPOS() {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) console.error("Sign out failed:", error.message);
+    authSession = null;
+    appStarted = false;
+    showAuthOverlay(true);
+    document.getElementById("auth-message").textContent = "Signed out.";
+  }
+
+  document.getElementById("auth-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = document.getElementById("auth-submit");
+    const message = document.getElementById("auth-message");
+    button.disabled = true;
+    button.textContent = "Signing in…";
+    message.textContent = "";
+    try {
+      const email = document.getElementById("auth-email").value.trim();
+      const password = document.getElementById("auth-password").value;
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      authSession = data.session;
+      showAuthOverlay(false);
+      message.textContent = "";
+      await startPOSAfterLogin();
+    } catch (error) {
+      message.textContent = error.message || "Sign in failed.";
+    } finally {
+      button.disabled = false;
+      button.textContent = "Sign in";
+    }
+  });
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    authSession = session;
+    if (session) {
+      showAuthOverlay(false);
+      // Avoid running database calls inside the auth callback; start once after login.
+      if (!appStarted) setTimeout(() => startPOSAfterLogin(), 0);
+    } else {
+      appStarted = false;
+      showAuthOverlay(true);
+    }
+  });
+
+  (async function restorePOSSession() {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) console.error("Could not restore session:", error.message);
+    authSession = data?.session || null;
+    showAuthOverlay(!authSession);
+    if (authSession) await startPOSAfterLogin();
+  })();
 
 
   // ==========================================
@@ -922,7 +1039,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
             "apikey": SUPABASE_ANON_KEY,
 
             "Authorization":
-              `Bearer ${SUPABASE_ANON_KEY}`
+              `Bearer ${getAccessToken()}`
           }
         }
       );
@@ -1035,7 +1152,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
         method: "POST",
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -1137,7 +1254,7 @@ async function loadTodayOrders() {
               SUPABASE_ANON_KEY,
 
             "Authorization":
-              `Bearer ${SUPABASE_ANON_KEY}`
+              `Bearer ${getAccessToken()}`
           }
         }
       );
@@ -1352,7 +1469,7 @@ row.onclick = () => {
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${getAccessToken()}`
         }
       }
     );
@@ -1383,7 +1500,7 @@ row.onclick = () => {
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${getAccessToken()}`
         }
       }
     );
@@ -1527,7 +1644,7 @@ async function openProductModal(product) {
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${getAccessToken()}`
         }
       }
     );
@@ -1559,7 +1676,7 @@ async function openProductModal(product) {
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${getAccessToken()}`
         }
       }
     );
@@ -1579,7 +1696,7 @@ async function openProductModal(product) {
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${getAccessToken()}`
         }
       }
     );
@@ -2164,7 +2281,7 @@ async function checkout() {
 
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json"
         },
 
@@ -2272,7 +2389,7 @@ ${errorText}`
               SUPABASE_ANON_KEY,
 
             "Authorization":
-              `Bearer ${SUPABASE_ANON_KEY}`,
+              `Bearer ${getAccessToken()}`,
 
             "Content-Type":
               "application/json",
@@ -2315,7 +2432,7 @@ ${errorText}`
               SUPABASE_ANON_KEY,
 
             "Authorization":
-              `Bearer ${SUPABASE_ANON_KEY}`,
+              `Bearer ${getAccessToken()}`,
 
             "Content-Type":
               "application/json"
@@ -2402,7 +2519,7 @@ ${errorText}`
     list.innerHTML = '<tr><td colspan="6">Loading equipment...</td></tr>';
     message.textContent = "";
     try {
-      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
       const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?select=*&order=name.asc`, { headers });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.message || "Could not load equipment. Run the equipment SQL setup first.");
@@ -2417,7 +2534,7 @@ ${errorText}`
   }
 
   async function loadEquipmentCategories() {
-    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
     const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?select=id,name&order=name.asc`, { headers });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.message || "Could not load equipment categories. Run the latest equipment SQL setup.");
@@ -2436,7 +2553,7 @@ ${errorText}`
     const action = prompt("Equipment categories\nType ADD to create a category or RENAME to change one:", "ADD");
     if (!action) return;
     const normalized = action.trim().toUpperCase();
-    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type":"application/json", Prefer:"return=representation" };
+    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}`, "Content-Type":"application/json", Prefer:"return=representation" };
     try {
       if (normalized === "ADD") {
         const name = prompt("New category name:");
@@ -2526,7 +2643,7 @@ ${errorText}`
     const payload = { name: document.getElementById("equipment-name").value.trim(), category: document.getElementById("equipment-category").value, quantity: Number(document.getElementById("equipment-quantity").value), unit_price: Number(document.getElementById("equipment-price").value || 0), status: document.getElementById("equipment-status").value, condition: document.getElementById("equipment-condition").value, location: document.getElementById("equipment-location").value.trim() || null, notes: document.getElementById("equipment-notes").value.trim() || null };
     const message = document.getElementById("equipment-form-message");
     try {
-      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type":"application/json", Prefer:"return=representation" };
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}`, "Content-Type":"application/json", Prefer:"return=representation" };
       const url = `${SUPABASE_URL}/rest/v1/equipment_items${id ? `?id=eq.${encodeURIComponent(id)}` : ""}`;
       const response = await fetch(url, { method:id ? "PATCH" : "POST", headers, body:JSON.stringify(payload) });
       const result = await response.json();
@@ -2541,7 +2658,7 @@ ${errorText}`
     const item = equipmentItems.find(x => Number(x.id) === Number(id));
     if (!item || !confirm(`Delete equipment “${item.name}”?`)) return;
     try {
-      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
       const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?id=eq.${encodeURIComponent(id)}`, { method:"DELETE", headers });
       if (!response.ok) { const err = await response.json(); throw new Error(err?.message || "Delete failed"); }
       await loadEquipment();
@@ -2556,7 +2673,7 @@ ${errorText}`
     summary.textContent = "Loading inventory...";
     select.innerHTML = '<option value="">Loading ingredients...</option>';
     try {
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` };
+      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}` };
       const [ir, cr] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=*&is_active=eq.true&order=name.asc`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/ingredient_categories?select=id,name&order=name.asc`, { headers })
@@ -2675,7 +2792,7 @@ ${errorText}`
     message.style.color = "#555"; message.textContent = "Saving ingredient…";
     try {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_inventory_ingredient`, {
-        method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json"},
+        method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${getAccessToken()}`,"Content-Type":"application/json"},
         body:JSON.stringify({p_ingredient_id:editId ? Number(editId) : null,p_name:name,p_unit:unit,p_minimum_stock:minimum,p_current_stock:stock,p_category:category})
       });
       const result = await response.json(); if (!response.ok) throw new Error(result?.message || result?.details || JSON.stringify(result));
@@ -2688,7 +2805,7 @@ ${errorText}`
 
   async function assignIngredientCategory(ingredientId, categoryName) {
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_ingredient_category`, { method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({p_ingredient_id:ingredientId,p_category_name:categoryName || null}) });
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_ingredient_category`, { method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${getAccessToken()}`,"Content-Type":"application/json"}, body:JSON.stringify({p_ingredient_id:ingredientId,p_category_name:categoryName || null}) });
       const result = await response.json(); if (!response.ok) throw new Error(result?.message || JSON.stringify(result));
       const item = inventoryIngredients.find(i => Number(i.id) === ingredientId); if (item) item.category = categoryName || null;
       renderInventoryTable();
@@ -2717,7 +2834,7 @@ ${errorText}`
     const categoryId = action === "rename" ? Number(document.getElementById("category-existing").value) : null;
     if (!name) { message.textContent = "Enter a category name."; return; }
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_ingredient_category`, { method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({p_action:action,p_category_id:categoryId,p_name:name}) });
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_ingredient_category`, { method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${getAccessToken()}`,"Content-Type":"application/json"}, body:JSON.stringify({p_action:action,p_category_id:categoryId,p_name:name}) });
       const result = await response.json(); if (!response.ok) throw new Error(result?.message || JSON.stringify(result));
       message.style.color = "#18794e"; message.textContent = action === "add" ? "Category added." : "Category renamed; assigned ingredients were updated.";
       document.getElementById("category-name").value = ""; await loadInventory();
@@ -2761,7 +2878,7 @@ ${errorText}`
         method: "POST",
         headers: {
           "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${getAccessToken()}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -2801,7 +2918,7 @@ ${errorText}`
     try {
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/purchases?select=*,ingredients(name,unit)&order=purchase_date.desc,created_at.desc&limit=100`,
-        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}` } }
       );
       const data = await response.json();
       if (!response.ok) throw new Error(data?.message || JSON.stringify(data));
@@ -2874,7 +2991,7 @@ ${errorText}`
     try {
       const headers = {
         "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        "Authorization": `Bearer ${getAccessToken()}`
       };
 
       const [productsResponse, recipesResponse, ingredientsResponse] = await Promise.all([
@@ -3062,7 +3179,7 @@ ${errorText}`
   let recipeEditorIngredients = [];
 
   async function initializeRecipeEditor() {
-    const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` };
+    const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}` };
     const [pr, ir, rr] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=id.asc`, { headers }),
       fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,name,unit,cost_per_unit,is_active&is_active=eq.true&order=name.asc`, { headers }),
@@ -3118,7 +3235,7 @@ ${errorText}`
     }
     button.disabled = true; message.textContent = "Saving product and recipe…"; message.style.color = "#555";
     try {
-      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" };
+      const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}`, "Content-Type": "application/json" };
       const saveProductRecipe = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_product_and_recipe`, { method: "POST", headers, body: JSON.stringify({ p_product_id: productId, p_name: name, p_price: price, p_recipe: recipe }) });
       const saveResult = await saveProductRecipe.json();
       if (!saveProductRecipe.ok) throw new Error(saveResult?.message || saveResult?.details || JSON.stringify(saveResult));
@@ -3138,12 +3255,7 @@ ${errorText}`
   // START APP
   // ==========================================
 
-  document.getElementById("purchase-date").value = new Date().toLocaleDateString("en-CA");
-  loadProducts();
-  loadTodayOrders();
-  loadInventory();
-  loadPurchaseHistory();
-  initializeRecipeEditor().catch(error => { const m = document.getElementById("recipe-editor-message"); if (m) m.textContent = error.message; });
+  // Startup is controlled by Supabase Auth after a valid session is restored or created.
 
 </script>
   
