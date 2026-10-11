@@ -735,21 +735,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           </div>
           <div id="today-orders-list"><div class="empty-cart">Loading orders...</div></div>
         </div>
-        <section class="section" id="order-log-section" style="margin-top:22px">
-          <div class="orders-header">
-            <div><h2>Order Log</h2><p>Search past orders, review order totals, and open any order to see its items.</p></div>
-            <button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">
-            <label>Search order / customer / app no.<input id="order-log-search" type="search" placeholder="Order number or customer" oninput="renderOrderLog()"></label>
-            <label>From date<input id="order-log-from" type="date" onchange="loadOrderLog()"></label>
-            <label>To date<input id="order-log-to" type="date" onchange="loadOrderLog()"></label>
-            <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
-          </div>
-          <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
-          <p class="placeholder-note" style="margin-top:10px">The log loads the latest 1,000 orders available to your account. Use the date filters to narrow the results.</p>
-        </section>
         <section class="section" id="new-order-section" style="margin-top:22px">
           <h2>New Order</h2>
           <label>Order Source</label>
@@ -772,6 +757,21 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div id="success" role="status" style="display:none; margin:10px 0; color:#18794e;"></div>
           <button class="checkout-button" id="checkout-button" onclick="checkout()" disabled>Create Order</button>
           <button class="clear-button" onclick="clearCart()">Clear Order</button>
+        </section>
+        <section class="section" id="order-log-section" style="margin-top:22px">
+          <div class="orders-header">
+            <div><h2>Order Log</h2><p>Search past orders, review order totals, and open any order to see its items.</p></div>
+            <button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">
+            <label>Search order / customer / app no.<input id="order-log-search" type="search" placeholder="Order number or customer" oninput="renderOrderLog()"></label>
+            <label>From date<input id="order-log-from" type="date" onchange="loadOrderLog()"></label>
+            <label>To date<input id="order-log-to" type="date" onchange="loadOrderLog()"></label>
+            <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
+          </div>
+          <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
+          <p class="placeholder-note" style="margin-top:10px">The log loads the latest 1,000 orders available to your account. Use the date filters to narrow the results.</p>
         </section>
       </section>
 
