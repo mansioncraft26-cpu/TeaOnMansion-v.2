@@ -1421,7 +1421,9 @@ ${errorText}`
 
 row.style.cursor = "pointer";
 
-row.onclick = () => {
+// Open details only when the user clicks the row itself, not an interactive control.
+row.onclick = (event) => {
+  if (event.target.closest("select, button, input, a, textarea, label")) return;
   showOrderDetails(order.id);
 };
 
@@ -1470,6 +1472,8 @@ row.onclick = () => {
   <select
     class="order-status-select"
     data-current-status="${status}"
+    onclick="event.stopPropagation()"
+    onmousedown="event.stopPropagation()"
     onchange="event.stopPropagation(); updateOrderStatus(${order.id}, this.value, this.dataset.currentStatus || '${status}')"
   >
     <option value="new" ${status === "new" ? "selected" : ""}>
