@@ -587,7 +587,7 @@ label{font-size:10px!important;text-transform:uppercase;letter-spacing:.1em;font
 input,select,textarea{box-sizing:border-box;min-height:42px;border:1px solid var(--mc-line)!important;border-radius:12px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.035)!important;color:#242424!important;padding:10px 12px!important;font-size:14px!important}
 input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outline-offset:1px;border-color:#e8a15b!important}button{font:inherit;cursor:pointer;border-radius:11px!important;min-height:40px;transition:background .15s,border-color .15s,transform .15s}button:active{transform:translateY(1px)}
 .checkout-button,.refresh-orders-button{padding:10px 15px!important;min-height:42px!important;font-size:13px!important;font-weight:600!important}.checkout-button{background:#303030!important;color:#fff!important;border:1px solid #303030!important}.checkout-button:hover{background:#111!important}.refresh-orders-button{background:#fff!important;color:#222!important;border:1px solid var(--mc-line)!important}.refresh-orders-button:hover{background:#f3f0e9!important}
-.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px!important;margin:20px 0!important}.dashboard-financial-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.stat-card{padding:18px!important}.stat-card .stat-label,.stat-label{font-size:10px!important;letter-spacing:.1em;text-transform:uppercase;color:#626262}.stat-card .stat-value{font-size:27px!important;letter-spacing:-.04em;margin-top:9px!important;font-weight:750}
+.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px!important;margin:20px 0!important}.dashboard-financial-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.stat-card{padding:18px!important}.stat-card .stat-label,.stat-label{font-size:10px!important;letter-spacing:.1em;text-transform:uppercase;color:#626262}.stat-card .stat-value{font-size:27px!important;letter-spacing:-.04em;margin-top:9px!important;font-weight:750}
 /* Inventory: forms on the left, stock table on the right, as in the reference */
 .inventory-split{display:grid!important;grid-template-columns:minmax(310px,.92fr) minmax(0,1.28fr)!important;gap:22px!important;align-items:start!important}
 .inventory-split>.inventory-panel{order:2!important}.inventory-split>div:not(.inventory-panel){order:1!important}
@@ -683,8 +683,20 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div class="stat-card"><div class="stat-label">Net to Cafe</div><div class="stat-value" id="dashboard-net">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Profit (After Cost)</div><div class="stat-value" id="dashboard-profit">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Platform Fees</div><div class="stat-value" id="dashboard-fees">฿0.00</div></div>
-          <div class="stat-card"><div class="stat-label">Today's Orders</div><div class="stat-value" id="dashboard-order-count">Loading…</div></div>
+          <div class="stat-card"><div class="stat-label">Total Orders Today</div><div class="stat-value" id="dashboard-order-count">Loading…</div></div>
+          <div class="stat-card"><div class="stat-label">Cups Sold Today</div><div class="stat-value" id="dashboard-cup-count">Loading…</div></div>
           <div class="stat-card"><div class="stat-label">Database</div><div class="stat-value" style="font-size:18px" id="dashboard-db-status">Connecting…</div></div>
+        </div>
+        <div class="page-grid" style="margin-top:22px">
+          <div class="section">
+            <div class="orders-header"><div><h2>Top Selling Items</h2><p id="top-selling-subtitle">Units sold this year · excludes cancelled/refunded orders</p></div><button class="refresh-orders-button" onclick="loadSalesAnalytics()">Refresh</button></div>
+            <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:360px"><thead><tr><th style="text-align:left;padding:10px 8px">Item</th><th style="text-align:right;padding:10px 8px">Cups Sold</th><th style="text-align:right;padding:10px 8px">Gross Sales</th></tr></thead><tbody id="top-selling-body"><tr><td colspan="3" style="padding:12px 8px">Loading sales data…</td></tr></tbody></table></div>
+          </div>
+          <div class="section">
+            <div class="orders-header"><div><h2>Monthly Report</h2><p>Monthly order and revenue summary</p></div><label style="min-width:100px;margin:0">Year <select id="monthly-report-year" onchange="loadSalesAnalytics()" style="margin-top:4px"></select></label></div>
+            <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:590px"><thead><tr><th style="text-align:left;padding:10px 8px">Month</th><th style="text-align:right;padding:10px 8px">Orders</th><th style="text-align:right;padding:10px 8px">Gross Revenue</th><th style="text-align:right;padding:10px 8px">Fees &amp; VAT</th><th style="text-align:right;padding:10px 8px">Net Revenue</th></tr></thead><tbody id="monthly-report-body"><tr><td colspan="5" style="padding:12px 8px">Loading monthly report…</td></tr></tbody><tfoot id="monthly-report-foot"></tfoot></table></div>
+            <p class="placeholder-note" style="margin-top:10px">Fees &amp; VAT includes the platform fee and any VAT/tax amount saved on the order. If VAT is not stored in your orders table, this column will show platform fees only.</p>
+          </div>
         </div>
         <div class="page-grid">
           <div class="section">
@@ -723,6 +735,21 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           </div>
           <div id="today-orders-list"><div class="empty-cart">Loading orders...</div></div>
         </div>
+        <section class="section" id="order-log-section" style="margin-top:22px">
+          <div class="orders-header">
+            <div><h2>Order Log</h2><p>Search past orders, review order totals, and open any order to see its items.</p></div>
+            <button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">
+            <label>Search order / customer / app no.<input id="order-log-search" type="search" placeholder="Order number or customer" oninput="renderOrderLog()"></label>
+            <label>From date<input id="order-log-from" type="date" onchange="loadOrderLog()"></label>
+            <label>To date<input id="order-log-to" type="date" onchange="loadOrderLog()"></label>
+            <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
+          </div>
+          <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
+          <p class="placeholder-note" style="margin-top:10px">The log loads the latest 1,000 orders available to your account. Use the date filters to narrow the results.</p>
+        </section>
         <section class="section" id="new-order-section" style="margin-top:22px">
           <h2>New Order</h2>
           <label>Order Source</label>
@@ -953,7 +980,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     document.getElementById("purchase-date").value = new Date().toLocaleDateString("en-CA");
     await Promise.allSettled([
       loadProducts(), loadTodayOrders(), loadInventory(), loadPurchaseHistory(),
-      initializeRecipeEditor()
+      initializeRecipeEditor(), loadSalesAnalytics()
     ]);
   }
 
@@ -1191,6 +1218,55 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 }
   
   // ==========================================
+// ORDER LOG: historical orders with search and filters
+let orderLogData = [];
+async function loadOrderLog() {
+  const body = document.getElementById("order-log-body");
+  const summary = document.getElementById("order-log-summary");
+  if (!body || !summary) return;
+  body.innerHTML = '<tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr>';
+  summary.textContent = "Loading order log…";
+  try {
+    const params = new URLSearchParams({select:"*", order:"created_at.desc", limit:"1000"});
+    const from = document.getElementById("order-log-from")?.value;
+    const to = document.getElementById("order-log-to")?.value;
+    if (from) params.set("created_at", `gte.${new Date(`${from}T00:00:00+07:00`).toISOString()}`);
+    if (to) params.append("created_at", `lt.${new Date(new Date(`${to}T00:00:00+07:00`).getTime()+86400000).toISOString()}`);
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders?${params.toString()}`, {headers:authHeaders()});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.message || data?.details || JSON.stringify(data));
+    orderLogData = Array.isArray(data) ? data : [];
+    renderOrderLog();
+  } catch (error) {
+    console.error("Order log error:", error);
+    body.innerHTML = `<tr><td colspan="7" style="padding:14px 8px;color:#b00020">Could not load order log: ${escapeHtml(error.message)}</td></tr>`;
+    summary.textContent = "Order log failed to load";
+  }
+}
+function renderOrderLog() {
+  const body = document.getElementById("order-log-body");
+  const summary = document.getElementById("order-log-summary");
+  if (!body || !summary) return;
+  const search = (document.getElementById("order-log-search")?.value || "").trim().toLowerCase();
+  const statusFilter = document.getElementById("order-log-status")?.value || "";
+  const money = n => `฿${Number(n || 0).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const safe = v => escapeHtml(String(v ?? ""));
+  const filtered = orderLogData.filter(o => {
+    const status = String(o.status || "new").toLowerCase();
+    const searchable = [o.order_number,o.customer_name,o.platform_order_number,o.order_source,o.source,o.order_type,o.id].map(v => String(v ?? "").toLowerCase()).join(" ");
+    return (!statusFilter || status === statusFilter) && (!search || searchable.includes(search));
+  });
+  const total = filtered.reduce((sum,o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
+  summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Total ฿${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  if (!filtered.length) { body.innerHTML = '<tr><td colspan="7" style="padding:14px 8px">No orders match these filters.</td></tr>'; return; }
+  body.innerHTML = filtered.map(o => {
+    const date = o.created_at ? new Date(o.created_at).toLocaleString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
+    const status = String(o.status || "new").toLowerCase();
+    const source = o.order_source || o.source || o.order_type || "—";
+    return `<tr style="border-top:1px solid var(--line)"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px">${safe(o.order_number || `#${o.id}`)}<div style="font-size:11px;color:var(--muted)">ID ${safe(o.id)}</div></td><td style="padding:10px 8px">${safe(o.customer_name || "—")}</td><td style="padding:10px 8px">${safe(source)}</td><td style="padding:10px 8px">${safe(status.replaceAll("_"," "))}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(o.total ?? o.subtotal)}</td><td style="padding:10px 8px"><button class="refresh-orders-button" onclick="showOrderDetails(${Number(o.id)})">View</button></td></tr>`;
+  }).join("");
+}
+
 // LOAD TODAY'S ORDERS
 // ==========================================
 
@@ -2954,11 +3030,12 @@ ${errorText}`
 
   async function loadDashboardStats(ordersArg) {
     const count = document.getElementById("dashboard-order-count");
+    const cupCount = document.getElementById("dashboard-cup-count");
     const revenueEl = document.getElementById("dashboard-revenue");
     const netEl = document.getElementById("dashboard-net");
     const profitEl = document.getElementById("dashboard-profit");
     const feesEl = document.getElementById("dashboard-fees");
-    if (!count || !revenueEl || !netEl || !profitEl || !feesEl) return;
+    if (!count || !cupCount || !revenueEl || !netEl || !profitEl || !feesEl) return;
     const money = value => `฿${Number(value || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
     try {
       let orders = ordersArg;
@@ -2978,11 +3055,12 @@ ${errorText}`
       const fees = revenueOrders.reduce((sum, o) => sum + Number(o.platform_fee || 0), 0);
       const net = revenue - fees;
       count.textContent = `${orders.length} ${orders.length === 1 ? "order" : "orders"}`;
+      cupCount.textContent = "Calculating…";
       revenueEl.textContent = money(revenue);
       feesEl.textContent = money(fees);
       netEl.textContent = money(net);
       profitEl.textContent = "Calculating…";
-      if (!revenueOrders.length) { profitEl.textContent = money(0); return; }
+      if (!revenueOrders.length) { cupCount.textContent = "0 cups"; profitEl.textContent = money(0); return; }
 
       const ids = revenueOrders.map(o => Number(o.id)).filter(Number.isFinite);
       if (!ids.length) { profitEl.textContent = "—"; return; }
@@ -2996,6 +3074,8 @@ ${errorText}`
       if (!itemsResponse.ok) throw new Error(items?.message || JSON.stringify(items));
       if (!recipesResponse.ok) throw new Error(recipes?.message || JSON.stringify(recipes));
       if (!ingredientsResponse.ok) throw new Error(ingredients?.message || JSON.stringify(ingredients));
+      const cupsSold = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+      cupCount.textContent = `${cupsSold.toLocaleString("en-US", {maximumFractionDigits: 2})} ${cupsSold === 1 ? "cup" : "cups"}`;
       const ingredientCosts = new Map(ingredients.filter(i => i.is_active !== false).map(i => [Number(i.id), Number(i.cost_per_unit || 0)]));
       const recipesByProduct = new Map();
       recipes.forEach(r => { const key = Number(r.product_id); if (!recipesByProduct.has(key)) recipesByProduct.set(key, []); recipesByProduct.get(key).push(r); });
@@ -3022,6 +3102,79 @@ ${errorText}`
     }
   }
 
+  async function loadSalesAnalytics() {
+    const topBody = document.getElementById("top-selling-body");
+    const reportBody = document.getElementById("monthly-report-body");
+    const reportFoot = document.getElementById("monthly-report-foot");
+    const yearSelect = document.getElementById("monthly-report-year");
+    if (!topBody || !reportBody || !reportFoot || !yearSelect) return;
+    const money = value => `฿${Number(value || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    const escape = value => typeof escapeHtml === "function" ? escapeHtml(String(value ?? "")) : String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    try {
+      const currentYear = Number(new Intl.DateTimeFormat("en-US", {timeZone:"Asia/Bangkok",year:"numeric"}).format(new Date()));
+      if (!yearSelect.options.length) {
+        for (let y = currentYear; y >= currentYear - 4; y--) yearSelect.add(new Option(String(y), String(y)));
+        yearSelect.value = String(currentYear);
+      }
+      const year = Number(yearSelect.value) || currentYear;
+      const topSubtitle = document.getElementById("top-selling-subtitle");
+      if (topSubtitle) topSubtitle.textContent = `Units sold in ${year} · excludes cancelled/refunded orders`;
+      const start = new Date(`${year}-01-01T00:00:00+07:00`);
+      const end = new Date(`${year + 1}-01-01T00:00:00+07:00`);
+      topBody.innerHTML = '<tr><td colspan="3" style="padding:12px 8px">Loading…</td></tr>';
+      reportBody.innerHTML = '<tr><td colspan="5" style="padding:12px 8px">Loading…</td></tr>';
+      const headers = authHeaders();
+      const ordersResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&created_at=gte.${encodeURIComponent(start.toISOString())}&created_at=lt.${encodeURIComponent(end.toISOString())}&order=created_at.desc&limit=5000`, {headers});
+      const ordersData = await ordersResponse.json();
+      if (!ordersResponse.ok) throw new Error(ordersData?.message || JSON.stringify(ordersData));
+      const orders = Array.isArray(ordersData) ? ordersData : [];
+      const validOrders = orders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
+      const ids = validOrders.map(o => Number(o.id)).filter(Number.isFinite);
+      let items = [];
+      if (ids.length) {
+        for (let i = 0; i < ids.length; i += 150) {
+          const batch = ids.slice(i, i + 150);
+          const itemResponse = await fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_id,product_name,quantity,unit_price,subtotal&order_id=in.(${batch.join(",")})&limit=10000`, {headers});
+          const itemData = await itemResponse.json();
+          if (!itemResponse.ok) throw new Error(itemData?.message || JSON.stringify(itemData));
+          items = items.concat(Array.isArray(itemData) ? itemData : []);
+        }
+      }
+      const revenueOf = o => Number(o.total ?? o.subtotal ?? 0);
+      const feeOf = o => Number(o.platform_fee ?? 0) + Number(o.vat_amount ?? o.vat ?? o.tax_amount ?? o.tax ?? 0);
+      const monthTotals = Array.from({length:12}, (_, index) => ({month:index, orders:0, gross:0, fees:0}));
+      validOrders.forEach(o => {
+        const date = new Date(o.created_at);
+        const month = Number(new Intl.DateTimeFormat("en-US", {timeZone:"Asia/Bangkok",month:"numeric"}).format(date)) - 1;
+        if (month < 0 || month > 11) return;
+        monthTotals[month].orders += 1;
+        monthTotals[month].gross += revenueOf(o);
+        monthTotals[month].fees += feeOf(o);
+      });
+      const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      reportBody.innerHTML = monthTotals.map(m => `<tr style="border-top:1px solid #e8e8e8"><td style="padding:10px 8px">${monthNames[m.month]}</td><td style="padding:10px 8px;text-align:right">${m.orders.toLocaleString("en-US")}</td><td style="padding:10px 8px;text-align:right">${money(m.gross)}</td><td style="padding:10px 8px;text-align:right">${money(m.fees)}</td><td style="padding:10px 8px;text-align:right">${money(m.gross-m.fees)}</td></tr>`).join("");
+      const totals = monthTotals.reduce((a,m) => ({orders:a.orders+m.orders,gross:a.gross+m.gross,fees:a.fees+m.fees}), {orders:0,gross:0,fees:0});
+      reportFoot.innerHTML = `<tr style="border-top:2px solid #b9b9b9;font-weight:700"><td style="padding:12px 8px">TOTAL</td><td style="padding:12px 8px;text-align:right">${totals.orders.toLocaleString("en-US")}</td><td style="padding:12px 8px;text-align:right">${money(totals.gross)}</td><td style="padding:12px 8px;text-align:right">${money(totals.fees)}</td><td style="padding:12px 8px;text-align:right">${money(totals.gross-totals.fees)}</td></tr>`;
+      const productTotals = new Map();
+      const validIds = new Set(validOrders.map(o => String(o.id)));
+      items.filter(item => validIds.has(String(item.order_id))).forEach(item => {
+        const key = String(item.product_id ?? item.product_name ?? "unknown");
+        const name = item.product_name || `Product #${item.product_id ?? "?"}`;
+        const existing = productTotals.get(key) || {name, cups:0, gross:0};
+        existing.cups += Number(item.quantity || 0);
+        existing.gross += Number(item.subtotal ?? (Number(item.unit_price || 0) * Number(item.quantity || 0)));
+        productTotals.set(key, existing);
+      });
+      const top = [...productTotals.values()].sort((a,b) => b.cups-a.cups || b.gross-a.gross).slice(0,10);
+      topBody.innerHTML = top.length ? top.map((item,index) => `<tr style="border-top:1px solid #e8e8e8"><td style="padding:10px 8px">${index+1}. ${escape(item.name)}</td><td style="padding:10px 8px;text-align:right">${item.cups.toLocaleString("en-US", {maximumFractionDigits:2})}</td><td style="padding:10px 8px;text-align:right">${money(item.gross)}</td></tr>`).join("") : '<tr><td colspan="3" style="padding:12px 8px">No sales recorded this year yet.</td></tr>';
+    } catch (error) {
+      console.error("Sales analytics error:", error);
+      topBody.innerHTML = `<tr><td colspan="3" style="padding:12px 8px;color:#b00020">Could not load top-selling items: ${escape(error.message)}</td></tr>`;
+      reportBody.innerHTML = `<tr><td colspan="5" style="padding:12px 8px;color:#b00020">Could not load monthly report: ${escape(error.message)}</td></tr>`;
+      reportFoot.innerHTML = "";
+    }
+  }
+
   function showPage(pageId, title, subtitle) {
     document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
     document.getElementById(pageId)?.classList.add("active");
@@ -3033,7 +3186,8 @@ ${errorText}`
     if (pageId === "inventory-page") loadInventory();
     if (pageId === "purchases-page") loadPurchaseHistory();
     if (pageId === "margins-page") loadMarginsAndRecipes();
-    if (pageId === "dashboard-page") loadDashboardStats();
+    if (pageId === "dashboard-page") { loadDashboardStats(); loadSalesAnalytics(); }
+    if (pageId === "orders-page") loadOrderLog();
   }
 
   document.getElementById("purchase-quantity").addEventListener("input", updatePurchaseTotal);
