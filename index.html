@@ -876,6 +876,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               </div>
             </div>
           </section>
+          <section class="inventory-panel" id="stock-movement-section" style="margin-top:20px">
+            <div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">Restocks from Purchase History and estimated ingredient usage from recorded orders.</p></div><button type="button" class="refresh-orders-button" onclick="loadStockMovements()">↻ Refresh movements</button></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
+              <label>From date<input id="movement-from" type="date" onchange="loadStockMovements()"></label>
+              <label>To date<input id="movement-to" type="date" onchange="loadStockMovements()"></label>
+              <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="Restock">Restock</option><option value="Sale usage">Sale usage</option></select></label>
+            </div>
+            <div id="stock-movement-summary" class="orders-summary" style="margin-bottom:12px">Loading stock movements…</div>
+            <div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="6">Loading stock movements…</td></tr></tbody></table></div>
+            <p class="placeholder-note" style="margin-top:10px">Sale usage is estimated from order items and saved recipes; cancelled/refunded orders are excluded. Manual stock corrections are not recorded as movements unless separately logged.</p>
+          </section>
         </section>
       </section>
 
@@ -904,17 +915,21 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               </table>
             </div>
           </div>
-          <div id="recipe-breakdowns" style="margin-top:24px"></div>
-          <hr style="margin:28px 0;border:0;border-top:1px solid #eee">
+          <div style="margin-top:24px">
           <div class="orders-header"><div><div class="stat-label">PRODUCT SETUP</div><h2>Recipe Editor</h2><p>Select a drink, set its selling price, and define the ingredients used per cup.</p></div></div>
           <form id="recipe-editor-form" onsubmit="saveRecipeEditor(event)">
             <label for="recipe-product">Product</label><select id="recipe-product" required><option value="">Loading products…</option></select><p class="placeholder-note">Choose an existing product to edit it, or choose “+ New product” to create a product and its recipe.</p>
             <label for="recipe-product-name">Product name</label><input id="recipe-product-name" type="text" required placeholder="e.g. Matcha Latte">
             <label for="recipe-product-price">Selling price (฿)</label><input id="recipe-product-price" type="number" min="0.01" step="0.01" required>
+            <label for="recipe-product-category">Menu category</label><select id="recipe-product-category" required><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha & Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option></select>
+            <p class="placeholder-note">Choose the menu category used to group this item in Menu Margin Table.</p>
             <div id="recipe-editor-lines"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button type="button" class="refresh-orders-button" onclick="addRecipeEditorLine()">+ Add ingredient</button><button type="submit" class="checkout-button" id="recipe-save-button">Save product & recipe</button></div>
             <div id="recipe-editor-message" style="margin-top:12px"></div>
           </form>
+          </div>
+          <div id="recipe-breakdowns" style="margin-top:24px"></div>
+
         </div>
       </section>
 
@@ -979,7 +994,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     appStarted = true;
     document.getElementById("purchase-date").value = new Date().toLocaleDateString("en-CA");
     await Promise.allSettled([
-      loadProducts(), loadTodayOrders(), loadInventory(), loadPurchaseHistory(),
+      loadProducts(), loadTodayOrders(), loadInventory(), loadStockMovements(), loadPurchaseHistory(),
       initializeRecipeEditor(), loadSalesAnalytics()
     ]);
   }
@@ -1179,44 +1194,28 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     }
   }
 
-  async function updateOrderStatus(orderId, newStatus) {
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/rpc/update_order_status`,
-      {
+  async function updateOrderStatus(orderId, newStatus, previousStatus = "") {
+    const selector = [...document.querySelectorAll('.order-status-select')].find(el => el.getAttribute('onchange')?.includes(`updateOrderStatus(${orderId},`));
+    if (selector) selector.disabled = true;
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_order_status`, {
         method: "POST",
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${getAccessToken()}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          p_order_id: orderId,
-          p_status: newStatus
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data?.message ||
-        data?.error_description ||
-        JSON.stringify(data)
-      );
-    }
-
-    console.log("Order status updated:", data);
-
-    await loadTodayOrders();
-
-  } catch (error) {
-    console.error("Update order status error:", error);
-    alert("Could not update order status: " + error.message);
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_order_id: orderId, p_status: newStatus })
+      });
+      const raw = await response.text();
+      let data; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      if (!response.ok) throw new Error(data?.message || data?.details || data?.hint || data?.error_description || (typeof data === 'string' ? data : JSON.stringify(data)) || `HTTP ${response.status}`);
+      await Promise.all([loadTodayOrders(), loadOrderLog()]);
+      console.log("Order status updated:", data);
+    } catch (error) {
+      console.error("Update order status error:", error);
+      alert(`Could not update order #${orderId}: ${error.message}\n\nIf this says “Not authorized”, verify your owner role in public.pos_user_roles. If it says function not found, check the update_order_status RPC deployment.`);
+      if (selector && previousStatus) selector.value = previousStatus;
+      if (selector) selector.dataset.currentStatus = selector.value;
+    } finally { if (selector) selector.disabled = false; }
   }
-}
-  
+
   // ==========================================
 // ORDER LOG: historical orders with search and filters
 let orderLogData = [];
@@ -1470,7 +1469,8 @@ row.onclick = () => {
 
   <select
     class="order-status-select"
-    onchange="event.stopPropagation(); updateOrderStatus(${order.id}, this.value)"
+    data-current-status="${status}"
+    onchange="event.stopPropagation(); updateOrderStatus(${order.id}, this.value, this.dataset.currentStatus || '${status}')"
   >
     <option value="new" ${status === "new" ? "selected" : ""}>
       New
@@ -2749,6 +2749,44 @@ ${errorText}`
     } catch (error) { alert(`Could not delete equipment: ${error.message}`); }
   }
 
+  let stockMovementRows = [];
+  async function loadStockMovements() {
+    const body = document.getElementById("stock-movement-body");
+    const summary = document.getElementById("stock-movement-summary");
+    if (!body || !summary) return;
+    body.innerHTML = '<tr><td colspan="6">Loading stock movements…</td></tr>'; summary.textContent = "Loading stock movements…";
+    try {
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
+      const [purchasesRes, ordersRes, itemsRes, recipesRes, ingredientsRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/purchases?select=id,ingredient_id,quantity,purchase_date,created_at,supplier,notes&order=created_at.desc&limit=1000`, {headers}),
+        fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,order_number,created_at,status,stock_deducted&order=created_at.desc&limit=1000`, {headers}),
+        fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_id,quantity&limit=5000`, {headers}),
+        fetch(`${SUPABASE_URL}/rest/v1/recipes?select=product_id,ingredient_id,quantity`, {headers}),
+        fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,name,unit`, {headers})
+      ]);
+      const responses = await Promise.all([purchasesRes,ordersRes,itemsRes,recipesRes,ingredientsRes]);
+      const payloads = await Promise.all(responses.map(async r => ({ok:r.ok,status:r.status,data:await r.json()})));
+      const failed = payloads.find(x=>!x.ok); if (failed) throw new Error(failed.data?.message || `Stock movement request failed (HTTP ${failed.status})`);
+      const [purchases,orders,orderItems,recipes,ingredients] = payloads.map(x=>x.data);
+      const ingredientMap = new Map(ingredients.map(i=>[Number(i.id),i]));
+      const orderMap = new Map(orders.map(o=>[Number(o.id),o]));
+      const recipeMap = new Map(); recipes.forEach(r=>{const key=Number(r.product_id); if(!recipeMap.has(key)) recipeMap.set(key,[]); recipeMap.get(key).push(r);});
+      const rows = purchases.map(p=>({date:p.created_at || p.purchase_date,ingredientId:Number(p.ingredient_id),type:"Restock",quantity:Number(p.quantity||0),reference:`Purchase #${p.id}`,notes:[p.supplier,p.notes].filter(Boolean).join(" · ") || "Ingredient purchase"}));
+      orderItems.forEach(item=>{const order=orderMap.get(Number(item.order_id)); if(!order || ["cancelled","refunded"].includes(String(order.status||"").toLowerCase())) return; const recipeLines=recipeMap.get(Number(item.product_id))||[]; recipeLines.forEach(line=>{rows.push({date:order.created_at,ingredientId:Number(line.ingredient_id),type:"Sale usage",quantity:-1*Number(line.quantity||0)*Number(item.quantity||0),reference:`Order ${order.order_number || `#${order.id}`}`,notes:`Estimated recipe usage · ${Number(item.quantity||0)} cup(s)`});});});
+      stockMovementRows = rows.map(r=>({...r,ingredient:ingredientMap.get(r.ingredientId)})).filter(r=>r.ingredient).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+      renderStockMovements();
+    } catch(error) { body.innerHTML=`<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`; summary.textContent="Could not load stock movements."; console.error("Stock movement load error:",error); }
+  }
+  function renderStockMovements() {
+    const body=document.getElementById("stock-movement-body"), summary=document.getElementById("stock-movement-summary"); if(!body||!summary)return;
+    const from=document.getElementById("movement-from")?.value || "", to=document.getElementById("movement-to")?.value || "", type=document.getElementById("movement-type")?.value || "";
+    const rows=stockMovementRows.filter(r=>{const d=String(r.date||"").slice(0,10);return (!from||d>=from)&&(!to||d<=to)&&(!type||r.type===type);});
+    const restocks=rows.filter(r=>r.type==="Restock").length, usages=rows.filter(r=>r.type==="Sale usage").length;
+    summary.innerHTML=`<span>${rows.length.toLocaleString()} movements</span><span>${restocks} restocks</span><span>${usages} sale-usage lines</span>`;
+    if(!rows.length){body.innerHTML='<tr><td colspan="6">No stock movements for these filters.</td></tr>';return;}
+    body.innerHTML=rows.slice(0,1000).map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.type)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}</td></tr>`).join("");
+  }
+
   async function loadInventory() {
     const list = document.getElementById("inventory-list");
     const summary = document.getElementById("inventory-summary");
@@ -3183,7 +3221,7 @@ ${errorText}`
     });
     document.getElementById("page-title").textContent = title;
     document.getElementById("page-subtitle").textContent = subtitle;
-    if (pageId === "inventory-page") loadInventory();
+    if (pageId === "inventory-page") { loadInventory(); loadStockMovements(); }
     if (pageId === "purchases-page") loadPurchaseHistory();
     if (pageId === "margins-page") loadMarginsAndRecipes();
     if (pageId === "dashboard-page") { loadDashboardStats(); loadSalesAnalytics(); }
@@ -3412,17 +3450,22 @@ ${errorText}`
     if (!pr.ok || !ir.ok || !rr.ok) throw new Error("Could not load product, ingredient, or recipe data. Check Supabase SELECT policies.");
     const select = document.getElementById("recipe-product");
     select.innerHTML = '<option value="">Select product…</option><option value="new">+ New product</option>' + recipeEditorProducts.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || p.product_name || `Product #${p.id}`)}</option>`).join("");
+    const categorySelect = document.getElementById("recipe-product-category");
+    const knownCategories = [...new Set(["Coffee", "Matcha & Tea", "Non-coffee", "Other", ...recipeEditorProducts.map(p => p.category).filter(Boolean)])];
+    categorySelect.innerHTML = '<option value="">Select category…</option>' + knownCategories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
     select.onchange = () => {
       const linesWrap = document.getElementById("recipe-editor-lines"); linesWrap.innerHTML = "";
       if (select.value === "new") {
         document.getElementById("recipe-product-name").value = "";
         document.getElementById("recipe-product-price").value = "";
+        categorySelect.value = "";
         addRecipeEditorLine(); return;
       }
       const product = recipeEditorProducts.find(p => Number(p.id) === Number(select.value));
       if (!product) return;
       document.getElementById("recipe-product-name").value = product.name || product.product_name || "";
       document.getElementById("recipe-product-price").value = Number(product.price ?? product.selling_price ?? 0);
+      categorySelect.value = product.category || "";
       const lines = recipes.filter(r => Number(r.product_id) === Number(product.id));
       if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity)); else addRecipeEditorLine();
     };
@@ -3448,17 +3491,18 @@ ${errorText}`
     const productId = selectedProduct === "new" ? null : Number(selectedProduct);
     const name = document.getElementById("recipe-product-name").value.trim();
     const price = Number(document.getElementById("recipe-product-price").value);
+    const category = document.getElementById("recipe-product-category").value;
     const rows = [...document.querySelectorAll(".recipe-editor-row")];
     const recipe = rows.map(row => ({ ingredient_id: Number(row.querySelector(".recipe-line-ingredient").value), quantity: Number(row.querySelector(".recipe-line-quantity").value) }));
-    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
+    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || !category || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
       message.style.color = "#b00020";
-      message.textContent = "Select a product, enter a valid name and price, and add unique ingredients with positive quantities.";
+      message.textContent = "Select a product and menu category, enter a valid name and price, and add unique ingredients with positive quantities.";
       return;
     }
     button.disabled = true; message.textContent = "Saving product and recipe…"; message.style.color = "#555";
     try {
       const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}`, "Content-Type": "application/json" };
-      const saveProductRecipe = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_product_and_recipe`, { method: "POST", headers, body: JSON.stringify({ p_product_id: productId, p_name: name, p_price: price, p_recipe: recipe }) });
+      const saveProductRecipe = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_product_and_recipe`, { method: "POST", headers, body: JSON.stringify({ p_product_id: productId, p_name: name, p_price: price, p_recipe: recipe, p_category: category }) });
       const saveResult = await saveProductRecipe.json();
       if (!saveProductRecipe.ok) throw new Error(saveResult?.message || saveResult?.details || JSON.stringify(saveResult));
       const savedProductId = Number(saveResult?.product_id ?? productId);
