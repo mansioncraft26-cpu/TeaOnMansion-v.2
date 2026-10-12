@@ -795,7 +795,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               </div>
               <div style="overflow-x:auto;margin-top:12px">
                 <table class="inventory-table" style="width:100%;border-collapse:collapse">
-                  <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
+                  <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:right">Maximum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
                   <tbody id="inventory-list"><tr><td colspan="6">Loading ingredients...</td></tr></tbody>
                 </table>
               </div>
@@ -810,6 +810,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
                     <div class="full-width"><label for="ingredient-name">Ingredient name</label><input id="ingredient-name" required maxlength="120" placeholder="e.g. Matcha Powder"></div>
                     <div><label for="ingredient-unit">Unit</label><select id="ingredient-unit" required><option value="g">g (grams)</option><option value="ml">ml (millilitres)</option><option value="pcs">pcs (pieces)</option><option value="unit">unit</option></select></div>
                     <div><label for="ingredient-minimum">Minimum stock</label><input id="ingredient-minimum" type="number" min="0" step="any" value="0" required></div>
+                    <div><label for="ingredient-maximum">Maximum stock</label><input id="ingredient-maximum" type="number" min="0.000001" step="any" value="1" required><p class="placeholder-note">Low stock alert triggers below 20% of this amount.</p></div>
                     <div><label for="ingredient-current-stock">Current stock</label><input id="ingredient-current-stock" type="number" step="any" value="0" required><p class="placeholder-note">Use only for initial stock or a manual stock correction.</p></div>
                     <div><label for="ingredient-category">Category</label><select id="ingredient-category"><option value="">Uncategorized</option></select></div>
                   </div>
@@ -2874,6 +2875,12 @@ ${errorText}`
     }
   }
 
+  function inventoryIsLow(ingredient) {
+    const stock = Number(ingredient.current_stock || 0);
+    const maximum = Number(ingredient.max_stock || 0);
+    return maximum > 0 && (stock / maximum) < 0.20;
+  }
+
   function renderInventoryTable() {
     const list = document.getElementById("inventory-list");
     const summary = document.getElementById("inventory-summary");
@@ -2882,41 +2889,38 @@ ${errorText}`
     const statusFilter = document.getElementById("inventory-status-filter")?.value || "";
     const query = (document.getElementById("inventory-search")?.value || "").trim().toLowerCase();
     const rows = inventoryIngredients.filter(i => {
-      const stock = Number(i.current_stock || 0), minimum = Number(i.minimum_stock || 0);
-      const low = stock <= minimum;
+      const low = inventoryIsLow(i);
       const matchesCategory = !filter || (i.category || "Uncategorized") === filter;
       const matchesStatus = !statusFilter || (statusFilter === "low" ? low : !low);
       const matchesQuery = !query || String(i.name || "").toLowerCase().includes(query);
       return matchesCategory && matchesStatus && matchesQuery;
     });
     list.innerHTML = "";
-    let lowCount = 0;
-    if (!rows.length) list.innerHTML = '<tr><td colspan="6">No ingredients in this category.</td></tr>';
+    if (!rows.length) list.innerHTML = '<tr><td colspan="7">No ingredients in this category.</td></tr>';
     rows.forEach(ingredient => {
-      const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), low = stock <= minimum;
-      if (low) lowCount++;
+      const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
       const tr = document.createElement("tr");
       const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
-      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
+      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${maximum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
       list.appendChild(tr);
     });
-    const allLow = inventoryIngredients.filter(i => Number(i.current_stock || 0) <= Number(i.minimum_stock || 0)).length;
+    const allLow = inventoryIngredients.filter(inventoryIsLow).length;
     summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
   }
 
   function exportInventoryCSV() {
-    const headers = ["id", "ingredient", "category", "unit", "current_stock", "minimum_stock", "status", "cost_per_unit"];
+    const headers = ["id", "ingredient", "category", "unit", "current_stock", "minimum_stock", "max_stock", "status", "cost_per_unit"];
     const filtered = (() => {
       const category = document.getElementById("inventory-category-filter")?.value || "";
       const status = document.getElementById("inventory-status-filter")?.value || "";
       const query = (document.getElementById("inventory-search")?.value || "").trim().toLowerCase();
       return inventoryIngredients.filter(i => {
-        const low = Number(i.current_stock || 0) <= Number(i.minimum_stock || 0);
+        const low = inventoryIsLow(i);
         return (!category || (i.category || "Uncategorized") === category) && (!status || (status === "low" ? low : !low)) && (!query || String(i.name || "").toLowerCase().includes(query));
       });
     })();
     const cell = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
-    const lines = [headers.map(cell).join(","), ...filtered.map(i => [i.id, i.name, i.category || "Uncategorized", i.unit, i.current_stock, i.minimum_stock, Number(i.current_stock || 0) <= Number(i.minimum_stock || 0) ? "Low stock" : "In stock", i.cost_per_unit].map(cell).join(","))];
+    const lines = [headers.map(cell).join(","), ...filtered.map(i => [i.id, i.name, i.category || "Uncategorized", i.unit, i.current_stock, i.minimum_stock, i.max_stock, inventoryIsLow(i) ? "Low stock" : "In stock", i.cost_per_unit].map(cell).join(","))];
     const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "mansion-craft-inventory.csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
@@ -2927,6 +2931,7 @@ ${errorText}`
     form.reset();
     document.getElementById("ingredient-edit-id").value = "";
     document.getElementById("ingredient-minimum").value = "0";
+    document.getElementById("ingredient-maximum").value = "1";
     document.getElementById("ingredient-current-stock").value = "0";
     document.getElementById("ingredient-form-title").textContent = "Add Ingredient";
     document.getElementById("ingredient-save-button").textContent = "Add Ingredient";
@@ -2940,6 +2945,7 @@ ${errorText}`
     document.getElementById("ingredient-name").value = item.name || "";
     document.getElementById("ingredient-unit").value = item.unit || "g";
     document.getElementById("ingredient-minimum").value = Number(item.minimum_stock || 0);
+    document.getElementById("ingredient-maximum").value = Number(item.max_stock || Math.max(Number(item.current_stock || 0), 1));
     document.getElementById("ingredient-current-stock").value = Number(item.current_stock || 0);
     document.getElementById("ingredient-category").value = item.category || "";
     document.getElementById("ingredient-form-title").textContent = `Update Ingredient: ${item.name}`;
@@ -2955,10 +2961,11 @@ ${errorText}`
     const name = document.getElementById("ingredient-name").value.trim();
     const unit = document.getElementById("ingredient-unit").value;
     const minimum = Number(document.getElementById("ingredient-minimum").value);
+    const maximum = Number(document.getElementById("ingredient-maximum").value);
     const stock = Number(document.getElementById("ingredient-current-stock").value);
     const category = document.getElementById("ingredient-category").value || null;
-    if (!name || !unit || !Number.isFinite(minimum) || minimum < 0 || !Number.isFinite(stock)) {
-      message.style.color = "#b00020"; message.textContent = "Enter a name, valid unit, non-negative minimum stock, and valid current stock."; return;
+    if (!name || !unit || !Number.isFinite(minimum) || minimum < 0 || !Number.isFinite(maximum) || maximum <= 0 || !Number.isFinite(stock)) {
+      message.style.color = "#b00020"; message.textContent = "Enter a name, valid unit, non-negative minimum stock, positive maximum stock, and valid current stock."; return;
     }
     const button = document.getElementById("ingredient-save-button"); button.disabled = true;
     message.style.color = "#555"; message.textContent = "Saving ingredient…";
@@ -2972,7 +2979,7 @@ ${errorText}`
       }
       const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_inventory_ingredient`, {
         method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${getAccessToken()}`,"Content-Type":"application/json"},
-        body:JSON.stringify({p_ingredient_id:editId ? Number(editId) : null,p_name:name,p_unit:unit,p_minimum_stock:minimum,p_current_stock:stock,p_category:category,p_adjustment_note:adjustmentNote})
+        body:JSON.stringify({p_ingredient_id:editId ? Number(editId) : null,p_name:name,p_unit:unit,p_minimum_stock:minimum,p_current_stock:stock,p_category:category,p_adjustment_note:adjustmentNote,p_max_stock:maximum})
       });
       const result = await response.json(); if (!response.ok) throw new Error(result?.message || result?.details || JSON.stringify(result));
       message.style.color = "#18794e"; message.textContent = editId ? "Ingredient updated successfully." : "Ingredient added successfully.";
