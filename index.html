@@ -738,7 +738,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
                       <section class="order-details-pane" id="new-order-section">
           <h2>New Order</h2>
           <label>Order Source</label>
-          <select id="order-source"><option value="direct">Direct</option><option value="grab">Grab</option><option value="lineman">LINE MAN</option></select>
+          <select id="order-source" onchange="handleOrderSourceChange()"><option value="direct">Direct</option><option value="grab">Grab</option><option value="lineman">LINE MAN</option></select>
           <label>Customer Name</label>
           <input type="text" id="customer-name" placeholder="Customer name">
           <label>Address</label>
@@ -931,7 +931,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <form id="recipe-editor-form" onsubmit="saveRecipeEditor(event)">
             <label for="recipe-product">Product</label><select id="recipe-product" required><option value="">Loading products…</option></select><p class="placeholder-note">Choose an existing product to edit it, or choose “+ New product” to create a product and its recipe.</p>
             <label for="recipe-product-name">Product name</label><input id="recipe-product-name" type="text" required placeholder="e.g. Matcha Latte">
-            <label for="recipe-product-price">Selling price (฿)</label><input id="recipe-product-price" type="number" min="0.01" step="0.01" required>
+            <label for="recipe-product-price">Direct price (฿)</label><input id="recipe-product-price" type="number" min="0.01" step="0.01" required>
+            <div class="pricing-channel-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px">
+              <div><label for="recipe-product-grab-price">Grab price (฿)</label><input id="recipe-product-grab-price" type="number" min="0.01" step="0.01" required></div>
+              <div><label for="recipe-product-lineman-price">LINE MAN price (฿)</label><input id="recipe-product-lineman-price" type="number" min="0.01" step="0.01" required></div>
+            </div>
+            <p class="placeholder-note">Set each channel's price manually. Direct price remains the default base price for costing and existing product compatibility.</p>
             <label for="recipe-product-category">Menu category</label><select id="recipe-product-category" required><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha & Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option></select>
             <p class="placeholder-note">Choose the menu category used to group this item in Menu Margin Table.</p>
             <div id="recipe-editor-lines"></div>
@@ -1133,6 +1138,28 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     });
   }
 
+  function getOrderSource() { return document.getElementById("order-source")?.value || "direct"; }
+
+  function getProductChannelPrice(product, source = getOrderSource()) {
+    const field = source === "grab" ? "grab_price" : source === "lineman" ? "lineman_price" : "direct_price";
+    const candidate = Number(product?.[field]);
+    if (Number.isFinite(candidate) && candidate > 0) return candidate;
+    return Number(product?.price ?? product?.selling_price ?? 0);
+  }
+
+  function handleOrderSourceChange() {
+    // Reprice items already in the cart while preserving selected option surcharges.
+    cart = cart.map(item => {
+      const product = products.find(p => Number(p.id) === Number(item.productId));
+      if (!product) return item;
+      const basePrice = getProductChannelPrice(product);
+      const optionTotal = (item.options || []).reduce((sum, option) => sum + Number(option.price || 0), 0);
+      return { ...item, basePrice, unitPrice: basePrice + optionTotal };
+    });
+    if (typeof renderCart === "function") renderCart();
+    if (typeof loadProducts === "function") loadProducts();
+  }
+
   async function loadProducts() {
 
     const status =
@@ -1215,7 +1242,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div class="product-card-content">
             <h3>${product.name || "Untitled product"}</h3>
             <div class="category">${product.category || ""}</div>
-            <div class="price">฿${Number(product.price).toFixed(2)}</div>
+            <div class="price">฿${getProductChannelPrice(product).toFixed(2)}</div>
             <button class="add-button" onclick="addToCart(${product.id})">Add to Order</button>
           </div>
         `;
@@ -1760,7 +1787,7 @@ let selectedProductOptions = [];
 
 async function openProductModal(product) {
 
-  selectedProduct = product;
+  selectedProduct = { ...product, price: getProductChannelPrice(product) };
   selectedProductOptions = [];
 
   document.getElementById("modal-product-name").textContent =
@@ -3539,13 +3566,18 @@ ${errorText}`
       if (select.value === "new") {
         document.getElementById("recipe-product-name").value = "";
         document.getElementById("recipe-product-price").value = "";
+        document.getElementById("recipe-product-grab-price").value = "";
+        document.getElementById("recipe-product-lineman-price").value = "";
         categorySelect.value = "";
         addRecipeEditorLine(); return;
       }
       const product = recipeEditorProducts.find(p => Number(p.id) === Number(select.value));
       if (!product) return;
       document.getElementById("recipe-product-name").value = product.name || product.product_name || "";
-      document.getElementById("recipe-product-price").value = Number(product.price ?? product.selling_price ?? 0);
+      const directPrice = Number(product.direct_price ?? product.price ?? product.selling_price ?? 0);
+      document.getElementById("recipe-product-price").value = directPrice;
+      document.getElementById("recipe-product-grab-price").value = Number(product.grab_price ?? directPrice);
+      document.getElementById("recipe-product-lineman-price").value = Number(product.lineman_price ?? directPrice);
       categorySelect.value = product.category || "";
       const lines = recipes.filter(r => Number(r.product_id) === Number(product.id));
       if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity)); else addRecipeEditorLine();
@@ -3572,10 +3604,12 @@ ${errorText}`
     const productId = selectedProduct === "new" ? null : Number(selectedProduct);
     const name = document.getElementById("recipe-product-name").value.trim();
     const price = Number(document.getElementById("recipe-product-price").value);
+    const grabPrice = Number(document.getElementById("recipe-product-grab-price").value);
+    const linemanPrice = Number(document.getElementById("recipe-product-lineman-price").value);
     const category = document.getElementById("recipe-product-category").value;
     const rows = [...document.querySelectorAll(".recipe-editor-row")];
     const recipe = rows.map(row => ({ ingredient_id: Number(row.querySelector(".recipe-line-ingredient").value), quantity: Number(row.querySelector(".recipe-line-quantity").value) }));
-    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || !category || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
+    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || grabPrice <= 0 || linemanPrice <= 0 || !category || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
       message.style.color = "#b00020";
       message.textContent = "Select a product and menu category, enter a valid name and price, and add unique ingredients with positive quantities.";
       return;
@@ -3587,6 +3621,13 @@ ${errorText}`
       const saveResult = await saveProductRecipe.json();
       if (!saveProductRecipe.ok) throw new Error(saveResult?.message || saveResult?.details || JSON.stringify(saveResult));
       const savedProductId = Number(saveResult?.product_id ?? productId);
+      // Save per-channel prices separately; keep the legacy `price` field equal to Direct.
+      const channelPriceResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${savedProductId}`, {
+        method: "PATCH",
+        headers: { ...headers, "Prefer": "return=minimal" },
+        body: JSON.stringify({ price, direct_price: price, grab_price: grabPrice, lineman_price: linemanPrice })
+      });
+      if (!channelPriceResponse.ok) throw new Error(`Product recipe saved, but channel prices could not be saved: ${await channelPriceResponse.text()}`);
       message.style.color = "#18794e"; message.textContent = selectedProduct === "new" ? "New product and recipe created." : "Product and recipe saved.";
       await loadProducts(); await loadMarginsAndRecipes(); await initializeRecipeEditor();
       document.getElementById("recipe-product").value = String(savedProductId);
