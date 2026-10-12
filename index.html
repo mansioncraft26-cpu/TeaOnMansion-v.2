@@ -662,6 +662,26 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 .auth-message{font-size:13px;min-height:18px;margin-top:12px;color:#a12622;overflow-wrap:anywhere}.auth-user{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:#706960}.auth-user button{border:1px solid #ddd5cb;background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer}
 .app-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 
+
+/* Persistent quick-order workspace (not a modal) */
+.order-workspace-section{padding:0;overflow:hidden;margin-bottom:22px}
+.add-order-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 24px;border-bottom:1px solid #e8e3da;background:#fff}
+.add-order-header h2{margin:4px 0 6px;font-size:25px;letter-spacing:-.04em}.add-order-header p{margin:0;color:#777066;font-size:13px;line-height:1.5}.eyebrow{font-size:10px;font-weight:750;letter-spacing:.15em;color:#8a7559}
+.add-order-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,.85fr);gap:0;min-height:650px;overflow:hidden;background:#faf9f6;color:#28251f}
+.order-menu-pane{padding:22px;min-width:0;min-height:0;overflow-y:auto;border-right:1px solid #e8e3da}
+.order-menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.order-menu-heading h3{font-size:18px;margin:0 0 4px}.order-menu-heading p{font-size:12px;color:#827b70;margin:0}.order-menu-heading input{box-sizing:border-box;width:min(260px,50%);padding:11px 13px;border:1px solid #e1dbd1;border-radius:11px;background:#fff}
+#products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;align-content:start}
+#products .product{padding:0;overflow:hidden;border:1px solid #e8e3da;border-radius:14px;background:#fff;display:flex;flex-direction:column;min-width:0;transition:transform .15s ease,box-shadow .15s ease}
+#products .product:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(45,38,28,.08)}
+.product-card-image{display:block;width:100%;height:125px;object-fit:cover;background:#eee8df}
+.product-card-image-empty{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 70% 25%,#f4e6cf 0 12%,transparent 13%),linear-gradient(145deg,#eee1ce,#d8bfa0 58%,#b98f68);color:#fff;font-size:46px;text-shadow:0 2px 8px rgba(69,42,20,.2)}
+.product-card-content{display:flex;flex:1;flex-direction:column;padding:13px;gap:6px}.product-card-content h3{font-size:14px;line-height:1.35;margin:0;color:#29251f}.product-card-content .category{font-size:11px;color:#8a8175;margin:0;min-height:15px}.product-card-content .price{font-size:17px;color:#29251f;margin:4px 0 8px}.product-card-content .add-button{margin-top:auto;padding:10px 12px;border-radius:9px;background:#2d2923;color:#fff;font-weight:650;font-size:12px}
+.order-details-pane{display:flex;flex-direction:column;gap:0;padding:20px 22px;min-width:0;min-height:0;overflow-y:auto;background:#fff}.order-details-pane>h2{font-size:18px;margin:0 0 8px}.order-details-pane label{font-size:12px;font-weight:700;color:#625b51;margin:12px 0 5px}.order-details-pane input,.order-details-pane select,.order-details-pane textarea{box-sizing:border-box;width:100%;max-width:100%;font-size:13px;padding:10px 11px;border:1px solid #e1dbd1;border-radius:9px;background:#fff;color:#29251f}.order-details-pane .placeholder-note{font-size:11px;line-height:1.45;color:#8a8175;margin:7px 0 0}.order-details-pane h3{font-size:14px;margin:20px 0 8px!important}
+#cart{flex:0 0 auto;min-height:60px;max-height:300px;overflow-y:auto;border:1px solid #eee9e1;border-radius:11px;padding:0 12px;background:#fcfbf9}.empty-cart{padding:18px 6px;text-align:center;color:#8a8175;font-size:12px}.cart-item{gap:12px;padding:12px 0;border-bottom:1px solid #eee9e1}.cart-item-name{font-size:12px;line-height:1.4}.cart-item-price{font-size:11px}.quantity-controls{gap:6px}.quantity-controls button{border-radius:7px;background:#f0eee9}.order-details-pane #order-notes{margin-top:12px;min-height:58px;resize:vertical}.order-details-pane .cart-total{font-size:17px;padding:14px 2px;border-bottom:1px solid #eee9e1;margin-bottom:4px}.order-details-pane #checkout-button{margin-top:12px;padding:13px;border-radius:10px;font-weight:750}.order-details-pane #checkout-button:disabled{opacity:.4;cursor:not-allowed}.order-details-pane .clear-button{margin-top:8px;padding:10px;border-radius:9px}
+@media(max-width:850px){.add-order-header{padding:15px 16px}.add-order-header h2{font-size:21px}.add-order-layout{grid-template-columns:1fr;min-height:0;overflow:visible}.order-menu-pane{padding:15px;border-right:0;border-bottom:1px solid #e8e3da;overflow:visible}.order-menu-heading{align-items:flex-start;flex-direction:column}.order-menu-heading input{width:100%;box-sizing:border-box}.order-details-pane{padding:15px;overflow:visible}#products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product-card-image{height:100px}.product-card-content{padding:10px}.product-card-content h3{font-size:13px}#cart{max-height:220px}}
+@media(max-width:390px){#products{grid-template-columns:1fr 1fr}.product-card-image{height:82px}.add-order-header p{max-width:260px}}
+
+
 </style></head>
 
 <body>
@@ -732,7 +752,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div class="section">
             <div class="orders-header"><div><h2>Quick actions</h2><p>Jump to common tasks</p></div></div>
             <div class="page-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-              <button class="checkout-button" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders'); document.getElementById('new-order-section').scrollIntoView({behavior:'smooth',block:'start'});">+ Create Order</button>
+              <button class="checkout-button" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders'); openAddOrderModal();">+ Create Order</button>
               <button class="checkout-button" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels');">+ Record Purchase</button>
             </div>
           </div>
@@ -749,23 +769,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
       </section>
 
       <section class="page" id="orders-page">
-        <div class="section" style="margin-bottom:22px">
-          <div class="orders-header">
-            <div>
-              <h2>Products</h2>
-              <p>Select a drink to add it to your order below.</p>
-            </div>
-          </div>
-          <div id="products">Loading products...</div>
-        </div>
-        <div class="section today-orders">
-          <div class="orders-header">
-            <div><h2>Today's Orders</h2><div class="orders-summary"><span id="today-order-count">0 orders</span><span id="today-sales">฿0.00</span></div></div>
-            <button class="refresh-orders-button" onclick="loadTodayOrders()">Refresh</button>
-          </div>
-          <div id="today-orders-list"><div class="empty-cart">Loading orders...</div></div>
-        </div>
-        <section class="section" id="new-order-section" style="margin-top:22px">
+        <section class="section order-workspace-section" aria-labelledby="add-order-title">
+          <div class="add-order-header"><div><div class="eyebrow">MANSION.CRAFT · QUICK ORDER</div><h2 id="add-order-title">Create Order</h2><p>Tap a drink to add it. Your cart and checkout stay beside the menu.</p></div><button type="button" class="clear-button" onclick="clearCart()">Clear Order</button></div>
+            <div class="add-order-layout">
+              <section class="order-menu-pane"><div class="order-menu-heading"><div><h3>Menu</h3><p>Tap a product to add or customize it.</p></div><input id="order-menu-search" type="search" placeholder="Search menu…" oninput="filterOrderMenu()" aria-label="Search menu"></div><div id="products">Loading products...</div></section>
+                      <section class="order-details-pane" id="new-order-section">
           <h2>New Order</h2>
           <label>Order Source</label>
           <select id="order-source"><option value="direct">Direct</option><option value="grab">Grab</option><option value="lineman">LINE MAN</option></select>
@@ -787,6 +795,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div id="success" role="status" style="display:none; margin:10px 0; color:#18794e;"></div>
           <button class="checkout-button" id="checkout-button" onclick="checkout()" disabled>Create Order</button>
           <button class="clear-button" onclick="clearCart()">Clear Order</button>
+        </section>
+
+            </div>
+        </section>
+        <section class="section today-orders" style="margin-top:22px">
+          <div class="orders-header">
+            <div><h2>Today's Orders</h2><div class="orders-summary"><span id="today-order-count">0 orders</span><span id="today-sales">฿0.00</span></div></div>
+            <button class="refresh-orders-button" onclick="loadTodayOrders()">Refresh</button>
+          </div>
+          <div id="today-orders-list"><div class="empty-cart">Loading orders...</div></div>
         </section>
         <section class="section" id="order-log-section" style="margin-top:22px">
           <div class="orders-header">
@@ -1135,6 +1153,24 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   // LOAD PRODUCTS
   // ==========================================
 
+  function openAddOrderModal() {
+    // Legacy button handler now navigates to the persistent ordering workspace instead of opening a modal.
+    if (typeof showPage === "function") showPage('orders-page','Orders','Create orders quickly with the menu and cart side by side');
+    requestAnimationFrame(() => document.getElementById("order-menu-search")?.focus());
+  }
+
+  function closeAddOrderModal() {
+    // Kept as a compatibility shim for older handlers; ordering is no longer a popup.
+    return;
+  }
+
+  function filterOrderMenu() {
+    const query = (document.getElementById("order-menu-search")?.value || "").trim().toLowerCase();
+    document.querySelectorAll("#products .product").forEach(card => {
+      card.style.display = card.textContent.toLowerCase().includes(query) ? "" : "none";
+    });
+  }
+
   async function loadProducts() {
 
     const status =
@@ -1210,27 +1246,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           "product";
 
 
+        const imageUrl = product.image_url || product.image || product.product_image || product.imageUrl || "";
+        const safeImageUrl = typeof imageUrl === "string" && /^https?:\/\//i.test(imageUrl) ? imageUrl : "";
         card.innerHTML = `
-
-          <h3>
-            ${product.name}
-          </h3>
-
-          <div class="category">
-            ${product.category || ""}
+          ${safeImageUrl ? `<img class="product-card-image" src="${safeImageUrl.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}" alt="${String(product.name || "Product").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}" loading="lazy">` : `<div class="product-card-image product-card-image-empty" aria-hidden="true"><span>☕</span></div>`}
+          <div class="product-card-content">
+            <h3>${product.name || "Untitled product"}</h3>
+            <div class="category">${product.category || ""}</div>
+            <div class="price">฿${Number(product.price).toFixed(2)}</div>
+            <button class="add-button" onclick="addToCart(${product.id})">Add to Order</button>
           </div>
-
-          <div class="price">
-            ฿${Number(product.price).toFixed(2)}
-          </div>
-
-          <button
-            class="add-button"
-            onclick="addToCart(${product.id})"
-          >
-            Add to Order
-          </button>
-
         `;
 
 
