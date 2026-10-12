@@ -737,6 +737,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <section class="order-menu-pane"><div class="order-menu-heading"><div><h3>Menu</h3><p>Tap a product to add or customize it.</p></div><input id="order-menu-search" type="search" placeholder="Search menu…" oninput="filterOrderMenu()" aria-label="Search menu"></div><div id="products">Loading products...</div></section>
                       <section class="order-details-pane" id="new-order-section">
           <h2>New Order</h2>
+          <label>Sale Date (actual date)</label>
+          <input type="date" id="order-sale-date" aria-label="Actual sale date">
+          <p class="placeholder-note">Choose the date the sale actually happened. This is useful for entering historical orders.</p>
           <label>Order Source</label>
           <select id="order-source" onchange="handleOrderSourceChange()"><option value="direct">Direct</option><option value="grab">Grab</option><option value="lineman">LINE MAN</option></select>
           <label>Customer Name</label>
@@ -746,8 +749,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <label>Delivery App Order Number</label>
           <input type="text" id="platform-order-number" placeholder="Optional for Direct orders">
           <label>Platform Fee (฿)</label>
-          <input type="number" id="platform-fee-input" min="0" step="0.01" value="0" readonly>
-          <p class="placeholder-note">Automatically estimated at 33% of the order subtotal for Grab / LINE MAN. Direct orders have no platform fee. Adjust PLATFORM_FEE_RATE in the script if your actual rate differs.</p>
+          <input type="number" id="platform-fee-input" min="0" step="0.01" value="0" placeholder="0.00">
+          <p class="placeholder-note">Enter the fee charged by Grab or LINE MAN for this order. Direct orders can stay at 0.</p>
           <label>Payment Method</label>
           <select id="payment-method"><option value="cash">Cash</option><option value="promptpay">PromptPay / Bank transfer</option><option value="grab_payment">Grab payment</option><option value="lineman_payment">LINE MAN payment</option></select>
           <h3 style="margin-top:25px">Current Order</h3>
@@ -780,7 +783,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
             <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
           </div>
           <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:1100px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Items</th><th style="padding:10px 8px;text-align:right">Subtotal</th><th style="padding:10px 8px;text-align:right">VAT</th><th style="padding:10px 8px;text-align:right">Delivery</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px;text-align:right">Fee</th><th style="padding:10px 8px;text-align:right">Net</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="10" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
           <p class="placeholder-note" style="margin-top:10px">The log loads the latest 1,000 orders available to your account. Use the date filters to narrow the results.</p>
         </section>
       </section>
@@ -866,6 +869,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
                   <form id="equipment-form" onsubmit="saveEquipment(event)">
                     <input id="equipment-edit-id" type="hidden">
                     <div class="inventory-form-grid">
+                      <div><label for="equipment-acquired-date">Purchase / acquisition date</label><input id="equipment-acquired-date" type="date" required></div>
                       <div><label for="equipment-price">Unit price (฿)</label><input id="equipment-price" type="number" min="0" step="0.01" value="0" required></div>
                       <div><label for="equipment-quantity">Quantity</label><input id="equipment-quantity" type="number" min="0" step="1" value="1" required></div>
                       <div class="full-width"><label for="equipment-name">Equipment name</label><input id="equipment-name" required maxlength="120" placeholder="e.g. Stainless steel milk pitcher"></div>
@@ -883,7 +887,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
                 <div class="equipment-topline"><div><div class="stat-label">REUSABLE ASSETS</div><h3 style="margin:4px 0 0">Equipment List</h3></div><button type="button" class="refresh-orders-button" onclick="loadEquipment()">↻ Refresh</button></div>
                 <div class="equipment-toolbar"><select id="equipment-filter-category" aria-label="Filter equipment category" onchange="renderEquipmentTable()"><option value="">All categories</option></select><button type="button" class="refresh-orders-button" onclick="manageEquipmentCategory()">Manage Categories</button><select id="equipment-filter-status" aria-label="Filter equipment status" onchange="renderEquipmentTable()"><option value="">All statuses</option><option value="In Use">In Use</option><option value="Retired">Retired</option></select><button type="button" class="refresh-orders-button" onclick="exportEquipmentCSV()">↓ Export CSV</button><button type="button" class="checkout-button" onclick="document.getElementById('equipment-name').focus()">＋ Add Equipment</button></div>
                 <div class="equipment-summary-grid"><div class="equipment-summary-card"><div class="stat-label">TOTAL EQUIPMENT VALUE</div><div class="equipment-summary-value" id="equipment-total-value">฿0.00</div><div class="placeholder-note" id="equipment-total-count">0 items</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE VALUE</div><div class="equipment-summary-value" id="equipment-inuse-value">฿0.00</div><div class="placeholder-note" id="equipment-inuse-count">0 items in use</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE − RETIRED</div><div class="equipment-summary-value" id="equipment-retired-value">฿0.00</div><div class="placeholder-note" id="equipment-retired-count">0 retired items · ฿0.00</div></div></div>
-                <div style="overflow-x:auto;margin-top:12px"><table class="inventory-table equipment-table" style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Equipment</th><th style="text-align:left">Category</th><th style="text-align:right">Qty</th><th style="text-align:left">Status</th><th style="text-align:left">Condition</th><th style="text-align:left">Location</th><th style="text-align:right">Unit price</th><th style="text-align:right">Total value</th><th>Actions</th></tr></thead><tbody id="equipment-list"><tr><td colspan="9">Loading equipment...</td></tr></tbody></table></div><div id="equipment-list-message" class="placeholder-note" style="margin-top:10px"></div>
+                <div style="overflow-x:auto;margin-top:12px"><table class="inventory-table equipment-table" style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Equipment</th><th style="text-align:left">Acquired</th><th style="text-align:left">Category</th><th style="text-align:right">Qty</th><th style="text-align:left">Status</th><th style="text-align:left">Condition</th><th style="text-align:left">Location</th><th style="text-align:right">Unit price</th><th style="text-align:right">Total value</th><th>Actions</th></tr></thead><tbody id="equipment-list"><tr><td colspan="10">Loading equipment...</td></tr></tbody></table></div><div id="equipment-list-message" class="placeholder-note" style="margin-top:10px"></div>
               </div>
             </div>
           </section>
@@ -895,7 +899,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
             </div>
             <div id="stock-movement-summary" class="orders-summary" style="margin-bottom:12px">Loading stock movements…</div>
-            <div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="6">Loading stock movements…</td></tr></tbody></table></div>
+            <div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th><th>Actions</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="7">Loading stock movements…</td></tr></tbody></table></div>
             <p class="placeholder-note" style="margin-top:10px">Each row is recorded when stock changes. Historical movements begin after the ledger migration; older transactions are not reconstructed or deducted again.</p>
           </section>
         </section>
@@ -992,8 +996,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div class="orders-header"><div><h2>Purchase History</h2><p>Latest 100 ingredient purchases</p></div><button class="refresh-orders-button" onclick="loadPurchaseHistory()">Refresh</button></div>
           <div style="overflow-x:auto">
             <table class="inventory-table" style="width:100%;border-collapse:collapse">
-              <thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Ingredient</th><th style="text-align:right">Quantity</th><th style="text-align:right">Unit cost</th><th style="text-align:right">Total</th><th style="text-align:left">Supplier</th></tr></thead>
-              <tbody id="purchase-history-list"><tr><td colspan="6">Loading purchases...</td></tr></tbody>
+              <thead><tr><th style="text-align:left">Purchase date</th><th style="text-align:left">Ingredient</th><th style="text-align:right">Quantity</th><th style="text-align:right">Unit cost</th><th style="text-align:right">Total</th><th style="text-align:left">Supplier</th><th>Actions</th></tr></thead>
+              <tbody id="purchase-history-list"><tr><td colspan="7">Loading purchases...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -1047,6 +1051,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     if (appStarted) return;
     appStarted = true;
     document.getElementById("purchase-date").value = new Date().toLocaleDateString("en-CA");
+    document.getElementById("equipment-acquired-date").value = new Date().toLocaleDateString("en-CA");
     await Promise.allSettled([
       loadProducts(), loadTodayOrders(), loadInventory(), loadStockMovements(), loadPurchaseHistory(),
       initializeRecipeEditor(), loadSalesAnalytics(), loadProductOptionsManager()
@@ -1116,6 +1121,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   let cart = [];
 
 
+  // Use Thailand's local calendar date for the sale-date field.
+  function bangkokDateInputValue(date = new Date()) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  }
+
   // ==========================================
   // LOAD PRODUCTS
   // ==========================================
@@ -1123,6 +1137,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   function openAddOrderModal() {
     // Legacy button handler now navigates to the persistent ordering workspace instead of opening a modal.
     if (typeof showPage === "function") showPage('orders-page','Orders','Create orders quickly with the menu and cart side by side');
+    const saleDate = document.getElementById("order-sale-date");
+    if (saleDate && !saleDate.value) saleDate.value = bangkokDateInputValue();
     requestAnimationFrame(() => document.getElementById("order-menu-search")?.focus());
   }
 
@@ -1138,15 +1154,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     });
   }
 
-  const PLATFORM_FEE_RATE = 0.33;
   function getOrderSource() { return document.getElementById("order-source")?.value || "direct"; }
-  function updatePlatformFeePreview() {
-    const input = document.getElementById("platform-fee-input");
-    if (!input) return;
-    const source = getOrderSource();
-    const subtotal = typeof calculateTotal === "function" ? Number(calculateTotal() || 0) : 0;
-    input.value = (source === "grab" || source === "lineman") ? (subtotal * PLATFORM_FEE_RATE).toFixed(2) : "0.00";
-  }
 
   function getProductChannelPrice(product, source = getOrderSource()) {
     const field = source === "grab" ? "grab_price" : source === "lineman" ? "lineman_price" : "direct_price";
@@ -1165,7 +1173,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
       return { ...item, basePrice, unitPrice: basePrice + optionTotal };
     });
     if (typeof renderCart === "function") renderCart();
-    updatePlatformFeePreview();
     if (typeof loadProducts === "function") loadProducts();
   }
 
@@ -1311,12 +1318,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   // ==========================================
 // ORDER LOG: historical orders with search and filters
 let orderLogData = [];
-let orderLogItemsByOrder = new Map();
 async function loadOrderLog() {
   const body = document.getElementById("order-log-body");
   const summary = document.getElementById("order-log-summary");
   if (!body || !summary) return;
-  body.innerHTML = '<tr><td colspan="10" style="padding:14px 8px">Loading order log…</td></tr>';
+  body.innerHTML = '<tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr>';
   summary.textContent = "Loading order log…";
   try {
     const params = new URLSearchParams({select:"*", order:"created_at.desc", limit:"1000"});
@@ -1328,24 +1334,10 @@ async function loadOrderLog() {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.message || data?.details || JSON.stringify(data));
     orderLogData = Array.isArray(data) ? data : [];
-    orderLogItemsByOrder = new Map();
-    const ids = orderLogData.map(o => Number(o.id)).filter(Number.isFinite);
-    for (let i = 0; i < ids.length; i += 100) {
-      const batch = ids.slice(i, i + 100);
-      if (!batch.length) continue;
-      const itemResponse = await fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_name,quantity,subtotal&order_id=in.(${batch.join(",")})&limit=10000`, {headers:authHeaders()});
-      const itemData = await itemResponse.json();
-      if (!itemResponse.ok) throw new Error(itemData?.message || itemData?.details || JSON.stringify(itemData));
-      (Array.isArray(itemData) ? itemData : []).forEach(item => {
-        const id = Number(item.order_id);
-        if (!orderLogItemsByOrder.has(id)) orderLogItemsByOrder.set(id, []);
-        orderLogItemsByOrder.get(id).push(item);
-      });
-    }
     renderOrderLog();
   } catch (error) {
     console.error("Order log error:", error);
-    body.innerHTML = `<tr><td colspan="10" style="padding:14px 8px;color:#b00020">Could not load order log: ${escapeHtml(error.message)}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="7" style="padding:14px 8px;color:#b00020">Could not load order log: ${escapeHtml(error.message)}</td></tr>`;
     summary.textContent = "Order log failed to load";
   }
 }
@@ -1357,29 +1349,48 @@ function renderOrderLog() {
   const statusFilter = document.getElementById("order-log-status")?.value || "";
   const money = n => `฿${Number(n || 0).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const safe = v => escapeHtml(String(v ?? ""));
-  const feeOf = o => Number(o.platform_fee ?? 0);
   const filtered = orderLogData.filter(o => {
     const status = String(o.status || "new").toLowerCase();
     const searchable = [o.order_number,o.customer_name,o.platform_order_number,o.order_source,o.source,o.order_type,o.id].map(v => String(v ?? "").toLowerCase()).join(" ");
     return (!statusFilter || status === statusFilter) && (!search || searchable.includes(search));
   });
   const total = filtered.reduce((sum,o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
-  summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Total ${money(total)}`;
-  if (!filtered.length) { body.innerHTML = '<tr><td colspan="10" style="padding:14px 8px">No orders match these filters.</td></tr>'; return; }
+  summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Total ฿${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  if (!filtered.length) { body.innerHTML = '<tr><td colspan="7" style="padding:14px 8px">No orders match these filters.</td></tr>'; return; }
   body.innerHTML = filtered.map(o => {
-    const date = o.created_at ? new Date(o.created_at).toLocaleDateString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric"}) : "—";
-    const source = String(o.order_source || o.source || o.order_type || "direct").toLowerCase();
-    const items = orderLogItemsByOrder.get(Number(o.id)) || [];
-    const itemText = items.length ? items.map(i => `${i.product_name || "Item"} ×${Number(i.quantity || 0)}`).join(", ") : "—";
-    const subtotal = Number(o.subtotal ?? 0);
-    const vat = Number(o.vat_amount ?? o.vat ?? o.tax_amount ?? o.tax ?? 0);
-    const delivery = Number(o.delivery_fee ?? 0);
-    const orderTotal = Number(o.total ?? (subtotal + vat + delivery));
-    // Older orders may have platform_fee=0 because fee was not calculated at checkout.
-    const fee = Number(o.platform_fee ?? 0);
-    const net = orderTotal - fee;
-    return `<tr style="border-top:1px solid var(--line)"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px;white-space:nowrap">${safe(o.order_number || `#${o.id}`)}</td><td style="padding:10px 8px;min-width:180px">${safe(itemText)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(subtotal)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(vat)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(delivery)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(orderTotal)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(fee)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap;font-weight:700">${money(net)}</td><td style="padding:10px 8px"><button class="refresh-orders-button" onclick="showOrderDetails(${Number(o.id)})">View</button></td></tr>`;
+    const date = o.created_at ? new Date(o.created_at).toLocaleString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
+    const status = String(o.status || "new").toLowerCase();
+    const source = o.order_source || o.source || o.order_type || "—";
+    const saleDate = o.created_at ? new Date(o.created_at).toLocaleDateString("en-CA", {timeZone:"Asia/Bangkok"}) : bangkokDateInputValue();
+    return `<tr style="border-top:1px solid var(--line)"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px">${safe(o.order_number || `#${o.id}`)}<div style="font-size:11px;color:var(--muted)">ID ${safe(o.id)}</div></td><td style="padding:10px 8px">${safe(o.customer_name || "—")}</td><td style="padding:10px 8px">${safe(source)}</td><td style="padding:10px 8px">${safe(status.replaceAll("_"," "))}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(o.total ?? o.subtotal)}</td><td style="padding:10px 8px;white-space:nowrap"><button class="refresh-orders-button" onclick="showOrderDetails(${Number(o.id)})">View</button> <button class="refresh-orders-button" onclick="editOrderSaleDate(${Number(o.id)}, '${safe(saleDate)}')">Edit date</button></td></tr>`;
   }).join("");
+}
+
+async function editOrderSaleDate(orderId, currentDate) {
+  const input = prompt(`Enter the actual sale date for order #${orderId} (YYYY-MM-DD):`, currentDate);
+  if (input === null) return;
+  const chosen = input.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(chosen) || Number.isNaN(new Date(`${chosen}T12:00:00+07:00`).getTime()) || new Date(`${chosen}T12:00:00+07:00`).toISOString().slice(0,10) !== chosen) {
+    alert("Please enter a valid date in YYYY-MM-DD format.");
+    return;
+  }
+  try {
+    const existing = orderLogData.find(order => Number(order.id) === Number(orderId));
+    const currentTimestamp = existing?.created_at ? new Date(existing.created_at) : new Date();
+    const parts = new Intl.DateTimeFormat("en-GB", {timeZone:"Asia/Bangkok",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(currentTimestamp);
+    const time = Object.fromEntries(parts.map(part => [part.type,part.value]));
+    const timestamp = new Date(`${chosen}T${time.hour}:${time.minute}:${time.second}+07:00`).toISOString();
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
+      method:"PATCH", headers:authHeaders({"Content-Type":"application/json","Prefer":"return=minimal"}), body:JSON.stringify({created_at:timestamp})
+    });
+    if (!response.ok) throw new Error(await response.text());
+    await loadOrderLog();
+    if (typeof loadTodayOrders === "function") await loadTodayOrders();
+    alert(`Sale date updated for order #${orderId}.`);
+  } catch (error) {
+    console.error("Edit order sale date error:", error);
+    alert(`Could not update the sale date. Your database may need an owner-only update policy for orders. Details: ${error.message}`);
+  }
 }
 
 // LOAD TODAY'S ORDERS
@@ -2186,6 +2197,12 @@ async function openProductModal(product) {
   renderCart();
 }
 
+  // Default the sale date to today in Thailand, without overwriting a date the user selected.
+  document.addEventListener("DOMContentLoaded", () => {
+    const saleDate = document.getElementById("order-sale-date");
+    if (saleDate && !saleDate.value) saleDate.value = bangkokDateInputValue();
+  });
+
   // ==========================================
   // CLEAR CART
   // ==========================================
@@ -2245,7 +2262,6 @@ async function openProductModal(product) {
     `;
 
     totalElement.textContent = "฿0.00";
-    updatePlatformFeePreview();
 
     checkoutButton.disabled = true;
 
@@ -2549,6 +2565,23 @@ ${errorText}`
 
     const orderId = order.id;
 
+    // Keep created_at as the sale timestamp so the existing Order Log and reports
+    // can use the actual historical sale date. Preserve the current Thailand time.
+    const chosenSaleDate = document.getElementById("order-sale-date")?.value || bangkokDateInputValue();
+    const nowParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+    }).formatToParts(new Date());
+    const timePart = Object.fromEntries(nowParts.map(part => [part.type, part.value]));
+    const saleTimestamp = new Date(`${chosenSaleDate}T${timePart.hour}:${timePart.minute}:${timePart.second}+07:00`).toISOString();
+    const dateUpdateResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`,
+      { method: "PATCH", headers: authHeaders({"Content-Type":"application/json", "Prefer":"return=minimal"}), body: JSON.stringify({created_at: saleTimestamp}) }
+    );
+    if (!dateUpdateResponse.ok) {
+      const dateError = await dateUpdateResponse.text();
+      console.warn("Order was created but sale date could not be updated:", dateError);
+      alert(`Order #${orderId} was created, but the selected sale date could not be saved. Your database may need an owner-only update policy for orders. Details: ${dateError}`);
+    }
 
     // ----------------------------------------
     // CREATE ORDER ITEMS
@@ -2723,7 +2756,7 @@ ${errorText}`
   async function loadEquipment() {
     const list = document.getElementById("equipment-list");
     const message = document.getElementById("equipment-list-message");
-    list.innerHTML = '<tr><td colspan="6">Loading equipment...</td></tr>';
+    list.innerHTML = '<tr><td colspan="10">Loading equipment...</td></tr>';
     message.textContent = "";
     try {
       const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
@@ -2734,7 +2767,7 @@ ${errorText}`
       await loadEquipmentCategories();
       renderEquipmentTable();
     } catch (error) {
-      list.innerHTML = '<tr><td colspan="6">Equipment could not be loaded.</td></tr>';
+      list.innerHTML = '<tr><td colspan="10">Equipment could not be loaded.</td></tr>';
       message.textContent = `${error.message}. Check that the equipment_items table and access policy have been created in Supabase.`;
       console.error("Equipment load error:", error);
     }
@@ -2806,12 +2839,12 @@ ${errorText}`
     const category = document.getElementById("equipment-filter-category")?.value || "";
     const status = document.getElementById("equipment-filter-status")?.value || "";
     const filtered = equipmentItems.filter(x => (!category || (x.category || "Other") === category) && (!status || (x.status || "In Use") === status));
-    if (!filtered.length) { list.innerHTML = '<tr><td colspan="9">No equipment matches these filters.</td></tr>'; return; }
-    list.innerHTML = filtered.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong></td><td>${escapeHtml(item.category || "Other")}</td><td style="text-align:right">${Number(item.quantity || 0)}</td><td><span class="equipment-status ${item.status === "Retired" ? "retired" : "in-use"}">${escapeHtml(item.status || "In Use")}</span></td><td>${escapeHtml(item.condition || "Good")}</td><td>${escapeHtml(item.location || "—")}</td><td style="text-align:right">${money(item.unit_price)}</td><td style="text-align:right"><strong>${money(valueOf(item))}</strong></td><td style="white-space:nowrap"><button type="button" class="refresh-orders-button" onclick="editEquipment(${Number(item.id)})">Edit</button> <button type="button" class="refresh-orders-button" onclick="deleteEquipment(${Number(item.id)})">Delete</button></td></tr>`).join("");
+    if (!filtered.length) { list.innerHTML = '<tr><td colspan="10">No equipment matches these filters.</td></tr>'; return; }
+    list.innerHTML = filtered.map(item => `<tr><td><strong>${escapeHtml(item.name)}</strong></td><td>${escapeHtml(item.acquired_date || "—")}</td><td>${escapeHtml(item.category || "Other")}</td><td style="text-align:right">${Number(item.quantity || 0)}</td><td><span class="equipment-status ${item.status === "Retired" ? "retired" : "in-use"}">${escapeHtml(item.status || "In Use")}</span></td><td>${escapeHtml(item.condition || "Good")}</td><td>${escapeHtml(item.location || "—")}</td><td style="text-align:right">${money(item.unit_price)}</td><td style="text-align:right"><strong>${money(valueOf(item))}</strong></td><td style="white-space:nowrap"><button type="button" class="refresh-orders-button" onclick="editEquipment(${Number(item.id)})">Edit</button> <button type="button" class="refresh-orders-button" onclick="deleteEquipment(${Number(item.id)})">Delete</button></td></tr>`).join("");
   }
   function exportEquipmentCSV() {
-    const headers = ["Name","Category","Quantity","Status","Condition","Location","Unit price","Total value","Notes"];
-    const rows = equipmentItems.map(x => [x.name,x.category,x.quantity,x.status || "In Use",x.condition,x.location,x.unit_price || 0,Number(x.quantity||0)*Number(x.unit_price||0),x.notes].map(v => '"' + String(v ?? "").replace(/"/g,'""') + '"').join(","));
+    const headers = ["Name","Acquisition date","Category","Quantity","Status","Condition","Location","Unit price","Total value","Notes"];
+    const rows = equipmentItems.map(x => [x.name,x.acquired_date,x.category,x.quantity,x.status || "In Use",x.condition,x.location,x.unit_price || 0,Number(x.quantity||0)*Number(x.unit_price||0),x.notes].map(v => '"' + String(v ?? "").replace(/"/g,'""') + '"').join(","));
     const blob = new Blob([[headers.join(","),...rows].join("\n")],{type:"text/csv;charset=utf-8;"});
     const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href=url; a.download="mansion-craft-equipment.csv"; a.click(); URL.revokeObjectURL(url);
   }
@@ -2821,6 +2854,7 @@ ${errorText}`
     document.getElementById("equipment-edit-id").value = "";
     document.getElementById("equipment-quantity").value = "1";
     document.getElementById("equipment-price").value = "0";
+    document.getElementById("equipment-acquired-date").value = new Date().toLocaleDateString("en-CA");
     document.getElementById("equipment-status").value = "In Use";
     document.getElementById("equipment-form-title").textContent = "Add Equipment";
     document.getElementById("equipment-save-button").textContent = "Add Equipment";
@@ -2834,6 +2868,7 @@ ${errorText}`
     document.getElementById("equipment-category").value = item.category || "Other";
     document.getElementById("equipment-quantity").value = item.quantity ?? 1;
     document.getElementById("equipment-price").value = item.unit_price ?? 0;
+    document.getElementById("equipment-acquired-date").value = item.acquired_date || (item.created_at ? String(item.created_at).slice(0,10) : new Date().toLocaleDateString("en-CA"));
     document.getElementById("equipment-status").value = item.status || "In Use";
     document.getElementById("equipment-condition").value = item.condition || "Good";
     document.getElementById("equipment-location").value = item.location || "";
@@ -2847,7 +2882,7 @@ ${errorText}`
   async function saveEquipment(event) {
     event.preventDefault();
     const id = document.getElementById("equipment-edit-id").value;
-    const payload = { name: document.getElementById("equipment-name").value.trim(), category: document.getElementById("equipment-category").value, quantity: Number(document.getElementById("equipment-quantity").value), unit_price: Number(document.getElementById("equipment-price").value || 0), status: document.getElementById("equipment-status").value, condition: document.getElementById("equipment-condition").value, location: document.getElementById("equipment-location").value.trim() || null, notes: document.getElementById("equipment-notes").value.trim() || null };
+    const payload = { name: document.getElementById("equipment-name").value.trim(), acquired_date: document.getElementById("equipment-acquired-date").value, category: document.getElementById("equipment-category").value, quantity: Number(document.getElementById("equipment-quantity").value), unit_price: Number(document.getElementById("equipment-price").value || 0), status: document.getElementById("equipment-status").value, condition: document.getElementById("equipment-condition").value, location: document.getElementById("equipment-location").value.trim() || null, notes: document.getElementById("equipment-notes").value.trim() || null };
     const message = document.getElementById("equipment-form-message");
     try {
       const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}`, "Content-Type":"application/json", Prefer:"return=representation" };
@@ -2877,7 +2912,7 @@ ${errorText}`
     const body = document.getElementById("stock-movement-body");
     const summary = document.getElementById("stock-movement-summary");
     if (!body || !summary) return;
-    body.innerHTML = '<tr><td colspan="6">Loading stock movements…</td></tr>';
+    body.innerHTML = '<tr><td colspan="7">Loading stock movements…</td></tr>';
     summary.textContent = "Loading stock movements…";
     try {
       const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
@@ -2900,7 +2935,7 @@ ${errorText}`
       })).filter(m => m.ingredient).sort((a,b) => new Date(b.date || 0)-new Date(a.date || 0));
       renderStockMovements();
     } catch(error) {
-      body.innerHTML=`<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
+      body.innerHTML=`<tr><td colspan="7" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
       summary.textContent="Could not load stock movements.";
       console.error("Stock movement load error:",error);
     }
@@ -2912,8 +2947,25 @@ ${errorText}`
     const rows=stockMovementRows.filter(r=>{const d=String(r.date||"").slice(0,10);return (!from||d>=from)&&(!to||d<=to)&&(!type||r.type===type);});
     const purchases=rows.filter(r=>r.type==="purchase").length, usage=rows.filter(r=>r.type==="sale_usage").length, adjustments=rows.filter(r=>r.type==="manual_adjustment").length;
     summary.innerHTML=`<span>${rows.length.toLocaleString()} recorded movements</span><span>${purchases} purchases</span><span>${usage} order-usage lines</span><span>${adjustments} adjustments</span>`;
-    if(!rows.length){body.innerHTML='<tr><td colspan="6">No recorded movements for these filters.</td></tr>';return;}
-    body.innerHTML=rows.slice(0,1000).map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.label)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}${r.before!==null&&r.before!==undefined?`<div style="color:#777;font-size:12px">${Number(r.before).toLocaleString()} → ${Number(r.after).toLocaleString()}</div>`:""}</td></tr>`).join("");
+    if(!rows.length){body.innerHTML='<tr><td colspan="7">No recorded movements for these filters.</td></tr>';return;}
+    body.innerHTML=rows.slice(0,1000).map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.label)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}${r.before!==null&&r.before!==undefined?`<div style="color:#777;font-size:12px">${Number(r.before).toLocaleString()} → ${Number(r.after).toLocaleString()}</div>`:""}</td><td><button type="button" class="refresh-orders-button" onclick="editStockMovementDate(${Number(r.id)})">Edit date</button></td></tr>`).join("");
+  }
+
+  async function editStockMovementDate(id) {
+    const movement = stockMovementRows.find(x => Number(x.id) === Number(id));
+    if (!movement) return;
+    const currentDate = movement.date ? String(movement.date).slice(0,10) : new Date().toLocaleDateString("en-CA");
+    const nextDate = prompt(`Set actual date for ${movement.label} — ${movement.ingredient?.name || "ingredient"} (YYYY-MM-DD):`, currentDate);
+    if (nextDate === null) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextDate) || Number.isNaN(Date.parse(nextDate))) { alert("Please enter a valid date in YYYY-MM-DD format."); return; }
+    try {
+      const timestamp = new Date(`${nextDate}T12:00:00+07:00`).toISOString();
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/stock_movements?id=eq.${encodeURIComponent(id)}`, {
+        method:"PATCH", headers:authHeaders({"Content-Type":"application/json","Prefer":"return=minimal"}), body:JSON.stringify({created_at:timestamp})
+      });
+      if (!response.ok) { const err = await response.json(); throw new Error(err?.message || "Could not update movement date"); }
+      await loadStockMovements();
+    } catch(error) { alert(`Could not update stock movement date: ${error.message}`); }
   }
 
   async function loadInventory() {
@@ -3175,10 +3227,23 @@ ${errorText}`
     }
   }
 
+  async function editPurchaseDate(id, currentDate) {
+    const current = prompt("Enter actual purchase date (YYYY-MM-DD):", currentDate || new Date().toLocaleDateString("en-CA"));
+    if (current === null) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(current) || Number.isNaN(Date.parse(current))) { alert("Please enter a valid date in YYYY-MM-DD format."); return; }
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/purchases?id=eq.${encodeURIComponent(id)}`, {
+        method:"PATCH", headers:authHeaders({"Content-Type":"application/json","Prefer":"return=minimal"}), body:JSON.stringify({purchase_date:current})
+      });
+      if (!response.ok) { const err = await response.json(); throw new Error(err?.message || "Could not update purchase date"); }
+      await loadPurchaseHistory();
+    } catch(error) { alert(`Could not update purchase date: ${error.message}`); }
+  }
+
   async function loadPurchaseHistory() {
     const target = document.getElementById("purchase-history-list");
     if (!target) return;
-    target.innerHTML = '<tr><td colspan="6">Loading purchases...</td></tr>';
+    target.innerHTML = '<tr><td colspan="7">Loading purchases...</td></tr>';
     try {
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/purchases?select=*,ingredients(name,unit)&order=purchase_date.desc,created_at.desc&limit=100`,
@@ -3188,7 +3253,7 @@ ${errorText}`
       if (!response.ok) throw new Error(data?.message || JSON.stringify(data));
       target.innerHTML = "";
       if (!data.length) {
-        target.innerHTML = '<tr><td colspan="6">No purchases recorded yet.</td></tr>';
+        target.innerHTML = '<tr><td colspan="7">No purchases recorded yet.</td></tr>';
         return;
       }
       data.forEach(purchase => {
@@ -3199,11 +3264,12 @@ ${errorText}`
           <td>${Number(purchase.quantity || 0).toLocaleString()} ${escapeHtml(purchase.ingredients?.unit || "")}</td>
           <td>฿${Number(purchase.unit_cost || 0).toFixed(2)}</td>
           <td>฿${Number(purchase.total_cost || 0).toFixed(2)}</td>
-          <td>${escapeHtml(purchase.supplier || "-")}</td>`;
+          <td>${escapeHtml(purchase.supplier || "-")}</td>
+          <td><button type="button" class="refresh-orders-button" onclick="editPurchaseDate(${Number(purchase.id)}, '${escapeHtml(purchase.purchase_date || "")}')">Edit date</button></td>`;
         target.appendChild(tr);
       });
     } catch (error) {
-      target.innerHTML = `<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
+      target.innerHTML = `<tr><td colspan="7" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
       console.error("Purchase history error:", error);
     }
   }
