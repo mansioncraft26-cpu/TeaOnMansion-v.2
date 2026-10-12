@@ -609,6 +609,33 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 @media(max-width:600px){.section{padding:15px!important}#recipe-editor-form{grid-template-columns:1fr;padding:14px}#recipe-editor-form>*{grid-column:1!important}.recipe-editor-row{grid-template-columns:1fr}.orders-header{gap:12px}.app-header h2{font-size:24px!important}}
 
 
+/* Collapsible left navigation: compact icons or expanded icon + label mode */
+.app-shell{grid-template-columns:80px minmax(0,1fr)!important;transition:grid-template-columns .18s ease}
+.app-shell.sidebar-expanded{grid-template-columns:236px minmax(0,1fr)!important}
+.sidebar{align-items:stretch!important;gap:0}
+.brand{display:flex;align-items:center;gap:11px;text-align:left!important;min-height:54px}
+.brand h1{flex:0 0 44px!important;margin:0!important}
+.brand p{display:none!important}
+.sidebar-expanded .brand{justify-content:flex-start;padding:0 0 18px!important}
+.sidebar-expanded .brand h1{font-size:15px!important;width:auto!important;height:auto!important;background:transparent!important;color:var(--mc-ink)!important;display:block!important;white-space:nowrap;letter-spacing:-.03em}
+.sidebar-expanded .brand h1:after{content:none!important}
+.sidebar-expanded .brand p{display:block!important;font-size:11px!important;color:var(--mc-muted)!important;margin:3px 0 0!important;white-space:nowrap}
+.sidebar-toggle{display:flex;align-items:center;justify-content:center;gap:10px;width:48px;min-height:42px;margin:0 auto 12px;padding:9px;background:transparent!important;border:1px solid var(--mc-line)!important;color:#394150!important;border-radius:11px!important;cursor:pointer}
+.sidebar-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 20px}
+.sidebar-toggle-label{display:none;font-size:12px;font-weight:600;white-space:nowrap}
+.sidebar-expanded .sidebar-toggle{width:100%;justify-content:flex-start;padding:9px 13px}
+.sidebar-expanded .sidebar-toggle svg{transform:rotate(180deg)}
+.sidebar-expanded .sidebar-toggle-label{display:inline}
+.sidebar-label{display:none!important}
+.sidebar nav{width:100%;display:flex;flex-direction:column;gap:5px}
+.nav-button{display:flex!important;align-items:center;justify-content:center!important;gap:0!important;width:58px!important;min-height:48px!important;height:48px;padding:0!important;margin:0 auto!important;white-space:nowrap;overflow:hidden}
+.nav-button .nav-icon{display:inline-flex!important;width:24px;height:24px;align-items:center;justify-content:center;flex:0 0 24px;color:inherit}
+.nav-button .nav-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-button .nav-label{display:none!important;font-size:13px!important;font-weight:550;overflow:hidden;text-overflow:ellipsis}
+.sidebar-expanded .nav-button{width:100%!important;justify-content:flex-start!important;gap:13px!important;padding:0 14px!important;margin:0!important}
+.sidebar-expanded .nav-button .nav-label{display:inline!important}
+@media(max-width:850px){.app-shell,.app-shell.sidebar-expanded{grid-template-columns:1fr!important}.sidebar{align-items:stretch!important}.brand,.sidebar-toggle{display:none!important}.sidebar nav{flex-direction:row!important;overflow-x:auto;justify-content:flex-start;gap:6px}.nav-button,.sidebar-expanded .nav-button{flex:0 0 auto!important;width:auto!important;min-width:48px!important;padding:0 12px!important;gap:8px!important}.nav-button .nav-label,.sidebar-expanded .nav-button .nav-label{display:inline!important}.nav-button .nav-icon{flex:0 0 22px}}
+
     .inventory-tabs{display:flex;gap:24px;border-bottom:1px solid var(--mc-line,#e7e3da);margin:20px 0 18px;padding:0 2px}
     .inventory-tab{border:0!important;background:transparent!important;border-radius:0!important;padding:12px 5px!important;color:#626262!important;font-size:14px!important;min-height:0!important;box-shadow:none!important;border-bottom:2px solid transparent!important;cursor:pointer}
     .inventory-tab.active{color:#111!important;border-bottom-color:#111!important;font-weight:600!important}
@@ -658,13 +685,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
       <h1>Mansion.craft</h1>
       <p>POS & Cafe Management</p>
     </div>
+    <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Expand sidebar" aria-expanded="false" title="Expand sidebar" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span class="sidebar-toggle-label">Expand menu</span>
+    </button>
     <div class="sidebar-label">WORKSPACE</div>
     <nav aria-label="Main navigation">
-      <button class="nav-button active" data-page="dashboard-page" aria-label="Dashboard" title="Dashboard" onclick="showPage('dashboard-page','Dashboard','Overview of your cafe')"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-label">Dashboard</span></button>
-      <button class="nav-button" data-page="orders-page" aria-label="Orders" title="Orders" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')"><span class="nav-icon" aria-hidden="true">▣</span><span class="nav-label">Orders</span></button>
-      <button class="nav-button" data-page="inventory-page" aria-label="Inventory" title="Inventory" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')"><span class="nav-icon" aria-hidden="true">▤</span><span class="nav-label">Inventory</span></button>
-      <button class="nav-button" data-page="margins-page" aria-label="Margins & Recipes" title="Margins & Recipes" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')"><span class="nav-icon" aria-hidden="true">↗</span><span class="nav-label">Margins &amp; Recipes</span></button>
-      <button class="nav-button" data-page="purchases-page" aria-label="Purchases" title="Purchases" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')"><span class="nav-icon" aria-hidden="true">↻</span><span class="nav-label">Purchases</span></button>
+      <button class="nav-button active" data-page="dashboard-page" aria-label="Dashboard" title="Dashboard" onclick="showPage('dashboard-page','Dashboard','Overview of your cafe')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="nav-label">Dashboard</span></button>
+      <button class="nav-button" data-page="orders-page" aria-label="Ordering" title="Ordering" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4-8 4V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="nav-label">Ordering</span></button>
+      <button class="nav-button" data-page="inventory-page" aria-label="Inventory" title="Inventory" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg></span><span class="nav-label">Inventory</span></button>
+      <button class="nav-button" data-page="margins-page" aria-label="Margins & Recipes" title="Margins & Recipes" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M8 7h8M8 11h8"/></svg></span><span class="nav-label">Margins &amp; Recipes</span></button>
+      <button class="nav-button" data-page="purchases-page" aria-label="Purchases" title="Purchases" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6"/><circle cx="10" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg></span><span class="nav-label">Purchases</span></button>
     </nav>
   </aside>
 
@@ -3722,6 +3752,19 @@ async function deleteOptionStockMap(id) {if(!confirm('Remove this stock mapping?
 
 </div>
   
+<script>
+function toggleSidebar(){
+  const shell=document.querySelector('.app-shell');
+  const button=document.getElementById('sidebar-toggle');
+  if(!shell||!button)return;
+  const expanded=shell.classList.toggle('sidebar-expanded');
+  button.setAttribute('aria-expanded',String(expanded));
+  button.setAttribute('aria-label',expanded?'Collapse sidebar':'Expand sidebar');
+  button.setAttribute('title',expanded?'Collapse sidebar':'Expand sidebar');
+  const label=button.querySelector('.sidebar-toggle-label');
+  if(label)label.textContent=expanded?'Collapse menu':'Expand menu';
+}
+</script>
 </body>
   
 </html>
