@@ -885,7 +885,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               </div>
               <div class="inventory-panel equipment-dashboard">
                 <div class="equipment-topline"><div><div class="stat-label">REUSABLE ASSETS</div><h3 style="margin:4px 0 0">Equipment List</h3></div><button type="button" class="refresh-orders-button" onclick="loadEquipment()">↻ Refresh</button></div>
-                <div class="equipment-toolbar"><select id="equipment-filter-category" aria-label="Filter equipment category" onchange="renderEquipmentTable()"><option value="">All categories</option></select><button type="button" class="refresh-orders-button" onclick="manageEquipmentCategory()">Manage Categories</button><select id="equipment-filter-status" aria-label="Filter equipment status" onchange="renderEquipmentTable()"><option value="">All statuses</option><option value="In Use">In Use</option><option value="Retired">Retired</option></select><button type="button" class="refresh-orders-button" onclick="exportEquipmentCSV()">↓ Export CSV</button><button type="button" class="checkout-button" onclick="document.getElementById('equipment-name').focus()">＋ Add Equipment</button></div>
+                <div class="equipment-toolbar"><select id="equipment-filter-category" aria-label="Filter equipment category" onchange="renderEquipmentTable()"><option value="">All categories</option></select><button type="button" class="checkout-button" onclick="addEquipmentCategory()">＋ Add Category</button><button type="button" class="refresh-orders-button" onclick="manageEquipmentCategory()">Rename Category</button><select id="equipment-filter-status" aria-label="Filter equipment status" onchange="renderEquipmentTable()"><option value="">All statuses</option><option value="In Use">In Use</option><option value="Retired">Retired</option></select><button type="button" class="refresh-orders-button" onclick="exportEquipmentCSV()">↓ Export CSV</button><button type="button" class="checkout-button" onclick="document.getElementById('equipment-name').focus()">＋ Add Equipment</button></div>
                 <div class="equipment-summary-grid"><div class="equipment-summary-card"><div class="stat-label">TOTAL EQUIPMENT VALUE</div><div class="equipment-summary-value" id="equipment-total-value">฿0.00</div><div class="placeholder-note" id="equipment-total-count">0 items</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE VALUE</div><div class="equipment-summary-value" id="equipment-inuse-value">฿0.00</div><div class="placeholder-note" id="equipment-inuse-count">0 items in use</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE − RETIRED</div><div class="equipment-summary-value" id="equipment-retired-value">฿0.00</div><div class="placeholder-note" id="equipment-retired-count">0 retired items · ฿0.00</div></div></div>
                 <div style="overflow-x:auto;margin-top:12px"><table class="inventory-table equipment-table" style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Equipment</th><th style="text-align:left">Acquired</th><th style="text-align:left">Category</th><th style="text-align:right">Qty</th><th style="text-align:left">Status</th><th style="text-align:left">Condition</th><th style="text-align:left">Location</th><th style="text-align:right">Unit price</th><th style="text-align:right">Total value</th><th>Actions</th></tr></thead><tbody id="equipment-list"><tr><td colspan="10">Loading equipment...</td></tr></tbody></table></div><div id="equipment-list-message" class="placeholder-note" style="margin-top:10px"></div>
               </div>
@@ -2787,6 +2787,37 @@ ${errorText}`
     document.getElementById("equipment-filter-category").innerHTML = '<option value="">All categories</option>' + names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
     if (names.includes(currentCategory)) document.getElementById("equipment-category").value = currentCategory;
     if (names.includes(currentFilter)) document.getElementById("equipment-filter-category").value = currentFilter;
+  }
+
+  async function addEquipmentCategory() {
+    const name = prompt("Enter the new equipment category name:");
+    if (!name || !name.trim()) return;
+    const clean = name.trim().replace(/\s+/g, " ");
+    if (equipmentCategories.some(x => x.toLowerCase() === clean.toLowerCase())) {
+      alert(`“${clean}” already exists. Choose it from the Category dropdown.`);
+      return;
+    }
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json", Prefer: "return=representation" }),
+        body: JSON.stringify({ name: clean })
+      });
+      const raw = await response.text();
+      let result = null;
+      try { result = raw ? JSON.parse(raw) : null; } catch (_) {}
+      if (!response.ok) {
+        const detail = result?.message || result?.details || result?.hint || raw || `HTTP ${response.status}`;
+        throw new Error(detail);
+      }
+      await loadEquipment();
+      const categorySelect = document.getElementById("equipment-category");
+      if (categorySelect) categorySelect.value = clean;
+      alert(`Category “${clean}” added successfully.`);
+    } catch (error) {
+      console.error("Add equipment category failed:", error);
+      alert(`Could not add equipment category. ${error.message}\n\nIf this mentions permission/RLS, confirm you are signed in as the POS owner and that equipment_categories has the owner-only policy from your security setup.`);
+    }
   }
 
   async function manageEquipmentCategory() {
