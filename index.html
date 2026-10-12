@@ -746,8 +746,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <label>Delivery App Order Number</label>
           <input type="text" id="platform-order-number" placeholder="Optional for Direct orders">
           <label>Platform Fee (฿)</label>
-          <input type="number" id="platform-fee-input" min="0" step="0.01" value="0" placeholder="0.00">
-          <p class="placeholder-note">Enter the fee charged by Grab or LINE MAN for this order. Direct orders can stay at 0.</p>
+          <input type="number" id="platform-fee-input" min="0" step="0.01" value="0" readonly>
+          <p class="placeholder-note">Automatically estimated at 33% of the order subtotal for Grab / LINE MAN. Direct orders have no platform fee. Adjust PLATFORM_FEE_RATE in the script if your actual rate differs.</p>
           <label>Payment Method</label>
           <select id="payment-method"><option value="cash">Cash</option><option value="promptpay">PromptPay / Bank transfer</option><option value="grab_payment">Grab payment</option><option value="lineman_payment">LINE MAN payment</option></select>
           <h3 style="margin-top:25px">Current Order</h3>
@@ -780,7 +780,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
             <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
           </div>
           <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:1100px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Items</th><th style="padding:10px 8px;text-align:right">Subtotal</th><th style="padding:10px 8px;text-align:right">VAT</th><th style="padding:10px 8px;text-align:right">Delivery</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px;text-align:right">Fee</th><th style="padding:10px 8px;text-align:right">Net</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="10" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
           <p class="placeholder-note" style="margin-top:10px">The log loads the latest 1,000 orders available to your account. Use the date filters to narrow the results.</p>
         </section>
       </section>
@@ -1138,7 +1138,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     });
   }
 
+  const PLATFORM_FEE_RATE = 0.33;
   function getOrderSource() { return document.getElementById("order-source")?.value || "direct"; }
+  function updatePlatformFeePreview() {
+    const input = document.getElementById("platform-fee-input");
+    if (!input) return;
+    const source = getOrderSource();
+    const subtotal = typeof calculateTotal === "function" ? Number(calculateTotal() || 0) : 0;
+    input.value = (source === "grab" || source === "lineman") ? (subtotal * PLATFORM_FEE_RATE).toFixed(2) : "0.00";
+  }
 
   function getProductChannelPrice(product, source = getOrderSource()) {
     const field = source === "grab" ? "grab_price" : source === "lineman" ? "lineman_price" : "direct_price";
@@ -1157,6 +1165,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
       return { ...item, basePrice, unitPrice: basePrice + optionTotal };
     });
     if (typeof renderCart === "function") renderCart();
+    updatePlatformFeePreview();
     if (typeof loadProducts === "function") loadProducts();
   }
 
@@ -1302,11 +1311,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   // ==========================================
 // ORDER LOG: historical orders with search and filters
 let orderLogData = [];
+let orderLogItemsByOrder = new Map();
 async function loadOrderLog() {
   const body = document.getElementById("order-log-body");
   const summary = document.getElementById("order-log-summary");
   if (!body || !summary) return;
-  body.innerHTML = '<tr><td colspan="7" style="padding:14px 8px">Loading order log…</td></tr>';
+  body.innerHTML = '<tr><td colspan="10" style="padding:14px 8px">Loading order log…</td></tr>';
   summary.textContent = "Loading order log…";
   try {
     const params = new URLSearchParams({select:"*", order:"created_at.desc", limit:"1000"});
@@ -1318,10 +1328,24 @@ async function loadOrderLog() {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.message || data?.details || JSON.stringify(data));
     orderLogData = Array.isArray(data) ? data : [];
+    orderLogItemsByOrder = new Map();
+    const ids = orderLogData.map(o => Number(o.id)).filter(Number.isFinite);
+    for (let i = 0; i < ids.length; i += 100) {
+      const batch = ids.slice(i, i + 100);
+      if (!batch.length) continue;
+      const itemResponse = await fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_name,quantity,subtotal&order_id=in.(${batch.join(",")})&limit=10000`, {headers:authHeaders()});
+      const itemData = await itemResponse.json();
+      if (!itemResponse.ok) throw new Error(itemData?.message || itemData?.details || JSON.stringify(itemData));
+      (Array.isArray(itemData) ? itemData : []).forEach(item => {
+        const id = Number(item.order_id);
+        if (!orderLogItemsByOrder.has(id)) orderLogItemsByOrder.set(id, []);
+        orderLogItemsByOrder.get(id).push(item);
+      });
+    }
     renderOrderLog();
   } catch (error) {
     console.error("Order log error:", error);
-    body.innerHTML = `<tr><td colspan="7" style="padding:14px 8px;color:#b00020">Could not load order log: ${escapeHtml(error.message)}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="10" style="padding:14px 8px;color:#b00020">Could not load order log: ${escapeHtml(error.message)}</td></tr>`;
     summary.textContent = "Order log failed to load";
   }
 }
@@ -1333,19 +1357,28 @@ function renderOrderLog() {
   const statusFilter = document.getElementById("order-log-status")?.value || "";
   const money = n => `฿${Number(n || 0).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const safe = v => escapeHtml(String(v ?? ""));
+  const feeOf = o => Number(o.platform_fee ?? 0);
   const filtered = orderLogData.filter(o => {
     const status = String(o.status || "new").toLowerCase();
     const searchable = [o.order_number,o.customer_name,o.platform_order_number,o.order_source,o.source,o.order_type,o.id].map(v => String(v ?? "").toLowerCase()).join(" ");
     return (!statusFilter || status === statusFilter) && (!search || searchable.includes(search));
   });
   const total = filtered.reduce((sum,o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
-  summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Total ฿${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-  if (!filtered.length) { body.innerHTML = '<tr><td colspan="7" style="padding:14px 8px">No orders match these filters.</td></tr>'; return; }
+  summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Total ${money(total)}`;
+  if (!filtered.length) { body.innerHTML = '<tr><td colspan="10" style="padding:14px 8px">No orders match these filters.</td></tr>'; return; }
   body.innerHTML = filtered.map(o => {
-    const date = o.created_at ? new Date(o.created_at).toLocaleString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
-    const status = String(o.status || "new").toLowerCase();
-    const source = o.order_source || o.source || o.order_type || "—";
-    return `<tr style="border-top:1px solid var(--line)"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px">${safe(o.order_number || `#${o.id}`)}<div style="font-size:11px;color:var(--muted)">ID ${safe(o.id)}</div></td><td style="padding:10px 8px">${safe(o.customer_name || "—")}</td><td style="padding:10px 8px">${safe(source)}</td><td style="padding:10px 8px">${safe(status.replaceAll("_"," "))}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(o.total ?? o.subtotal)}</td><td style="padding:10px 8px"><button class="refresh-orders-button" onclick="showOrderDetails(${Number(o.id)})">View</button></td></tr>`;
+    const date = o.created_at ? new Date(o.created_at).toLocaleDateString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric"}) : "—";
+    const source = String(o.order_source || o.source || o.order_type || "direct").toLowerCase();
+    const items = orderLogItemsByOrder.get(Number(o.id)) || [];
+    const itemText = items.length ? items.map(i => `${i.product_name || "Item"} ×${Number(i.quantity || 0)}`).join(", ") : "—";
+    const subtotal = Number(o.subtotal ?? 0);
+    const vat = Number(o.vat_amount ?? o.vat ?? o.tax_amount ?? o.tax ?? 0);
+    const delivery = Number(o.delivery_fee ?? 0);
+    const orderTotal = Number(o.total ?? (subtotal + vat + delivery));
+    // Older orders may have platform_fee=0 because fee was not calculated at checkout.
+    const fee = Number(o.platform_fee ?? 0);
+    const net = orderTotal - fee;
+    return `<tr style="border-top:1px solid var(--line)"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px;white-space:nowrap">${safe(o.order_number || `#${o.id}`)}</td><td style="padding:10px 8px;min-width:180px">${safe(itemText)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(subtotal)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(vat)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(delivery)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(orderTotal)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(fee)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap;font-weight:700">${money(net)}</td><td style="padding:10px 8px"><button class="refresh-orders-button" onclick="showOrderDetails(${Number(o.id)})">View</button></td></tr>`;
   }).join("");
 }
 
@@ -2212,6 +2245,7 @@ async function openProductModal(product) {
     `;
 
     totalElement.textContent = "฿0.00";
+    updatePlatformFeePreview();
 
     checkoutButton.disabled = true;
 
