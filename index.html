@@ -877,15 +877,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
             </div>
           </section>
           <section class="inventory-panel" id="stock-movement-section" style="margin-top:20px">
-            <div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">Restocks from Purchase History and estimated ingredient usage from recorded orders.</p></div><button type="button" class="refresh-orders-button" onclick="loadStockMovements()">↻ Refresh movements</button></div>
+            <div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">A permanent ledger of actual stock changes: purchases, order usage, opening balances, and manual corrections.</p></div><button type="button" class="refresh-orders-button" onclick="loadStockMovements()">↻ Refresh movements</button></div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
               <label>From date<input id="movement-from" type="date" onchange="loadStockMovements()"></label>
               <label>To date<input id="movement-to" type="date" onchange="loadStockMovements()"></label>
-              <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="Restock">Restock</option><option value="Sale usage">Sale usage</option></select></label>
+              <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
             </div>
             <div id="stock-movement-summary" class="orders-summary" style="margin-bottom:12px">Loading stock movements…</div>
             <div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="6">Loading stock movements…</td></tr></tbody></table></div>
-            <p class="placeholder-note" style="margin-top:10px">Sale usage is estimated from order items and saved recipes; cancelled/refunded orders are excluded. Manual stock corrections are not recorded as movements unless separately logged.</p>
+            <p class="placeholder-note" style="margin-top:10px">Each row is recorded when stock changes. Historical movements begin after the ledger migration; older transactions are not reconstructed or deducted again.</p>
           </section>
         </section>
       </section>
@@ -2798,37 +2798,43 @@ ${errorText}`
     const body = document.getElementById("stock-movement-body");
     const summary = document.getElementById("stock-movement-summary");
     if (!body || !summary) return;
-    body.innerHTML = '<tr><td colspan="6">Loading stock movements…</td></tr>'; summary.textContent = "Loading stock movements…";
+    body.innerHTML = '<tr><td colspan="6">Loading stock movements…</td></tr>';
+    summary.textContent = "Loading stock movements…";
     try {
       const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}` };
-      const [purchasesRes, ordersRes, itemsRes, recipesRes, ingredientsRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/purchases?select=id,ingredient_id,quantity,purchase_date,created_at,supplier,notes&order=created_at.desc&limit=1000`, {headers}),
-        fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,order_number,created_at,status,stock_deducted&order=created_at.desc&limit=1000`, {headers}),
-        fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_id,quantity&limit=5000`, {headers}),
-        fetch(`${SUPABASE_URL}/rest/v1/recipes?select=product_id,ingredient_id,quantity`, {headers}),
+      const [movementRes, ingredientsRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/stock_movements?select=id,ingredient_id,movement_type,quantity_delta,stock_before,stock_after,reference_type,reference_id,notes,created_at&order=created_at.desc&limit=5000`, {headers}),
         fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,name,unit`, {headers})
       ]);
-      const responses = await Promise.all([purchasesRes,ordersRes,itemsRes,recipesRes,ingredientsRes]);
-      const payloads = await Promise.all(responses.map(async r => ({ok:r.ok,status:r.status,data:await r.json()})));
-      const failed = payloads.find(x=>!x.ok); if (failed) throw new Error(failed.data?.message || `Stock movement request failed (HTTP ${failed.status})`);
-      const [purchases,orders,orderItems,recipes,ingredients] = payloads.map(x=>x.data);
-      const ingredientMap = new Map(ingredients.map(i=>[Number(i.id),i]));
-      const orderMap = new Map(orders.map(o=>[Number(o.id),o]));
-      const recipeMap = new Map(); recipes.forEach(r=>{const key=Number(r.product_id); if(!recipeMap.has(key)) recipeMap.set(key,[]); recipeMap.get(key).push(r);});
-      const rows = purchases.map(p=>({date:p.created_at || p.purchase_date,ingredientId:Number(p.ingredient_id),type:"Restock",quantity:Number(p.quantity||0),reference:`Purchase #${p.id}`,notes:[p.supplier,p.notes].filter(Boolean).join(" · ") || "Ingredient purchase"}));
-      orderItems.forEach(item=>{const order=orderMap.get(Number(item.order_id)); if(!order || ["cancelled","refunded"].includes(String(order.status||"").toLowerCase())) return; const recipeLines=recipeMap.get(Number(item.product_id))||[]; recipeLines.forEach(line=>{rows.push({date:order.created_at,ingredientId:Number(line.ingredient_id),type:"Sale usage",quantity:-1*Number(line.quantity||0)*Number(item.quantity||0),reference:`Order ${order.order_number || `#${order.id}`}`,notes:`Estimated recipe usage · ${Number(item.quantity||0)} cup(s)`});});});
-      stockMovementRows = rows.map(r=>({...r,ingredient:ingredientMap.get(r.ingredientId)})).filter(r=>r.ingredient).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+      const movementData = await movementRes.json();
+      const ingredientData = await ingredientsRes.json();
+      if (!movementRes.ok) throw new Error(movementData?.message || `Stock ledger request failed (HTTP ${movementRes.status}). Run the stock ledger SQL migration first.`);
+      if (!ingredientsRes.ok) throw new Error(ingredientData?.message || `Ingredient request failed (HTTP ${ingredientsRes.status})`);
+      const ingredientMap = new Map(ingredientData.map(i => [Number(i.id), i]));
+      const labels = {purchase:"Purchase / Restock", sale_usage:"Order usage", manual_adjustment:"Manual adjustment", opening_balance:"Opening balance"};
+      stockMovementRows = movementData.map(m => ({
+        id:m.id, date:m.created_at, ingredientId:Number(m.ingredient_id),
+        type:m.movement_type, label:labels[m.movement_type] || m.movement_type,
+        quantity:Number(m.quantity_delta || 0), before:m.stock_before, after:m.stock_after,
+        reference:[m.reference_type, m.reference_id].filter(Boolean).join(" #") || "—",
+        notes:m.notes || "—", ingredient:ingredientMap.get(Number(m.ingredient_id))
+      })).filter(m => m.ingredient).sort((a,b) => new Date(b.date || 0)-new Date(a.date || 0));
       renderStockMovements();
-    } catch(error) { body.innerHTML=`<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`; summary.textContent="Could not load stock movements."; console.error("Stock movement load error:",error); }
+    } catch(error) {
+      body.innerHTML=`<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
+      summary.textContent="Could not load stock movements.";
+      console.error("Stock movement load error:",error);
+    }
   }
   function renderStockMovements() {
-    const body=document.getElementById("stock-movement-body"), summary=document.getElementById("stock-movement-summary"); if(!body||!summary)return;
+    const body=document.getElementById("stock-movement-body"), summary=document.getElementById("stock-movement-summary");
+    if(!body||!summary)return;
     const from=document.getElementById("movement-from")?.value || "", to=document.getElementById("movement-to")?.value || "", type=document.getElementById("movement-type")?.value || "";
     const rows=stockMovementRows.filter(r=>{const d=String(r.date||"").slice(0,10);return (!from||d>=from)&&(!to||d<=to)&&(!type||r.type===type);});
-    const restocks=rows.filter(r=>r.type==="Restock").length, usages=rows.filter(r=>r.type==="Sale usage").length;
-    summary.innerHTML=`<span>${rows.length.toLocaleString()} movements</span><span>${restocks} restocks</span><span>${usages} sale-usage lines</span>`;
-    if(!rows.length){body.innerHTML='<tr><td colspan="6">No stock movements for these filters.</td></tr>';return;}
-    body.innerHTML=rows.slice(0,1000).map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.type)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}</td></tr>`).join("");
+    const purchases=rows.filter(r=>r.type==="purchase").length, usage=rows.filter(r=>r.type==="sale_usage").length, adjustments=rows.filter(r=>r.type==="manual_adjustment").length;
+    summary.innerHTML=`<span>${rows.length.toLocaleString()} recorded movements</span><span>${purchases} purchases</span><span>${usage} order-usage lines</span><span>${adjustments} adjustments</span>`;
+    if(!rows.length){body.innerHTML='<tr><td colspan="6">No recorded movements for these filters.</td></tr>';return;}
+    body.innerHTML=rows.slice(0,1000).map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.label)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}${r.before!==null&&r.before!==undefined?`<div style="color:#777;font-size:12px">${Number(r.before).toLocaleString()} → ${Number(r.after).toLocaleString()}</div>`:""}</td></tr>`).join("");
   }
 
   async function loadInventory() {
@@ -2957,9 +2963,16 @@ ${errorText}`
     const button = document.getElementById("ingredient-save-button"); button.disabled = true;
     message.style.color = "#555"; message.textContent = "Saving ingredient…";
     try {
+      const existingIngredient = editId ? inventoryIngredients.find(i => Number(i.id) === Number(editId)) : null;
+      let adjustmentNote = null;
+      if (existingIngredient && Number(existingIngredient.current_stock || 0) !== stock) {
+        adjustmentNote = prompt(`Stock will change from ${existingIngredient.current_stock} to ${stock} ${existingIngredient.unit}. Enter the reason for this stock adjustment:`, "Physical stock count");
+        if (adjustmentNote === null) { message.style.color = "#555"; message.textContent = "Stock adjustment cancelled."; return; }
+        if (!adjustmentNote.trim()) { message.style.color = "#b00020"; message.textContent = "Please enter a reason for the stock adjustment."; return; }
+      }
       const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_inventory_ingredient`, {
         method:"POST", headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${getAccessToken()}`,"Content-Type":"application/json"},
-        body:JSON.stringify({p_ingredient_id:editId ? Number(editId) : null,p_name:name,p_unit:unit,p_minimum_stock:minimum,p_current_stock:stock,p_category:category})
+        body:JSON.stringify({p_ingredient_id:editId ? Number(editId) : null,p_name:name,p_unit:unit,p_minimum_stock:minimum,p_current_stock:stock,p_category:category,p_adjustment_note:adjustmentNote})
       });
       const result = await response.json(); if (!response.ok) throw new Error(result?.message || result?.details || JSON.stringify(result));
       message.style.color = "#18794e"; message.textContent = editId ? "Ingredient updated successfully." : "Ingredient added successfully.";
