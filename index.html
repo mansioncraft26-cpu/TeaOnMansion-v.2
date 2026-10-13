@@ -645,15 +645,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 
 
 
-    /* Display-only inventory grouping; does not alter stock data or calculations */
-    .inventory-table .inventory-category-row td{
-      background:#e7e5e1!important;color:#171717;font-size:10px;font-weight:800;
-      letter-spacing:.12em;text-transform:uppercase;padding:10px 12px!important;
-      border-bottom:1px solid var(--mc-line)!important;
-    }
-    .inventory-category-count{float:right;color:#777;font-size:10px;font-weight:550;letter-spacing:0;text-transform:none}
-    .inventory-table tr.inventory-category-row+tr td{border-top:0!important}
-
+/* Recipe editor usability: custom menu categories + compact recipe breakdowns */
+.recipe-category-control{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;grid-column:1/-1}
+.recipe-category-control #recipe-product-category-custom{width:100%;grid-column:1/-1}
+#margins-page #recipe-breakdowns{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;align-items:start;margin-top:14px!important}
+#margins-page #recipe-breakdowns .stat-card{padding:13px!important;margin:0!important;min-width:0}
+#margins-page #recipe-breakdowns h3{font-size:14px!important;line-height:1.35;margin:0 0 9px!important}
+#margins-page #recipe-breakdowns table{font-size:11px!important}
+#margins-page #recipe-breakdowns th{font-size:9px!important;text-transform:uppercase;letter-spacing:.04em;color:#666;white-space:nowrap}
+#margins-page #recipe-breakdowns td{padding:6px 7px!important;line-height:1.35}
+#margins-page #recipe-breakdowns p{font-size:11px!important;line-height:1.5;margin-top:9px!important}
+@media(max-width:650px){#margins-page #recipe-breakdowns{grid-template-columns:1fr}.recipe-category-control{grid-column:1}}
 </style></head>
 
 <body>
@@ -951,7 +953,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <div><label for="recipe-product-lineman-price">LINE MAN price (฿)</label><input id="recipe-product-lineman-price" type="number" min="0.01" step="0.01" required></div>
             </div>
             <p class="placeholder-note">Set each channel's price manually. Direct price remains the default base price for costing and existing product compatibility.</p>
-            <label for="recipe-product-category">Menu category</label><select id="recipe-product-category" required><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha & Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option></select>
+            <label for="recipe-product-category">Menu category</label><div class="recipe-category-control"><select id="recipe-product-category" required><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha & Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option><option value="__custom__">＋ Add a new category…</option></select><input id="recipe-product-category-custom" type="text" maxlength="60" placeholder="Type new menu category" style="display:none" aria-label="New menu category"></div>
             <p class="placeholder-note">Choose the menu category used to group this item in Menu Margin Table.</p>
             <div id="recipe-editor-lines"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button type="button" class="refresh-orders-button" onclick="addRecipeEditorLine()">+ Add ingredient</button><button type="submit" class="checkout-button" id="recipe-save-button">Save product & recipe</button></div>
@@ -3087,31 +3089,14 @@ ${errorText}`
       return matchesCategory && matchesStatus && matchesQuery;
     });
     list.innerHTML = "";
-    if (!rows.length) {
-      list.innerHTML = '<tr><td colspan="7">No ingredients in this category.</td></tr>';
-    } else {
-      // Display-only grouping: the underlying inventory data and stock logic are unchanged.
-      const grouped = new Map();
-      rows.forEach(ingredient => {
-        const category = ingredient.category || "Uncategorized";
-        if (!grouped.has(category)) grouped.set(category, []);
-        grouped.get(category).push(ingredient);
-      });
-      [...grouped.keys()].sort((a, b) => a.localeCompare(b)).forEach(category => {
-        const categoryItems = grouped.get(category).sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-        const groupRow = document.createElement("tr");
-        groupRow.className = "inventory-category-row";
-        groupRow.innerHTML = `<td colspan="7"><span>${escapeHtml(category)}</span><span class="inventory-category-count">${categoryItems.length} items</span></td>`;
-        list.appendChild(groupRow);
-        categoryItems.forEach(ingredient => {
-          const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
-          const tr = document.createElement("tr");
-          const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
-          tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${maximum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
-          list.appendChild(tr);
-        });
-      });
-    }
+    if (!rows.length) list.innerHTML = '<tr><td colspan="7">No ingredients in this category.</td></tr>';
+    rows.forEach(ingredient => {
+      const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
+      const tr = document.createElement("tr");
+      const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
+      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${maximum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
+      list.appendChild(tr);
+    });
     const allLow = inventoryIngredients.filter(inventoryIsLow).length;
     summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
   }
@@ -3737,8 +3722,16 @@ ${errorText}`
     const select = document.getElementById("recipe-product");
     select.innerHTML = '<option value="">Select product…</option><option value="new">+ New product</option>' + recipeEditorProducts.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || p.product_name || `Product #${p.id}`)}</option>`).join("");
     const categorySelect = document.getElementById("recipe-product-category");
+    const customCategoryInput = document.getElementById("recipe-product-category-custom");
     const knownCategories = [...new Set(["Coffee", "Matcha & Tea", "Non-coffee", "Other", ...recipeEditorProducts.map(p => p.category).filter(Boolean)])];
-    categorySelect.innerHTML = '<option value="">Select category…</option>' + knownCategories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    categorySelect.innerHTML = '<option value="">Select category…</option>' + knownCategories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("") + '<option value="__custom__">＋ Add a new category…</option>';
+    const syncCustomCategory = () => {
+      const isCustom = categorySelect.value === "__custom__";
+      customCategoryInput.style.display = isCustom ? "block" : "none";
+      customCategoryInput.required = isCustom;
+      if (!isCustom) customCategoryInput.value = "";
+    };
+    categorySelect.onchange = syncCustomCategory;
     select.onchange = () => {
       const linesWrap = document.getElementById("recipe-editor-lines"); linesWrap.innerHTML = "";
       if (select.value === "new") {
@@ -3747,6 +3740,7 @@ ${errorText}`
         document.getElementById("recipe-product-grab-price").value = "";
         document.getElementById("recipe-product-lineman-price").value = "";
         categorySelect.value = "";
+        customCategoryInput.value = ""; syncCustomCategory();
         addRecipeEditorLine(); return;
       }
       const product = recipeEditorProducts.find(p => Number(p.id) === Number(select.value));
@@ -3756,7 +3750,13 @@ ${errorText}`
       document.getElementById("recipe-product-price").value = directPrice;
       document.getElementById("recipe-product-grab-price").value = Number(product.grab_price ?? directPrice);
       document.getElementById("recipe-product-lineman-price").value = Number(product.lineman_price ?? directPrice);
-      categorySelect.value = product.category || "";
+      const existingCategory = product.category || "";
+      if (existingCategory && ![...categorySelect.options].some(o => o.value === existingCategory)) {
+        const option = document.createElement("option"); option.value = existingCategory; option.textContent = existingCategory;
+        categorySelect.insertBefore(option, categorySelect.querySelector('option[value="__custom__"]'));
+      }
+      categorySelect.value = existingCategory;
+      customCategoryInput.value = ""; syncCustomCategory();
       const lines = recipes.filter(r => Number(r.product_id) === Number(product.id));
       if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity)); else addRecipeEditorLine();
     };
@@ -3784,10 +3784,11 @@ ${errorText}`
     const price = Number(document.getElementById("recipe-product-price").value);
     const grabPrice = Number(document.getElementById("recipe-product-grab-price").value);
     const linemanPrice = Number(document.getElementById("recipe-product-lineman-price").value);
-    const category = document.getElementById("recipe-product-category").value;
+    const categoryChoice = document.getElementById("recipe-product-category").value;
+    const category = categoryChoice === "__custom__" ? document.getElementById("recipe-product-category-custom").value.trim() : categoryChoice;
     const rows = [...document.querySelectorAll(".recipe-editor-row")];
     const recipe = rows.map(row => ({ ingredient_id: Number(row.querySelector(".recipe-line-ingredient").value), quantity: Number(row.querySelector(".recipe-line-quantity").value) }));
-    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || grabPrice <= 0 || linemanPrice <= 0 || !category || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
+    if ((selectedProduct !== "new" && !productId) || !selectedProduct || !name || price <= 0 || grabPrice <= 0 || linemanPrice <= 0 || !category || categoryChoice === "__custom__" && !category.trim() || !recipe.length || recipe.some(r => !r.ingredient_id || r.quantity <= 0) || new Set(recipe.map(r => r.ingredient_id)).size !== recipe.length) {
       message.style.color = "#b00020";
       message.textContent = "Select a product and menu category, enter a valid name and price, and add unique ingredients with positive quantities.";
       return;
