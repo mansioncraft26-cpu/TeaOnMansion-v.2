@@ -644,6 +644,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 @media(max-width:390px){#products{grid-template-columns:1fr 1fr}.product-card-image{height:82px}.add-order-header p{max-width:260px}}
 
 
+
+    /* Display-only inventory grouping; does not alter stock data or calculations */
+    .inventory-table .inventory-category-row td{
+      background:#e7e5e1!important;color:#171717;font-size:10px;font-weight:800;
+      letter-spacing:.12em;text-transform:uppercase;padding:10px 12px!important;
+      border-bottom:1px solid var(--mc-line)!important;
+    }
+    .inventory-category-count{float:right;color:#777;font-size:10px;font-weight:550;letter-spacing:0;text-transform:none}
+    .inventory-table tr.inventory-category-row+tr td{border-top:0!important}
+
 </style></head>
 
 <body>
@@ -3077,14 +3087,31 @@ ${errorText}`
       return matchesCategory && matchesStatus && matchesQuery;
     });
     list.innerHTML = "";
-    if (!rows.length) list.innerHTML = '<tr><td colspan="7">No ingredients in this category.</td></tr>';
-    rows.forEach(ingredient => {
-      const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
-      const tr = document.createElement("tr");
-      const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
-      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${maximum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
-      list.appendChild(tr);
-    });
+    if (!rows.length) {
+      list.innerHTML = '<tr><td colspan="7">No ingredients in this category.</td></tr>';
+    } else {
+      // Display-only grouping: the underlying inventory data and stock logic are unchanged.
+      const grouped = new Map();
+      rows.forEach(ingredient => {
+        const category = ingredient.category || "Uncategorized";
+        if (!grouped.has(category)) grouped.set(category, []);
+        grouped.get(category).push(ingredient);
+      });
+      [...grouped.keys()].sort((a, b) => a.localeCompare(b)).forEach(category => {
+        const categoryItems = grouped.get(category).sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+        const groupRow = document.createElement("tr");
+        groupRow.className = "inventory-category-row";
+        groupRow.innerHTML = `<td colspan="7"><span>${escapeHtml(category)}</span><span class="inventory-category-count">${categoryItems.length} items</span></td>`;
+        list.appendChild(groupRow);
+        categoryItems.forEach(ingredient => {
+          const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
+          const tr = document.createElement("tr");
+          const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
+          tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${maximum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
+          list.appendChild(tr);
+        });
+      });
+    }
     const allLow = inventoryIngredients.filter(inventoryIsLow).length;
     summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
   }
