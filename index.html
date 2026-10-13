@@ -712,14 +712,26 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 
     <div class="page-content">
       <section class="page active" id="dashboard-page">
-        <div class="placeholder-note" style="margin-bottom:10px">Today's performance · Revenue and profit are calculated from today's orders. Profit is estimated from saved recipes and current ingredient costs.</div>
+        <div class="section" style="margin-bottom:14px;padding:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <label style="margin:0;min-width:180px">Dashboard period
+            <select id="dashboard-period" onchange="onDashboardPeriodChange()" style="margin-top:5px">
+              <option value="all">All-time · Since opening</option>
+              <option value="month">Selected month</option>
+            </select>
+          </label>
+          <label id="dashboard-month-wrap" style="margin:0;min-width:160px;display:none">Month
+            <input type="month" id="dashboard-month" onchange="onDashboardPeriodChange()" style="margin-top:5px" />
+          </label>
+          <span class="placeholder-note" id="dashboard-period-caption" style="margin:0">All recorded sales since opening day, excluding cancelled/refunded orders.</span>
+        </div>
+        <div class="placeholder-note" style="margin-bottom:10px">Revenue and order counts use the selected period. Profit is an estimate based on saved recipes and current ingredient costs; it excludes packaging, labor, rent, and other overhead.</div>
         <div class="stat-grid dashboard-financial-grid">
           <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value" id="dashboard-revenue">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Net to Cafe</div><div class="stat-value" id="dashboard-net">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Profit (After Cost)</div><div class="stat-value" id="dashboard-profit">฿0.00</div></div>
           <div class="stat-card"><div class="stat-label">Platform Fees</div><div class="stat-value" id="dashboard-fees">฿0.00</div></div>
-          <div class="stat-card"><div class="stat-label">Total Orders Today</div><div class="stat-value" id="dashboard-order-count">Loading…</div></div>
-          <div class="stat-card"><div class="stat-label">Cups Sold Today</div><div class="stat-value" id="dashboard-cup-count">Loading…</div></div>
+          <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="dashboard-order-count">Loading…</div></div>
+          <div class="stat-card"><div class="stat-label">Cups Sold</div><div class="stat-value" id="dashboard-cup-count">Loading…</div></div>
           <div class="stat-card"><div class="stat-label">Database</div><div class="stat-value" style="font-size:18px" id="dashboard-db-status">Connecting…</div></div>
         </div>
         <div class="page-grid" style="margin-top:22px">
@@ -3416,7 +3428,28 @@ ${errorText}`
     }
   }
 
-  async function loadDashboardStats(ordersArg) {
+  function dashboardPeriodBounds() {
+    const period = document.getElementById("dashboard-period")?.value || "all";
+    const selectedMonth = document.getElementById("dashboard-month")?.value;
+    if (period !== "month" || !/^\d{4}-\d{2}$/.test(selectedMonth || "")) return {period:"all", month:null, start:null, end:null};
+    const [year, month] = selectedMonth.split("-").map(Number);
+    return {period:"month", month:selectedMonth, start:new Date(`${selectedMonth}-01T00:00:00+07:00`), end:new Date(`${year + (month === 12 ? 1 : 0)}-${String(month === 12 ? 1 : month + 1).padStart(2,"0")}-01T00:00:00+07:00`)};
+  }
+
+  function onDashboardPeriodChange() {
+    const period = document.getElementById("dashboard-period")?.value || "all";
+    const monthWrap = document.getElementById("dashboard-month-wrap");
+    const monthInput = document.getElementById("dashboard-month");
+    if (monthWrap) monthWrap.style.display = period === "month" ? "block" : "none";
+    if (monthInput && !monthInput.value) monthInput.value = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit"}).format(new Date());
+    const bounds = dashboardPeriodBounds();
+    const caption = document.getElementById("dashboard-period-caption");
+    if (caption) caption.textContent = bounds.period === "month" ? `Sales for ${bounds.month}, excluding cancelled/refunded orders.` : "All recorded sales since opening day, excluding cancelled/refunded orders.";
+    loadDashboardStats();
+    loadSalesAnalytics();
+  }
+
+  async function loadDashboardStats() {
     const count = document.getElementById("dashboard-order-count");
     const cupCount = document.getElementById("dashboard-cup-count");
     const revenueEl = document.getElementById("dashboard-revenue");
@@ -3426,67 +3459,59 @@ ${errorText}`
     if (!count || !cupCount || !revenueEl || !netEl || !profitEl || !feesEl) return;
     const money = value => `฿${Number(value || 0).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
     try {
-      let orders = ordersArg;
-      if (!Array.isArray(orders)) {
-        const now = new Date();
-        const thailandDate = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit",day:"2-digit"}).format(now);
-        const start = new Date(`${thailandDate}T00:00:00+07:00`);
-        const end = new Date(start.getTime() + 86400000);
-        const orderResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&created_at=gte.${encodeURIComponent(start.toISOString())}&created_at=lt.${encodeURIComponent(end.toISOString())}&order=created_at.desc`, {headers: authHeaders()});
-        const orderData = await orderResponse.json();
-        if (!orderResponse.ok) throw new Error(orderData?.message || JSON.stringify(orderData));
-        orders = orderData;
-      }
-      // Cancelled/refunded orders are not treated as revenue.
+      const bounds = dashboardPeriodBounds();
+      let url = `${SUPABASE_URL}/rest/v1/orders?select=*&order=created_at.asc&limit=10000`;
+      if (bounds.period === "month") url += `&created_at=gte.${encodeURIComponent(bounds.start.toISOString())}&created_at=lt.${encodeURIComponent(bounds.end.toISOString())}`;
+      const orderResponse = await fetch(url, {headers:authHeaders()});
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) throw new Error(orderData?.message || JSON.stringify(orderData));
+      const orders = Array.isArray(orderData) ? orderData : [];
       const revenueOrders = orders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
       const revenue = revenueOrders.reduce((sum, o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
-      const fees = revenueOrders.reduce((sum, o) => sum + Number(o.platform_fee || 0), 0);
+      const fees = revenueOrders.reduce((sum, o) => sum + Number(o.platform_fee || 0) + Number(o.vat_amount ?? o.vat ?? o.tax_amount ?? o.tax ?? 0), 0);
       const net = revenue - fees;
-      count.textContent = `${orders.length} ${orders.length === 1 ? "order" : "orders"}`;
+      count.textContent = `${revenueOrders.length.toLocaleString("en-US")} ${revenueOrders.length === 1 ? "order" : "orders"}`;
       cupCount.textContent = "Calculating…";
       revenueEl.textContent = money(revenue);
       feesEl.textContent = money(fees);
       netEl.textContent = money(net);
       profitEl.textContent = "Calculating…";
       if (!revenueOrders.length) { cupCount.textContent = "0 cups"; profitEl.textContent = money(0); return; }
-
       const ids = revenueOrders.map(o => Number(o.id)).filter(Number.isFinite);
       if (!ids.length) { profitEl.textContent = "—"; return; }
       const headers = authHeaders();
-      const [itemsResponse, recipesResponse, ingredientsResponse] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_id,quantity&order_id=in.(${ids.join(",")})`, {headers}),
+      let items = [];
+      for (let i=0; i<ids.length; i+=150) {
+        const batch = ids.slice(i,i+150);
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/order_items?select=order_id,product_id,quantity&order_id=in.(${batch.join(",")})&limit=10000`, {headers});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.message || JSON.stringify(data));
+        items = items.concat(Array.isArray(data) ? data : []);
+      }
+      const [recipesResponse, ingredientsResponse] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/recipes?select=product_id,ingredient_id,quantity`, {headers}),
         fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=id,cost_per_unit,is_active`, {headers})
       ]);
-      const [items, recipes, ingredients] = await Promise.all([itemsResponse.json(), recipesResponse.json(), ingredientsResponse.json()]);
-      if (!itemsResponse.ok) throw new Error(items?.message || JSON.stringify(items));
+      const [recipes, ingredients] = await Promise.all([recipesResponse.json(), ingredientsResponse.json()]);
       if (!recipesResponse.ok) throw new Error(recipes?.message || JSON.stringify(recipes));
       if (!ingredientsResponse.ok) throw new Error(ingredients?.message || JSON.stringify(ingredients));
       const cupsSold = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-      cupCount.textContent = `${cupsSold.toLocaleString("en-US", {maximumFractionDigits: 2})} ${cupsSold === 1 ? "cup" : "cups"}`;
+      cupCount.textContent = `${cupsSold.toLocaleString("en-US", {maximumFractionDigits:2})} ${cupsSold === 1 ? "cup" : "cups"}`;
       const ingredientCosts = new Map(ingredients.filter(i => i.is_active !== false).map(i => [Number(i.id), Number(i.cost_per_unit || 0)]));
       const recipesByProduct = new Map();
       recipes.forEach(r => { const key = Number(r.product_id); if (!recipesByProduct.has(key)) recipesByProduct.set(key, []); recipesByProduct.get(key).push(r); });
-      let ingredientCostTotal = 0;
-      let missingRecipe = false;
+      let ingredientCostTotal = 0, missingRecipe = false;
       items.forEach(item => {
         const recipe = recipesByProduct.get(Number(item.product_id)) || [];
         if (!recipe.length) { missingRecipe = true; return; }
-        const qty = Number(item.quantity || 0);
-        recipe.forEach(r => {
-          const iid = Number(r.ingredient_id);
-          if (!ingredientCosts.has(iid)) { missingRecipe = true; return; }
-          ingredientCostTotal += Number(r.quantity || 0) * ingredientCosts.get(iid) * qty;
-        });
+        recipe.forEach(r => { const iid=Number(r.ingredient_id); if (!ingredientCosts.has(iid)) { missingRecipe=true; return; } ingredientCostTotal += Number(r.quantity || 0) * ingredientCosts.get(iid) * Number(item.quantity || 0); });
       });
       profitEl.textContent = money(net - ingredientCostTotal) + (missingRecipe ? "*" : "");
-      profitEl.title = missingRecipe ? "Estimated profit: some sold products do not have complete recipes/current ingredient costs, so the actual profit may be lower." : "Estimated profit after platform fees and recipe-based ingredient cost; excludes packaging, labor, rent, and other overhead.";
+      profitEl.title = missingRecipe ? "Estimated profit: some sold products do not have complete recipes/current ingredient costs, so the actual profit may be lower." : "Estimated profit after fees and recipe-based ingredient cost; excludes packaging, labor, rent, and other overhead.";
     } catch (error) {
       console.error("Dashboard metrics error:", error);
-      revenueEl.textContent = "—";
-      netEl.textContent = "—";
-      profitEl.textContent = "—";
-      feesEl.textContent = "—";
+      count.textContent = cupCount.textContent = "—";
+      revenueEl.textContent = netEl.textContent = profitEl.textContent = feesEl.textContent = "—";
     }
   }
 
@@ -3512,12 +3537,16 @@ ${errorText}`
       topBody.innerHTML = '<tr><td colspan="3" style="padding:12px 8px">Loading…</td></tr>';
       reportBody.innerHTML = '<tr><td colspan="5" style="padding:12px 8px">Loading…</td></tr>';
       const headers = authHeaders();
-      const ordersResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&created_at=gte.${encodeURIComponent(start.toISOString())}&created_at=lt.${encodeURIComponent(end.toISOString())}&order=created_at.desc&limit=5000`, {headers});
+      const ordersResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&order=created_at.desc&limit=10000`, {headers});
       const ordersData = await ordersResponse.json();
       if (!ordersResponse.ok) throw new Error(ordersData?.message || JSON.stringify(ordersData));
-      const orders = Array.isArray(ordersData) ? ordersData : [];
-      const validOrders = orders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
-      const ids = validOrders.map(o => Number(o.id)).filter(Number.isFinite);
+      const allOrders = Array.isArray(ordersData) ? ordersData : [];
+      const validAllOrders = allOrders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
+      const validOrders = validAllOrders.filter(o => { const d=new Date(o.created_at); return d >= start && d < end; });
+      const bounds = dashboardPeriodBounds();
+      const topOrders = bounds.period === "month" ? validAllOrders.filter(o => { const d=new Date(o.created_at); return d >= bounds.start && d < bounds.end; }) : validAllOrders;
+      if (topSubtitle) topSubtitle.textContent = bounds.period === "month" ? `Units sold in ${bounds.month} · excludes cancelled/refunded orders` : "All-time units sold since opening · excludes cancelled/refunded orders";
+      const ids = [...new Set([...validOrders, ...topOrders].map(o => Number(o.id)).filter(Number.isFinite))];
       let items = [];
       if (ids.length) {
         for (let i = 0; i < ids.length; i += 150) {
@@ -3544,7 +3573,7 @@ ${errorText}`
       const totals = monthTotals.reduce((a,m) => ({orders:a.orders+m.orders,gross:a.gross+m.gross,fees:a.fees+m.fees}), {orders:0,gross:0,fees:0});
       reportFoot.innerHTML = `<tr style="border-top:2px solid #b9b9b9;font-weight:700"><td style="padding:12px 8px">TOTAL</td><td style="padding:12px 8px;text-align:right">${totals.orders.toLocaleString("en-US")}</td><td style="padding:12px 8px;text-align:right">${money(totals.gross)}</td><td style="padding:12px 8px;text-align:right">${money(totals.fees)}</td><td style="padding:12px 8px;text-align:right">${money(totals.gross-totals.fees)}</td></tr>`;
       const productTotals = new Map();
-      const validIds = new Set(validOrders.map(o => String(o.id)));
+      const validIds = new Set(topOrders.map(o => String(o.id)));
       items.filter(item => validIds.has(String(item.order_id))).forEach(item => {
         const key = String(item.product_id ?? item.product_name ?? "unknown");
         const name = item.product_name || `Product #${item.product_id ?? "?"}`;
@@ -3554,7 +3583,7 @@ ${errorText}`
         productTotals.set(key, existing);
       });
       const top = [...productTotals.values()].sort((a,b) => b.cups-a.cups || b.gross-a.gross).slice(0,10);
-      topBody.innerHTML = top.length ? top.map((item,index) => `<tr style="border-top:1px solid #e8e8e8"><td style="padding:10px 8px">${index+1}. ${escape(item.name)}</td><td style="padding:10px 8px;text-align:right">${item.cups.toLocaleString("en-US", {maximumFractionDigits:2})}</td><td style="padding:10px 8px;text-align:right">${money(item.gross)}</td></tr>`).join("") : '<tr><td colspan="3" style="padding:12px 8px">No sales recorded this year yet.</td></tr>';
+      topBody.innerHTML = top.length ? top.map((item,index) => `<tr style="border-top:1px solid #e8e8e8"><td style="padding:10px 8px">${index+1}. ${escape(item.name)}</td><td style="padding:10px 8px;text-align:right">${item.cups.toLocaleString("en-US", {maximumFractionDigits:2})}</td><td style="padding:10px 8px;text-align:right">${money(item.gross)}</td></tr>`).join("") : '<tr><td colspan="3" style="padding:12px 8px">No sales recorded for this period yet.</td></tr>';
     } catch (error) {
       console.error("Sales analytics error:", error);
       topBody.innerHTML = `<tr><td colspan="3" style="padding:12px 8px;color:#b00020">Could not load top-selling items: ${escape(error.message)}</td></tr>`;
