@@ -885,7 +885,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               </div>
               <div class="inventory-panel equipment-dashboard">
                 <div class="equipment-topline"><div><div class="stat-label">REUSABLE ASSETS</div><h3 style="margin:4px 0 0">Equipment List</h3></div><button type="button" class="refresh-orders-button" onclick="loadEquipment()">↻ Refresh</button></div>
-                <div class="equipment-toolbar"><select id="equipment-filter-category" aria-label="Filter equipment category" onchange="renderEquipmentTable()"><option value="">All categories</option></select><button type="button" class="checkout-button" onclick="addEquipmentCategory()">＋ Add Category</button><button type="button" class="refresh-orders-button" onclick="manageEquipmentCategory()">Rename Category</button><select id="equipment-filter-status" aria-label="Filter equipment status" onchange="renderEquipmentTable()"><option value="">All statuses</option><option value="In Use">In Use</option><option value="Retired">Retired</option></select><button type="button" class="refresh-orders-button" onclick="exportEquipmentCSV()">↓ Export CSV</button><button type="button" class="checkout-button" onclick="document.getElementById('equipment-name').focus()">＋ Add Equipment</button></div>
+                <div class="equipment-toolbar"><select id="equipment-filter-category" aria-label="Filter equipment category" onchange="renderEquipmentTable()"><option value="">All categories</option></select><button type="button" class="checkout-button" onclick="addEquipmentCategory()">＋ Add Category</button><button type="button" class="refresh-orders-button" onclick="renameEquipmentCategory()">Rename Category</button><select id="equipment-filter-status" aria-label="Filter equipment status" onchange="renderEquipmentTable()"><option value="">All statuses</option><option value="In Use">In Use</option><option value="Retired">Retired</option></select><button type="button" class="refresh-orders-button" onclick="exportEquipmentCSV()">↓ Export CSV</button><button type="button" class="checkout-button" onclick="document.getElementById('equipment-name').focus()">＋ Add Equipment</button></div>
                 <div class="equipment-summary-grid"><div class="equipment-summary-card"><div class="stat-label">TOTAL EQUIPMENT VALUE</div><div class="equipment-summary-value" id="equipment-total-value">฿0.00</div><div class="placeholder-note" id="equipment-total-count">0 items</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE VALUE</div><div class="equipment-summary-value" id="equipment-inuse-value">฿0.00</div><div class="placeholder-note" id="equipment-inuse-count">0 items in use</div></div><div class="equipment-summary-card"><div class="stat-label">IN USE − RETIRED</div><div class="equipment-summary-value" id="equipment-retired-value">฿0.00</div><div class="placeholder-note" id="equipment-retired-count">0 retired items · ฿0.00</div></div></div>
                 <div style="overflow-x:auto;margin-top:12px"><table class="inventory-table equipment-table" style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Equipment</th><th style="text-align:left">Acquired</th><th style="text-align:left">Category</th><th style="text-align:right">Qty</th><th style="text-align:left">Status</th><th style="text-align:left">Condition</th><th style="text-align:left">Location</th><th style="text-align:right">Unit price</th><th style="text-align:right">Total value</th><th>Actions</th></tr></thead><tbody id="equipment-list"><tr><td colspan="10">Loading equipment...</td></tr></tbody></table></div><div id="equipment-list-message" class="placeholder-note" style="margin-top:10px"></div>
               </div>
@@ -2820,39 +2820,59 @@ ${errorText}`
     }
   }
 
-  async function manageEquipmentCategory() {
-    const action = prompt("Equipment categories\nType ADD to create a category or RENAME to change one:", "ADD");
-    if (!action) return;
-    const normalized = action.trim().toUpperCase();
-    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${getAccessToken()}`, "Content-Type":"application/json", Prefer:"return=representation" };
+  async function renameEquipmentCategory() {
+    const oldNameInput = prompt("Enter the equipment category to rename:\n" + equipmentCategories.join(", "));
+    if (!oldNameInput) return;
+    const oldName = oldNameInput.trim();
+    if (!equipmentCategories.includes(oldName)) {
+      alert(`Equipment category “${oldName}” was not found. Please use the exact category name shown.`);
+      return;
+    }
+    const newNameInput = prompt(`Rename equipment category “${oldName}” to:`, oldName);
+    if (!newNameInput || !newNameInput.trim()) return;
+    const clean = newNameInput.trim().replace(/\s+/g, " ");
+    if (clean === oldName) return;
+    if (equipmentCategories.some(x => x.toLowerCase() === clean.toLowerCase())) {
+      alert(`Equipment category “${clean}” already exists. Choose a different name.`);
+      return;
+    }
+    const headers = authHeaders({ "Content-Type": "application/json", Prefer: "return=representation" });
     try {
-      if (normalized === "ADD") {
-        const name = prompt("New category name:");
-        if (!name || !name.trim()) return;
-        const clean = name.trim();
-        if (equipmentCategories.some(x=>x.toLowerCase()===clean.toLowerCase())) { alert("That category already exists."); return; }
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories`, {method:"POST",headers,body:JSON.stringify({name:clean})});
-        const result = await response.json();
-        if (!response.ok) throw new Error(result?.message || "Could not add category");
-      } else if (normalized === "RENAME") {
-        const oldName = prompt("Enter the category name exactly as it is now:\n" + equipmentCategories.join(", "));
-        if (!oldName) return;
-        if (!equipmentCategories.includes(oldName.trim())) { alert("Category not found."); return; }
-        const newName = prompt(`Rename “${oldName.trim()}” to:`, oldName.trim());
-        if (!newName || !newName.trim()) return;
-        const clean = newName.trim();
-        const match = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?name=eq.${encodeURIComponent(oldName.trim())}`, {headers});
-        const found = await match.json();
-        if (!match.ok) throw new Error(found?.message || "Could not find category");
-        if (!found.length) throw new Error("Category record not found. Run the latest SQL setup and refresh.");
-        const update = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?id=eq.${encodeURIComponent(found[0].id)}`, {method:"PATCH",headers,body:JSON.stringify({name:clean})});
-        if (!update.ok) { const err=await update.json(); throw new Error(err?.message || "Could not rename category"); }
-        const itemUpdate = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?category=eq.${encodeURIComponent(oldName.trim())}`, {method:"PATCH",headers,body:JSON.stringify({category:clean})});
-        if (!itemUpdate.ok) { const err=await itemUpdate.json(); throw new Error(err?.message || "Category renamed, but equipment assignments could not be updated"); }
-      } else { alert("Type ADD or RENAME."); return; }
+      // Deliberately target equipment_categories only; do not touch ingredient_categories.
+      const lookup = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?name=eq.${encodeURIComponent(oldName)}&select=id,name`, { headers });
+      const lookupText = await lookup.text();
+      let rows = [];
+      try { rows = lookupText ? JSON.parse(lookupText) : []; } catch (_) {}
+      if (!lookup.ok) throw new Error(rows?.message || lookupText || `Could not find equipment category (HTTP ${lookup.status})`);
+      if (!rows.length) throw new Error(`“${oldName}” is not saved in equipment_categories. Refresh the page and try again.`);
+
+      const update = await fetch(`${SUPABASE_URL}/rest/v1/equipment_categories?id=eq.${encodeURIComponent(rows[0].id)}`, {
+        method: "PATCH", headers, body: JSON.stringify({ name: clean })
+      });
+      const updateText = await update.text();
+      let updateResult = null;
+      try { updateResult = updateText ? JSON.parse(updateText) : null; } catch (_) {}
+      if (!update.ok) {
+        const detail = updateResult?.message || updateResult?.details || updateResult?.hint || updateText || `HTTP ${update.status}`;
+        if (String(detail).includes("equipment_categories_name_key")) throw new Error(`Equipment category “${clean}” already exists.`);
+        if (String(detail).includes("ingredient_categories_name_key")) throw new Error("The request reached ingredient_categories instead of equipment_categories. Please reopen this updated HTML file; do not change Supabase permissions.");
+        throw new Error(detail);
+      }
+
+      const itemUpdate = await fetch(`${SUPABASE_URL}/rest/v1/equipment_items?category=eq.${encodeURIComponent(oldName)}`, {
+        method: "PATCH", headers, body: JSON.stringify({ category: clean })
+      });
+      const itemText = await itemUpdate.text();
+      let itemResult = null;
+      try { itemResult = itemText ? JSON.parse(itemText) : null; } catch (_) {}
+      if (!itemUpdate.ok) throw new Error(itemResult?.message || itemText || `Category renamed, but equipment assignments could not be updated (HTTP ${itemUpdate.status})`);
+
       await loadEquipment();
-      alert("Equipment categories updated.");
-    } catch (error) { alert(`Could not manage category: ${error.message}. Check Supabase permissions and run the latest SQL setup.`); }
+      alert(`Equipment category renamed from “${oldName}” to “${clean}”.`);
+    } catch (error) {
+      console.error("Rename equipment category failed:", error);
+      alert(`Could not rename equipment category: ${error.message}`);
+    }
   }
 
   function renderEquipmentTable() {
