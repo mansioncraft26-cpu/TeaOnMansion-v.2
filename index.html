@@ -662,6 +662,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 #margins-page #recipe-breakdowns td{padding:6px 7px!important;line-height:1.35}
 #margins-page #recipe-breakdowns p{font-size:11px!important;line-height:1.5;margin-top:9px!important}
 @media(max-width:650px){#margins-page #recipe-breakdowns{grid-template-columns:1fr}.recipe-category-control{grid-column:1}}
+
+/* Stock Levels: category bands with ingredients grouped beneath each category */
+.inventory-category-group-row td{background:#e7e5e1!important;color:#171717!important;font-size:10px!important;font-weight:800!important;letter-spacing:.12em!important;text-transform:uppercase!important;padding:10px 14px!important;border-bottom:1px solid var(--mc-line)!important}
+.inventory-ingredient-row td:first-child{font-weight:550;color:#202020}
+.inventory-row-unit{font-size:11px;color:#858078;font-weight:400;margin-top:3px}
 </style></head>
 
 <body>
@@ -827,7 +832,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               </div>
               <div style="overflow-x:auto;margin-top:12px">
                 <table class="inventory-table" style="width:100%;border-collapse:collapse">
-                  <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:left">Category</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:right">Maximum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
+                  <thead><tr><th style="text-align:left">Ingredient</th><th style="text-align:right">Stock</th><th style="text-align:right">Minimum</th><th style="text-align:right">Maximum</th><th style="text-align:left">Status</th><th>Action</th></tr></thead>
                   <tbody id="inventory-list"><tr><td colspan="6">Loading ingredients...</td></tr></tbody>
                 </table>
               </div>
@@ -3150,14 +3155,27 @@ ${errorText}`
       return matchesCategory && matchesStatus && matchesQuery;
     });
     list.innerHTML = "";
-    if (!rows.length) list.innerHTML = '<tr><td colspan="7">No ingredients in this category.</td></tr>';
+    if (!rows.length) list.innerHTML = '<tr><td colspan="6">No ingredients in this category.</td></tr>';
+    // Group stock rows under visible category bands, matching the requested Stock Level reference.
+    const grouped = new Map();
     rows.forEach(ingredient => {
-      const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
-      const tr = document.createElement("tr");
-      const options = '<option value="">Uncategorized</option>' + inventoryCategories.map(c => `<option value="${escapeHtml(c.name)}" ${c.name === ingredient.category ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
-      tr.innerHTML = `<td>${escapeHtml(ingredient.name)}</td><td><select aria-label="Category for ${escapeHtml(ingredient.name)}" onchange="assignIngredientCategory(${Number(ingredient.id)},this.value)">${options}</select></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${maximum.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
-      list.appendChild(tr);
+      const categoryName = String(ingredient.category || "Uncategorized").trim() || "Uncategorized";
+      if (!grouped.has(categoryName)) grouped.set(categoryName, []);
+      grouped.get(categoryName).push(ingredient);
     });
+    for (const [categoryName, ingredients] of grouped) {
+      const groupRow = document.createElement("tr");
+      groupRow.className = "inventory-category-group-row";
+      groupRow.innerHTML = `<td colspan="6">${escapeHtml(categoryName)}</td>`;
+      list.appendChild(groupRow);
+      ingredients.forEach(ingredient => {
+        const stock = Number(ingredient.current_stock || 0), minimum = Number(ingredient.minimum_stock || 0), maximum = Number(ingredient.max_stock || 0), low = inventoryIsLow(ingredient);
+        const tr = document.createElement("tr");
+        tr.className = "inventory-ingredient-row";
+        tr.innerHTML = `<td>${escapeHtml(ingredient.name)}<div class="inventory-row-unit">${escapeHtml(ingredient.unit || "")}</div></td><td style="text-align:right">${stock.toLocaleString()} ${escapeHtml(ingredient.unit || "")}</td><td style="text-align:right">${minimum.toLocaleString()}</td><td style="text-align:right">${maximum.toLocaleString()}</td><td class="${low ? "stock-low" : "stock-ok"}">${low ? "Low stock" : "In stock"}${maximum > 0 ? ` <span style="font-size:11px;color:#777">(${(stock/maximum*100).toLocaleString(undefined,{maximumFractionDigits:1})}%)</span>` : ""}</td><td><button type="button" class="refresh-orders-button" onclick="editInventoryIngredient(${Number(ingredient.id)})">Edit</button></td>`;
+        list.appendChild(tr);
+      });
+    }
     const allLow = inventoryIngredients.filter(inventoryIsLow).length;
     summary.innerHTML = `<strong>${rows.length}</strong> ingredients shown · <strong class="${allLow ? "stock-low" : "stock-ok"}">${allLow}</strong> low-stock items · <strong>${inventoryCategories.length}</strong> categories`;
   }
