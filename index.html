@@ -980,7 +980,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <form id="product-option-form" onsubmit="saveProductOption(event)" style="background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
                 <h3 style="margin-top:0">2. Add option</h3><label for="manager-option-category">Group</label><select id="manager-option-category" required><option value="">Load groups…</option></select>
                 <label for="manager-option-name">Option name</label><input id="manager-option-name" required placeholder="e.g. Large, 50% sweet">
-                <label for="manager-option-price">Extra price (฿)</label><input id="manager-option-price" type="number" step="0.01" value="0" required>
+                <div class="option-channel-prices" style="display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:8px"><div><label for="manager-option-price-direct">Direct extra (฿)</label><input id="manager-option-price-direct" type="number" min="0" step="0.01" value="0" required></div><div><label for="manager-option-price-grab">Grab extra (฿)</label><input id="manager-option-price-grab" type="number" min="0" step="0.01" value="0" required></div><div><label for="manager-option-price-lineman">LINE MAN extra (฿)</label><input id="manager-option-price-lineman" type="number" min="0" step="0.01" value="0" required></div></div><p class="placeholder-note">Set the add-on price separately for each sales channel.</p>
                 <label><input id="manager-option-default" type="checkbox" style="min-height:auto;width:auto"> Default selection</label>
                 <button class="checkout-button" type="submit" style="margin-top:12px">Add option</button><div id="product-option-message" class="placeholder-note"></div>
               </form>
@@ -1002,7 +1002,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <div style="overflow-x:auto;margin-top:14px"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Product</th><th>Option</th><th>Ingredient</th><th>Adjustment / cup</th><th></th></tr></thead><tbody id="option-stock-map-body"><tr><td colspan="5">Loading mappings…</td></tr></tbody></table></div>
             </div>
             <div style="margin-top:20px;background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
-              <h3 style="margin-top:0">Existing options</h3><div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Group</th><th>Option name</th><th>Extra price</th><th>Default</th><th>Active</th><th></th></tr></thead><tbody id="product-options-manager-body"><tr><td colspan="6">Loading options…</td></tr></tbody></table></div>
+              <h3 style="margin-top:0">Existing options</h3><div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Group</th><th>Option name</th><th>Direct extra (฿)</th><th>Grab extra (฿)</th><th>LINE MAN extra (฿)</th><th>Default</th><th>Active</th><th></th></tr></thead><tbody id="product-options-manager-body"><tr><td colspan="8">Loading options…</td></tr></tbody></table></div>
             </div>
           </section>
 
@@ -1206,14 +1206,22 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     return Number(product?.price ?? product?.selling_price ?? 0);
   }
 
+  function getOptionChannelPrice(option, source = getOrderSource()) {
+    const field = source === "grab" ? "grab_price" : source === "lineman" ? "lineman_price" : "direct_price";
+    const candidate = Number(option?.[field]);
+    if (Number.isFinite(candidate) && candidate >= 0 && option?.[field] != null) return candidate;
+    return Number(option?.price_adjustment ?? option?.price ?? 0);
+  }
+
   function handleOrderSourceChange() {
-    // Reprice items already in the cart while preserving selected option surcharges.
+    // Reprice base drinks and each selected add-on for the chosen sales channel.
     cart = cart.map(item => {
       const product = products.find(p => Number(p.id) === Number(item.productId));
       if (!product) return item;
       const basePrice = getProductChannelPrice(product);
-      const optionTotal = (item.options || []).reduce((sum, option) => sum + Number(option.price || 0), 0);
-      return { ...item, basePrice, unitPrice: basePrice + optionTotal };
+      const options = (item.options || []).map(option => ({ ...option, price: Number(option[getOrderSource() === "grab" ? "grabPrice" : getOrderSource() === "lineman" ? "linemanPrice" : "directPrice"] ?? option.price ?? 0) }));
+      const optionTotal = options.reduce((sum, option) => sum + Number(option.price || 0), 0);
+      return { ...item, options, basePrice, unitPrice: basePrice + optionTotal };
     });
     if (typeof renderCart === "function") renderCart();
     if (typeof loadProducts === "function") loadProducts();
@@ -2011,8 +2019,7 @@ async function openProductModal(product) {
         const checked =
           option.is_default ? "checked" : "";
 
-        const extraPrice =
-          Number(option.price_adjustment || 0);
+        const extraPrice = getOptionChannelPrice(option, getOrderSource());
 
         label.innerHTML = `
           <span>
@@ -2024,6 +2031,9 @@ async function openProductModal(product) {
               data-category-id="${category.id}"
               data-option-name="${option.name}"
               data-price="${extraPrice}"
+              data-direct-price="${Number(option.direct_price ?? option.price_adjustment ?? 0)}"
+              data-grab-price="${Number(option.grab_price ?? option.price_adjustment ?? 0)}"
+              data-lineman-price="${Number(option.lineman_price ?? option.price_adjustment ?? 0)}"
               ${checked}
             >
 
@@ -2085,7 +2095,7 @@ async function openProductModal(product) {
   }
 
   let total =
-    Number(selectedProduct.price || 0);
+    getProductChannelPrice(selectedProduct, getOrderSource());
 
   const selectedOptions =
     document.querySelectorAll(
@@ -2126,8 +2136,10 @@ async function openProductModal(product) {
     name:
       input.dataset.optionName,
 
-    price:
-      Number(input.dataset.price || 0)
+    price: Number(input.dataset.price || 0),
+    directPrice: Number(input.dataset.directPrice ?? input.dataset.price ?? 0),
+    grabPrice: Number(input.dataset.grabPrice ?? input.dataset.price ?? 0),
+    linemanPrice: Number(input.dataset.linemanPrice ?? input.dataset.price ?? 0)
   }));
 
   const itemNote =
@@ -3886,7 +3898,7 @@ async function loadProductOptionsManager() {
     renderProductOptionManagerTables();
   } catch(error) {
     console.error('Product options manager load failed:', error);
-    const body=document.getElementById('product-options-manager-body'); if(body) body.innerHTML=`<tr><td colspan="6">Could not load option manager: ${escapeHtml(error.message)}. Apply the Product Options Stock SQL migration first, then refresh.</td></tr>`;
+    const body=document.getElementById('product-options-manager-body'); if(body) body.innerHTML=`<tr><td colspan="8">Could not load option manager: ${escapeHtml(error.message)}. Apply the Product Options Stock SQL migration first, then refresh.</td></tr>`;
     const maps=document.getElementById('option-stock-map-body'); if(maps) maps.innerHTML=`<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
   }
 }
@@ -3897,20 +3909,20 @@ function renderProductOptionManagerTables() {
     const groupedRows = activeCats.map(c => {
       const groupOptions = managerProductOptions.filter(o => Number(o.category_id) === Number(c.id));
       if (!groupOptions.length) return '';
-      const heading = `<tr class="option-category-divider"><td colspan="6" style="background:#eee9df;font-weight:700;padding:11px 12px;border-top:2px solid #d8cfc0">${escapeHtml(c.name)} <span style="font-weight:400;color:#71695f">(${groupOptions.length} option${groupOptions.length===1?'':'s'})</span></td></tr>`;
-      const rows = groupOptions.map(o => `<tr><td>${escapeHtml(c.name||'—')}</td><td><input id="manager-opt-name-${Number(o.id)}" value="${escapeHtml(o.name||'')}" aria-label="Option name"></td><td><input id="manager-opt-price-${Number(o.id)}" type="number" step="0.01" value="${Number(o.price_adjustment||0)}" aria-label="Extra price" style="max-width:110px"></td><td><input id="manager-opt-default-${Number(o.id)}" type="checkbox" ${o.is_default?'checked':''} aria-label="Default option" style="width:auto;min-height:auto"></td><td><input id="manager-opt-active-${Number(o.id)}" type="checkbox" ${o.is_active!==false?'checked':''} aria-label="Active option" style="width:auto;min-height:auto"></td><td><button type="button" class="refresh-orders-button" onclick="updateProductOption(${Number(o.id)})">Save</button></td></tr>`).join('');
+      const heading = `<tr class="option-category-divider"><td colspan="8" style="background:#eee9df;font-weight:700;padding:11px 12px;border-top:2px solid #d8cfc0">${escapeHtml(c.name)} <span style="font-weight:400;color:#71695f">(${groupOptions.length} option${groupOptions.length===1?'':'s'})</span></td></tr>`;
+      const rows = groupOptions.map(o => `<tr><td>${escapeHtml(c.name||'—')}</td><td><input id="manager-opt-name-${Number(o.id)}" value="${escapeHtml(o.name||'')}" aria-label="Option name"></td><td><input id="manager-opt-price-direct-${Number(o.id)}" type="number" min="0" step="0.01" value="${Number(o.direct_price ?? o.price_adjustment ?? 0)}" aria-label="Direct extra price" style="max-width:90px"></td><td><input id="manager-opt-price-grab-${Number(o.id)}" type="number" min="0" step="0.01" value="${Number(o.grab_price ?? o.price_adjustment ?? 0)}" aria-label="Grab extra price" style="max-width:90px"></td><td><input id="manager-opt-price-lineman-${Number(o.id)}" type="number" min="0" step="0.01" value="${Number(o.lineman_price ?? o.price_adjustment ?? 0)}" aria-label="LINE MAN extra price" style="max-width:90px"></td><td><input id="manager-opt-default-${Number(o.id)}" type="checkbox" ${o.is_default?'checked':''} aria-label="Default option" style="width:auto;min-height:auto"></td><td><input id="manager-opt-active-${Number(o.id)}" type="checkbox" ${o.is_active!==false?'checked':''} aria-label="Active option" style="width:auto;min-height:auto"></td><td><button type="button" class="refresh-orders-button" onclick="updateProductOption(${Number(o.id)})">Save</button></td></tr>`).join('');
       return heading + rows;
     }).join('');
     const uncategorized = managerProductOptions.filter(o => !managerOptionCategories.some(c => Number(c.id) === Number(o.category_id)));
-    const uncategorizedRows = uncategorized.length ? `<tr class="option-category-divider"><td colspan="6" style="background:#eee9df;font-weight:700;padding:11px 12px">Uncategorized</td></tr>` + uncategorized.map(o => `<tr><td>—</td><td><input id="manager-opt-name-${Number(o.id)}" value="${escapeHtml(o.name||'')}" aria-label="Option name"></td><td><input id="manager-opt-price-${Number(o.id)}" type="number" step="0.01" value="${Number(o.price_adjustment||0)}" aria-label="Extra price" style="max-width:110px"></td><td><input id="manager-opt-default-${Number(o.id)}" type="checkbox" ${o.is_default?'checked':''} aria-label="Default option" style="width:auto;min-height:auto"></td><td><input id="manager-opt-active-${Number(o.id)}" type="checkbox" ${o.is_active!==false?'checked':''} aria-label="Active option" style="width:auto;min-height:auto"></td><td><button type="button" class="refresh-orders-button" onclick="updateProductOption(${Number(o.id)})">Save</button></td></tr>`).join('') : '';
-    body.innerHTML = groupedRows + uncategorizedRows || '<tr><td colspan="6">No options yet. Add an option group and options above.</td></tr>';
+    const uncategorizedRows = uncategorized.length ? `<tr class="option-category-divider"><td colspan="8" style="background:#eee9df;font-weight:700;padding:11px 12px">Uncategorized</td></tr>` + uncategorized.map(o => `<tr><td>—</td><td><input id="manager-opt-name-${Number(o.id)}" value="${escapeHtml(o.name||'')}" aria-label="Option name"></td><td><input id="manager-opt-price-direct-${Number(o.id)}" type="number" min="0" step="0.01" value="${Number(o.direct_price ?? o.price_adjustment ?? 0)}" aria-label="Direct extra price" style="max-width:90px"></td><td><input id="manager-opt-price-grab-${Number(o.id)}" type="number" min="0" step="0.01" value="${Number(o.grab_price ?? o.price_adjustment ?? 0)}" aria-label="Grab extra price" style="max-width:90px"></td><td><input id="manager-opt-price-lineman-${Number(o.id)}" type="number" min="0" step="0.01" value="${Number(o.lineman_price ?? o.price_adjustment ?? 0)}" aria-label="LINE MAN extra price" style="max-width:90px"></td><td><input id="manager-opt-default-${Number(o.id)}" type="checkbox" ${o.is_default?'checked':''} aria-label="Default option" style="width:auto;min-height:auto"></td><td><input id="manager-opt-active-${Number(o.id)}" type="checkbox" ${o.is_active!==false?'checked':''} aria-label="Active option" style="width:auto;min-height:auto"></td><td><button type="button" class="refresh-orders-button" onclick="updateProductOption(${Number(o.id)})">Save</button></td></tr>`).join('') : '';
+    body.innerHTML = groupedRows + uncategorizedRows || '<tr><td colspan="8">No options yet. Add an option group and options above.</td></tr>';
   }
   const mapBody=document.getElementById('option-stock-map-body');
   if(mapBody) mapBody.innerHTML=managerStockMaps.map(m=>{const o=managerProductOptions.find(x=>Number(x.id)===Number(m.option_id));const i=managerOptionIngredients.find(x=>Number(x.id)===Number(m.ingredient_id));const p=managerOptionProducts.find(x=>Number(x.id)===Number(m.product_id));return `<tr><td>${escapeHtml(p?.name||p?.product_name||`Product #${m.product_id}`)}</td><td>${escapeHtml(o?.name||`Option #${m.option_id}`)}</td><td>${escapeHtml(i?.name||`Ingredient #${m.ingredient_id}`)} (${escapeHtml(i?.unit||'unit')})</td><td>${Number(m.quantity_delta)>0?'+':''}${Number(m.quantity_delta)} ${escapeHtml(i?.unit||'')}</td><td><button type="button" class="refresh-orders-button" onclick="deleteOptionStockMap(${Number(m.id)})">Remove</button></td></tr>`;}).join('') || '<tr><td colspan="5">No stock mappings yet.</td></tr>';
 }
 async function saveOptionCategory(event) { event.preventDefault(); try {const name=document.getElementById('option-category-name').value.trim(); if(!name) throw new Error('Enter a group name.'); await optionManagerFetch('option_categories',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({name,is_active:true})}); document.getElementById('option-category-name').value=''; document.getElementById('option-category-message').textContent='Group added.'; await loadProductOptionsManager();} catch(e){document.getElementById('option-category-message').textContent='Could not save group: '+e.message;}}
-async function saveProductOption(event) {event.preventDefault(); try {const category_id=Number(document.getElementById('manager-option-category').value),name=document.getElementById('manager-option-name').value.trim(),price_adjustment=Number(document.getElementById('manager-option-price').value),is_default=document.getElementById('manager-option-default').checked;if(!category_id||!name||!Number.isFinite(price_adjustment)) throw new Error('Complete the group, option name, and price.'); if(is_default){await optionManagerFetch(`product_options?category_id=eq.${category_id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({is_default:false})});} await optionManagerFetch('product_options',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({category_id,name,price_adjustment,is_default,is_active:true})}); document.getElementById('manager-option-name').value=''; document.getElementById('manager-option-price').value='0'; document.getElementById('manager-option-default').checked=false; document.getElementById('product-option-message').textContent='Option added.'; await loadProductOptionsManager();}catch(e){document.getElementById('product-option-message').textContent='Could not save option: '+e.message;}}
-async function updateProductOption(id) {try{const name=document.getElementById(`manager-opt-name-${id}`).value.trim(),price_adjustment=Number(document.getElementById(`manager-opt-price-${id}`).value),is_default=document.getElementById(`manager-opt-default-${id}`).checked,is_active=document.getElementById(`manager-opt-active-${id}`).checked;const row=managerProductOptions.find(o=>Number(o.id)===id);if(!name||!Number.isFinite(price_adjustment)) throw new Error('Option name and price are required.');if(is_default) await optionManagerFetch(`product_options?category_id=eq.${Number(row.category_id)}&id=neq.${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({is_default:false})});await optionManagerFetch(`product_options?id=eq.${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({name,price_adjustment,is_default,is_active})});await loadProductOptionsManager();alert('Option saved.');}catch(e){alert('Could not update option: '+e.message);}}
+async function saveProductOption(event) {event.preventDefault(); try {const category_id=Number(document.getElementById('manager-option-category').value),name=document.getElementById('manager-option-name').value.trim(),direct_price=Number(document.getElementById('manager-option-price-direct').value),grab_price=Number(document.getElementById('manager-option-price-grab').value),lineman_price=Number(document.getElementById('manager-option-price-lineman').value),is_default=document.getElementById('manager-option-default').checked;if(!category_id||!name||![direct_price,grab_price,lineman_price].every(n=>Number.isFinite(n)&&n>=0)) throw new Error('Complete the group, option name, and valid non-negative prices.'); if(is_default){await optionManagerFetch(`product_options?category_id=eq.${category_id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({is_default:false})});} await optionManagerFetch('product_options',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({category_id,name,price_adjustment:direct_price,direct_price,grab_price,lineman_price,is_default,is_active:true})}); document.getElementById('manager-option-name').value=''; ['direct','grab','lineman'].forEach(k=>document.getElementById(`manager-option-price-${k}`).value='0'); document.getElementById('manager-option-default').checked=false; document.getElementById('product-option-message').textContent='Option added.'; await loadProductOptionsManager();}catch(e){document.getElementById('product-option-message').textContent='Could not save option: '+e.message;}}
+async function updateProductOption(id) {try{const name=document.getElementById(`manager-opt-name-${id}`).value.trim(),direct_price=Number(document.getElementById(`manager-opt-price-direct-${id}`).value),grab_price=Number(document.getElementById(`manager-opt-price-grab-${id}`).value),lineman_price=Number(document.getElementById(`manager-opt-price-lineman-${id}`).value),is_default=document.getElementById(`manager-opt-default-${id}`).checked,is_active=document.getElementById(`manager-opt-active-${id}`).checked;const row=managerProductOptions.find(o=>Number(o.id)===id);if(!name||![direct_price,grab_price,lineman_price].every(n=>Number.isFinite(n)&&n>=0)) throw new Error('Option name and all three non-negative prices are required.');if(is_default) await optionManagerFetch(`product_options?category_id=eq.${Number(row.category_id)}&id=neq.${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({is_default:false})});await optionManagerFetch(`product_options?id=eq.${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({name,price_adjustment:direct_price,direct_price,grab_price,lineman_price,is_default,is_active})});await loadProductOptionsManager();alert('Option saved.');}catch(e){alert('Could not update option: '+e.message);}}
 async function attachOptionGroup(event) {event.preventDefault();const message=document.getElementById('option-attach-message');try{const product_id=Number(document.getElementById('manager-option-product').value),category_id=Number(document.getElementById('manager-attach-category').value);if(!product_id||!category_id) throw new Error('Choose both a product and an option group.');await optionManagerFetch('product_option_categories?on_conflict=product_id,category_id',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({product_id,category_id})});message.textContent='Option group enabled for this product.';}catch(e){message.textContent='Could not enable group: '+e.message;}}
 async function saveOptionStockMap(event) {event.preventDefault();const message=document.getElementById('option-stock-map-message');try{const product_id=Number(document.getElementById('manager-map-product').value),option_id=Number(document.getElementById('manager-map-option').value),ingredient_id=Number(document.getElementById('manager-map-ingredient').value),quantity_delta=Number(document.getElementById('manager-map-quantity').value);if(!product_id||!option_id||!ingredient_id||!Number.isFinite(quantity_delta)||quantity_delta===0) throw new Error('Choose an option and ingredient, and enter a non-zero adjustment.');await optionManagerFetch('product_option_ingredients',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({product_id,option_id,ingredient_id,quantity_delta})});document.getElementById('manager-map-quantity').value='';message.textContent='Stock adjustment saved.';await loadProductOptionsManager();}catch(e){message.textContent='Could not save stock mapping: '+e.message;}}
 async function deleteOptionStockMap(id) {if(!confirm('Remove this stock mapping?')) return;try{await optionManagerFetch(`product_option_ingredients?id=eq.${id}`,{method:'DELETE',headers:{'Prefer':'return=minimal'}});await loadProductOptionsManager();}catch(e){alert('Could not remove mapping: '+e.message);}}
