@@ -783,6 +783,23 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <textarea id="customer-address" class="notes" rows="3" placeholder="Delivery address"></textarea>
           <label>Delivery App Order Number</label>
           <input type="text" id="platform-order-number" placeholder="Optional for Direct orders">
+          <div class="discount-panel" style="margin:14px 0;padding:13px;border:1px solid var(--mc-line,#e8e2d8);border-radius:10px;background:#fcfbf8">
+            <h3 style="margin:0 0 10px">Discount</h3>
+            <label for="discount-type">Discount type</label>
+            <select id="discount-type" onchange="updateDiscountPreview()"><option value="none">No discount</option><option value="percent">Percentage (%)</option><option value="fixed">Fixed amount (฿)</option></select>
+            <label for="discount-value">Discount value</label>
+            <input type="number" id="discount-value" min="0" step="0.01" value="0" oninput="updateDiscountPreview()" placeholder="Enter discount">
+            <label for="discount-reason">Reason</label>
+            <select id="discount-reason"><option value="Promotion">Promotion</option><option value="Loyalty">Loyalty / regular customer</option><option value="Staff">Staff discount</option><option value="Other">Other</option></select>
+            <div id="discount-funding-wrap">
+              <label for="discount-funding">Who funds the discount?</label>
+              <select id="discount-funding" onchange="updateDiscountPreview()"><option value="cafe">Café-funded</option><option value="platform">Platform-funded</option></select>
+              <p class="placeholder-note" style="margin:5px 0">Choose Platform-funded only when the app covers the discount. Direct orders use Café-funded.</p>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:10px;margin-top:10px"><span>Discount amount</span><strong id="discount-amount-preview">−฿0.00</strong></div>
+            <div style="display:flex;justify-content:space-between;gap:10px;margin-top:6px"><span>Customer pays</span><strong id="discount-total-preview">฿0.00</strong></div>
+            <div id="discount-net-preview" class="placeholder-note" style="margin-top:7px" aria-live="polite">Estimated café net after platform fee: ฿0.00</div>
+          </div>
           <label>Estimated Platform Fee (฿)</label>
           <input type="number" id="platform-fee-input" min="0" step="0.01" value="0" readonly aria-readonly="true">
           <p class="placeholder-note">Automatically estimated at 33% of the order subtotal for Grab and LINE MAN. Direct orders have ฿0 fee. This is an estimate; use the platform settlement statement for exact fees.</p>
@@ -1232,14 +1249,54 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     return Number(option?.price_adjustment ?? option?.price ?? 0);
   }
 
-  function updatePlatformFeeEstimate() {
-    const source = getOrderSource();
+  function getDiscountDetails() {
     const subtotal = typeof calculateTotal === "function" ? calculateTotal() : 0;
-    const fee = (source === "grab" || source === "lineman") ? Math.round(subtotal * 0.33 * 100) / 100 : 0;
+    const type = document.getElementById("discount-type")?.value || "none";
+    const raw = Math.max(0, Number(document.getElementById("discount-value")?.value || 0));
+    const source = getOrderSource();
+    const fundingSelect = document.getElementById("discount-funding");
+    let funding = fundingSelect?.value || "cafe";
+    if (source === "direct") funding = "cafe";
+    const requested = type === "percent" ? subtotal * Math.min(100, raw) / 100 : type === "fixed" ? raw : 0;
+    const amount = Math.round(Math.min(subtotal, Math.max(0, requested)) * 100) / 100;
+    const cafeDiscount = funding === "cafe" ? amount : 0;
+    const customerTotal = Math.max(0, Math.round((subtotal - amount) * 100) / 100);
+    return {subtotal, type, raw, amount, funding, cafeDiscount, customerTotal};
+  }
+
+  function updateDiscountPreview() {
+    const details = getDiscountDetails();
+    const source = getOrderSource();
+    const feeBase = Math.max(0, details.subtotal - details.cafeDiscount);
+    const fee = (source === "grab" || source === "lineman") ? Math.round(feeBase * 0.33 * 100) / 100 : 0;
+    const amountEl = document.getElementById("discount-amount-preview");
+    const totalEl = document.getElementById("discount-total-preview");
+    const netEl = document.getElementById("discount-net-preview");
+    const fundingWrap = document.getElementById("discount-funding-wrap");
+    if (amountEl) amountEl.textContent = `−฿${details.amount.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `฿${details.customerTotal.toFixed(2)}`;
+    if (netEl) netEl.textContent = `Estimated café net after platform fee: ฿${(feeBase - fee).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    if (fundingWrap) fundingWrap.style.display = source === "direct" ? "none" : "block";
+    updatePlatformFeeEstimate();
+  }
+
+  function updatePlatformFeeEstimate() {
+    const details = getDiscountDetails();
+    const source = getOrderSource();
+    // Café-funded discounts reduce the café's commissionable sales estimate.
+    // Platform-funded discounts are assumed reimbursed by the platform.
+    const feeBase = Math.max(0, details.subtotal - details.cafeDiscount);
+    const fee = (source === "grab" || source === "lineman") ? Math.round(feeBase * 0.33 * 100) / 100 : 0;
     const feeInput = document.getElementById("platform-fee-input");
     if (feeInput) feeInput.value = fee.toFixed(2);
     const netLabel = document.getElementById("order-net-estimate");
-    if (netLabel) netLabel.textContent = `Estimated net after platform fee: ฿${(subtotal - fee).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    if (netLabel) netLabel.textContent = `Estimated net after platform fee: ฿${(feeBase - fee).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    const amountEl = document.getElementById("discount-amount-preview");
+    const totalEl = document.getElementById("discount-total-preview");
+    const discountNet = document.getElementById("discount-net-preview");
+    if (amountEl) amountEl.textContent = `−฿${details.amount.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `฿${details.customerTotal.toFixed(2)}`;
+    if (discountNet) discountNet.textContent = `Estimated café net after platform fee: ฿${(feeBase - fee).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}`;
   }
 
   function handleOrderSourceChange() {
@@ -1434,7 +1491,7 @@ function renderOrderLog() {
     const searchable = [o.order_number,o.customer_name,o.platform_order_number,o.order_source,o.source,o.order_type,o.id].map(v => String(v ?? "").toLowerCase()).join(" ");
     return (!statusFilter || status === statusFilter) && (!search || searchable.includes(search));
   });
-  const total = filtered.reduce((sum,o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
+  const total = filtered.reduce((sum,o) => sum + Math.max(0, Number(o.subtotal ?? o.total ?? 0) - (String(o.discount_funding || "cafe") === "cafe" ? Number(o.discount_amount || 0) : 0)), 0);
   const fees = filtered.reduce((sum,o) => sum + Number(o.platform_fee || 0), 0);
   const net = total - fees;
   summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Gross ฿${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} · Fees ฿${fees.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} · Net ฿${net.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -2303,6 +2360,14 @@ async function openProductModal(product) {
     document.getElementById(
       "order-notes"
     ).value = "";
+    const discountType = document.getElementById("discount-type");
+    const discountValue = document.getElementById("discount-value");
+    const discountReason = document.getElementById("discount-reason");
+    const discountFunding = document.getElementById("discount-funding");
+    if (discountType) discountType.value = "none";
+    if (discountValue) discountValue.value = "0";
+    if (discountReason) discountReason.value = "Promotion";
+    if (discountFunding) discountFunding.value = "cafe";
 
     renderCart();
   }
@@ -2487,12 +2552,11 @@ async function openProductModal(product) {
   });
 
 
-  totalElement.textContent =
-    `฿${total.toFixed(2)}`;
-
+  const discountDetails = getDiscountDetails();
+  totalElement.textContent = `฿${discountDetails.customerTotal.toFixed(2)}`;
 
   checkoutButton.disabled = false;
-  updatePlatformFeeEstimate();
+  updateDiscountPreview();
 }
 
 
@@ -2558,6 +2622,8 @@ async function checkout() {
   try {
 
     const subtotal = calculateTotal();
+    const discount = getDiscountDetails();
+    const discountReason = document.getElementById("discount-reason")?.value || "Promotion";
 
     const orderSource =
       document.getElementById("order-source").value;
@@ -2605,7 +2671,7 @@ async function checkout() {
           p_subtotal: subtotal,
           p_delivery_fee: 0,
           p_platform_fee: Math.max(0, Number(document.getElementById("platform-fee-input")?.value || 0)),
-          p_total: subtotal,
+          p_total: discount.customerTotal,
           p_notes: notes || null,
           p_customer_name: customerName || null,
           p_customer_address: customerAddress || null,
@@ -2671,6 +2737,21 @@ ${errorText}`
       const dateError = await dateUpdateResponse.text();
       console.warn("Order was created but sale date could not be updated:", dateError);
       alert(`Order #${orderId} was created, but the selected sale date could not be saved. Your database may need an owner-only update policy for orders. Details: ${dateError}`);
+    }
+
+    // Persist discount details. Run the companion SQL migration before using discounts.
+    const discountResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`,
+      { method: "PATCH", headers: authHeaders({"Content-Type":"application/json", "Prefer":"return=minimal"}), body: JSON.stringify({
+        discount_type: discount.type,
+        discount_amount: discount.amount,
+        discount_reason: discount.amount > 0 ? discountReason : null,
+        discount_funding: discount.amount > 0 ? discount.funding : null
+      }) }
+    );
+    if (!discountResponse.ok) {
+      const discountError = await discountResponse.text();
+      throw new Error(`Order was created but discount details could not be saved. Run the discount SQL migration before taking orders with discounts. Details: ${discountError}`);
     }
 
     // ----------------------------------------
@@ -2801,12 +2882,11 @@ ${errorText}`
 
 
     cart = [];
-
-
-    document.getElementById(
-      "order-notes"
-    ).value = "";
-
+    document.getElementById("order-notes").value = "";
+    document.getElementById("discount-type").value = "none";
+    document.getElementById("discount-value").value = "0";
+    document.getElementById("discount-reason").value = "Promotion";
+    document.getElementById("discount-funding").value = "cafe";
 
     renderCart();
 
@@ -3467,7 +3547,12 @@ ${errorText}`
       if (!orderResponse.ok) throw new Error(orderData?.message || JSON.stringify(orderData));
       const orders = Array.isArray(orderData) ? orderData : [];
       const revenueOrders = orders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
-      const revenue = revenueOrders.reduce((sum, o) => sum + Number(o.total ?? o.subtotal ?? 0), 0);
+      // Café revenue: original subtotal less café-funded discounts. Platform-funded discounts are reimbursed by the platform, so they do not reduce café revenue.
+      const revenue = revenueOrders.reduce((sum, o) => {
+        const base = Number(o.subtotal ?? o.total ?? 0);
+        const cafeDiscount = String(o.discount_funding || "cafe") === "cafe" ? Number(o.discount_amount || 0) : 0;
+        return sum + Math.max(0, base - cafeDiscount);
+      }, 0);
       const fees = revenueOrders.reduce((sum, o) => sum + Number(o.platform_fee || 0) + Number(o.vat_amount ?? o.vat ?? o.tax_amount ?? o.tax ?? 0), 0);
       const net = revenue - fees;
       count.textContent = `${revenueOrders.length.toLocaleString("en-US")} ${revenueOrders.length === 1 ? "order" : "orders"}`;
@@ -3557,7 +3642,7 @@ ${errorText}`
           items = items.concat(Array.isArray(itemData) ? itemData : []);
         }
       }
-      const revenueOf = o => Number(o.total ?? o.subtotal ?? 0);
+      const revenueOf = o => Math.max(0, Number(o.subtotal ?? o.total ?? 0) - (String(o.discount_funding || "cafe") === "cafe" ? Number(o.discount_amount || 0) : 0));
       const feeOf = o => Number(o.platform_fee ?? 0) + Number(o.vat_amount ?? o.vat ?? o.tax_amount ?? o.tax ?? 0);
       const monthTotals = Array.from({length:12}, (_, index) => ({month:index, orders:0, gross:0, fees:0}));
       validOrders.forEach(o => {
