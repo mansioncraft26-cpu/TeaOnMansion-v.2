@@ -625,6 +625,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 .app-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 
 
+
+.order-menu-categories{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 16px;padding-bottom:2px}
+.order-menu-category-btn{border:1px solid #e2dbd0!important;background:#fff!important;color:#625b51!important;border-radius:999px!important;padding:8px 13px!important;min-height:34px!important;font-size:12px!important;font-weight:650!important;cursor:pointer;white-space:nowrap}
+.order-menu-category-btn.active{background:#2d2923!important;border-color:#2d2923!important;color:#fff!important}
+@media(max-width:600px){.order-menu-categories{gap:6px}.order-menu-category-btn{padding:7px 11px!important;font-size:11px!important}}
+
 /* Persistent quick-order workspace (not a modal) */
 .order-workspace-section{padding:0;overflow:hidden;margin-bottom:22px}
 .add-order-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 24px;border-bottom:1px solid #e8e3da;background:#fff}
@@ -746,7 +752,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
         <section class="section order-workspace-section" aria-labelledby="add-order-title">
           <div class="add-order-header"><div><div class="eyebrow">MANSION.CRAFT · QUICK ORDER</div><h2 id="add-order-title">Create Order</h2><p>Tap a drink to add it. Your cart and checkout stay beside the menu.</p></div><button type="button" class="clear-button" onclick="clearCart()">Clear Order</button></div>
             <div class="add-order-layout">
-              <section class="order-menu-pane"><div class="order-menu-heading"><div><h3>Menu</h3><p>Tap a product to add or customize it.</p></div><input id="order-menu-search" type="search" placeholder="Search menu…" oninput="filterOrderMenu()" aria-label="Search menu"></div><div id="products">Loading products...</div></section>
+              <section class="order-menu-pane"><div class="order-menu-heading"><div><h3>Menu</h3><p>Tap a product to add or customize it.</p></div><input id="order-menu-search" type="search" placeholder="Search menu…" oninput="filterOrderMenu()" aria-label="Search menu"></div><div id="order-menu-categories" class="order-menu-categories" role="group" aria-label="Filter menu by category"></div><div id="products">Loading products...</div></section>
                       <section class="order-details-pane" id="new-order-section">
           <h2>New Order</h2>
           <label>Sale Date (actual date)</label>
@@ -1159,10 +1165,35 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     return;
   }
 
+  let activeOrderMenuCategory = "All";
+
+  function renderOrderMenuCategories() {
+    const container = document.getElementById("order-menu-categories");
+    if (!container) return;
+    const categories = [...new Set((products || []).map(p => String(p.category || "").trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    if (activeOrderMenuCategory !== "All" && !categories.includes(activeOrderMenuCategory)) activeOrderMenuCategory = "All";
+    const buttons = ["All", ...categories];
+    container.innerHTML = buttons.map(category => {
+      const active = category === activeOrderMenuCategory;
+      const safe = String(category).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return `<button type="button" class="order-menu-category-btn${active ? " active" : ""}" aria-pressed="${active}" onclick="selectOrderMenuCategory(this.dataset.category)" data-category="${safe}">${safe}</button>`;
+    }).join("");
+  }
+
+  function selectOrderMenuCategory(category) {
+    activeOrderMenuCategory = category || "All";
+    renderOrderMenuCategories();
+    filterOrderMenu();
+  }
+
   function filterOrderMenu() {
     const query = (document.getElementById("order-menu-search")?.value || "").trim().toLowerCase();
     document.querySelectorAll("#products .product").forEach(card => {
-      card.style.display = card.textContent.toLowerCase().includes(query) ? "" : "none";
+      const cardCategory = (card.dataset.category || "").trim();
+      const matchesCategory = activeOrderMenuCategory === "All" || cardCategory === activeOrderMenuCategory;
+      const matchesQuery = card.textContent.toLowerCase().includes(query);
+      card.style.display = matchesCategory && matchesQuery ? "" : "none";
     });
   }
 
@@ -1241,9 +1272,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
         "green";
 
 
-      productsContainer.innerHTML =
-        "";
-
+      productsContainer.innerHTML = "";
+      renderOrderMenuCategories();
 
       if (products.length === 0) {
 
@@ -1259,9 +1289,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
         const card =
           document.createElement("div");
 
-        card.className =
-          "product";
-
+        card.className = "product";
+        card.dataset.category = String(product.category || "").trim();
 
         const imageUrl = product.image_url || product.image || product.product_image || product.imageUrl || "";
         const safeImageUrl = typeof imageUrl === "string" && /^https?:\/\//i.test(imageUrl) ? imageUrl : "";
@@ -1279,6 +1308,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
         productsContainer.appendChild(card);
 
       });
+      filterOrderMenu();
 
     }
 
