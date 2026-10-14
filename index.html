@@ -692,6 +692,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 .inventory-category-group-row td{background:#e7e5e1!important;color:#171717!important;font-size:10px!important;font-weight:800!important;letter-spacing:.12em!important;text-transform:uppercase!important;padding:10px 14px!important;border-bottom:1px solid var(--mc-line)!important}
 .inventory-ingredient-row td:first-child{font-weight:550;color:#202020}
 .inventory-row-unit{font-size:11px;color:#858078;font-weight:400;margin-top:3px}
+
+/* Product Options Manager uses the same subtitle hierarchy as Menu Margins / Recipe Costs. */
+#product-options-manager .product-options-manager-header .product-options-page-subtitle{display:block;font-size:18px!important;line-height:1.35;font-weight:650!important;letter-spacing:-.02em;color:#171717;margin:0!important;padding:0 0 12px;border-bottom:1px solid var(--mc-line);text-transform:none}
+#product-options-manager .product-options-manager-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#product-options-manager .product-options-manager-header p{margin:12px 0 0;color:var(--mc-muted)}
 </style></head>
 
 <body>
@@ -724,6 +729,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
       <button class="nav-button" data-page="orders-page" aria-label="Ordering" title="Ordering" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4-8 4V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="nav-label">Ordering</span></button>
       <button class="nav-button" data-page="inventory-page" aria-label="Inventory" title="Inventory" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg></span><span class="nav-label">Inventory</span></button>
       <button class="nav-button" data-page="margins-page" aria-label="Margins & Recipes" title="Margins & Recipes" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M8 7h8M8 11h8"/></svg></span><span class="nav-label">Margins &amp; Recipes</span></button>
+      <button class="nav-button" data-page="product-options-page" aria-label="Product Options" title="Product Options" onclick="showPage('product-options-page','Product Options','Manage option groups, drink add-ons, and ingredient stock mapping')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="8"/></svg></span><span class="nav-label">Product Options</span></button>
       <button class="nav-button" data-page="purchases-page" aria-label="Purchases" title="Purchases" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6"/><circle cx="10" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg></span><span class="nav-label">Purchases</span></button>
     </nav>
   </aside>
@@ -1026,8 +1032,22 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
           <div id="recipe-breakdowns" style="margin-top:24px"></div>
 
           <hr>
-          <section class="section" id="product-options-manager" style="margin-top:24px;background:#f8f7f3;border:1px solid var(--mc-line);border-radius:14px;padding:22px">
-            <div class="product-options-manager-header"><div class="product-options-page-subtitle">PRODUCT SETUP</div><div class="product-options-manager-title-row"><h2 style="margin:0">Product Options Manager</h2><button type="button" class="refresh-orders-button" onclick="loadProductOptionsManager()">↻ Refresh</button></div><p>Manage sizes, sweetness, extra shots, and map each option to ingredient stock adjustments.</p></div>
+<!-- Product Options Manager moved to its own page below. -->
+
+        </div>
+      </section>
+
+      <section class="page" id="product-options-page">
+        <div class="section" style="padding:0;border:0;background:transparent">
+          <div class="orders-header" style="margin-bottom:16px">
+            <div>
+              <div class="stat-label">MENU CONFIGURATION</div>
+              <h2>Product Options</h2>
+              <p>Manage option groups, add-on prices, drink availability, and stock mapping in one place.</p>
+            </div>
+          </div>
+                    <section class="section" id="product-options-manager" style="margin-top:24px;background:#f8f7f3;border:1px solid var(--mc-line);border-radius:14px;padding:22px">
+            <div class="product-options-manager-header"><div class="product-options-manager-title-row"><h3 class="product-options-page-subtitle" style="margin:0">Product Options Manager</h3><button type="button" class="refresh-orders-button" onclick="loadProductOptionsManager()">↻ Refresh</button></div><p>Manage sizes, sweetness, extra shots, and map each option to ingredient stock adjustments.</p></div>
             <p class="placeholder-note">Stock rule: the normal recipe is deducted first. Option mappings are additional quantity adjustments per cup: positive adds consumption; negative reduces consumption. Example: if the base recipe uses 20 ml syrup, Sweetness 50% can map syrup to -10 ml. Use the ingredient's own unit (g, ml, pcs).</p>
             <h3 style="margin:18px 0 12px">Option setup</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
               <form id="option-category-form" onsubmit="saveOptionCategory(event)" style="background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
@@ -1069,7 +1089,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <div class="product-options-existing-heading"><h3 style="margin:0">Existing options</h3><p class="placeholder-note" style="margin:5px 0 0">Search or filter by option group to find settings quickly.</p></div><div style="display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,220px);gap:10px;margin-bottom:12px"><input id="existing-options-search" type="search" placeholder="Search option name…" oninput="renderProductOptionManagerTables()"><select id="existing-options-group" onchange="renderProductOptionManagerTables()"><option value="">All option groups</option></select></div><div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Group</th><th>Option name</th><th>Direct extra (฿)</th><th>Grab extra (฿)</th><th>LINE MAN extra (฿)</th><th>Default</th><th>Active</th><th></th></tr></thead><tbody id="product-options-manager-body"><tr><td colspan="8">Loading options…</td></tr></tbody></table></div>
             </div>
           </section>
-
         </div>
       </section>
 
@@ -1136,7 +1155,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
     document.getElementById("equipment-acquired-date").value = new Date().toLocaleDateString("en-CA");
     await Promise.allSettled([
       loadProducts(), loadTodayOrders(), loadInventory(), loadStockMovements(), loadPurchaseHistory(),
-      initializeRecipeEditor(), loadSalesAnalytics(), loadProductOptionsManager(), loadOrderLog()
+      initializeRecipeEditor(), loadSalesAnalytics(), loadOrderLog()
     ]);
   }
 
@@ -3724,6 +3743,7 @@ ${errorText}`
     if (pageId === "inventory-page") { loadInventory(); loadStockMovements(); }
     if (pageId === "purchases-page") loadPurchaseHistory();
     if (pageId === "margins-page") loadMarginsAndRecipes();
+    if (pageId === "product-options-page") loadProductOptionsManager();
     if (pageId === "dashboard-page") { loadDashboardStats(); loadSalesAnalytics(); loadOrderLog(); }
     if (pageId === "orders-page") loadOrderLog();
   }
