@@ -718,7 +718,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   <aside class="sidebar">
     <div class="brand">
       <h1>Mansion.craft</h1>
-      <p>Management</p>
+      <p>POS & Cafe Management</p>
     </div>
     <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Expand sidebar" aria-expanded="false" title="Expand sidebar" onclick="toggleSidebar()">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span class="sidebar-toggle-label">Expand menu</span>
@@ -939,6 +939,19 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
                 </form>
               </div>
             </div>
+          </div>
+          <div class="inventory-panel" id="manual-ingredient-usage-panel" style="margin-top:18px">
+            <div class="orders-header"><div><div class="stat-label">NON-SALE STOCK USE</div><h3 style="margin:4px 0 0">Record Ingredient Usage</h3><p class="placeholder-note">Record test drinks, spills, waste, personal use, or other ingredient usage without creating a customer order.</p></div></div>
+            <form id="manual-usage-form" onsubmit="recordManualIngredientUsage(event)">
+              <div class="inventory-form-grid">
+                <div class="full-width"><label for="manual-usage-ingredient">Ingredient</label><select id="manual-usage-ingredient" required onchange="updateManualUsageStockHint()"><option value="">Select ingredient</option></select><p class="placeholder-note" id="manual-usage-stock-hint">Choose an ingredient to see current stock and unit.</p></div>
+                <div><label for="manual-usage-quantity">Quantity used</label><input id="manual-usage-quantity" type="number" min="0.000001" step="any" required placeholder="e.g. 150"></div>
+                <div><label for="manual-usage-reason">Reason</label><select id="manual-usage-reason" required><option value="Test drink / recipe development">Test drink / recipe development</option><option value="Spillage / waste">Spillage / waste</option><option value="Expired ingredient">Expired ingredient</option><option value="Personal / staff use">Personal / staff use</option><option value="Other">Other</option></select></div>
+                <div class="full-width"><label for="manual-usage-notes">Note (optional)</label><textarea id="manual-usage-notes" class="notes" rows="2" maxlength="500" placeholder="e.g. Tested a new matcha latte recipe"></textarea></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px"><button type="submit" class="checkout-button" id="manual-usage-submit">Record Usage &amp; Deduct Stock</button><button type="button" class="refresh-orders-button" onclick="resetManualUsageForm()">Clear</button></div>
+              <div id="manual-usage-message" role="status" style="margin-top:12px"></div>
+            </form>
           </div>
           </div><!-- /inventory-stock-workspace -->
           <section id="inventory-equipment-workspace" style="display:none;margin-top:20px">
@@ -3244,6 +3257,70 @@ ${errorText}`
     } catch(error) { alert(`Could not update stock movement date: ${error.message}`); }
   }
 
+  function updateManualUsageStockHint() {
+    const select = document.getElementById("manual-usage-ingredient");
+    const hint = document.getElementById("manual-usage-stock-hint");
+    if (!select || !hint) return;
+    const item = inventoryIngredients.find(i => Number(i.id) === Number(select.value));
+    hint.textContent = item ? `Current stock: ${Number(item.current_stock || 0).toLocaleString("en-US", {maximumFractionDigits:4})} ${item.unit || ""}` : "Choose an ingredient to see current stock and unit.";
+  }
+
+  function resetManualUsageForm() {
+    const form = document.getElementById("manual-usage-form");
+    if (form) form.reset();
+    const message = document.getElementById("manual-usage-message");
+    if (message) { message.textContent = ""; message.style.color = ""; }
+    updateManualUsageStockHint();
+  }
+
+  async function recordManualIngredientUsage(event) {
+    event.preventDefault();
+    const message = document.getElementById("manual-usage-message");
+    const button = document.getElementById("manual-usage-submit");
+    const ingredientId = Number(document.getElementById("manual-usage-ingredient").value);
+    const quantity = Number(document.getElementById("manual-usage-quantity").value);
+    const reason = document.getElementById("manual-usage-reason").value;
+    const note = document.getElementById("manual-usage-notes").value.trim();
+    const item = inventoryIngredients.find(i => Number(i.id) === ingredientId);
+    if (!item) { message.style.color = "#b00020"; message.textContent = "Select a valid ingredient."; return; }
+    if (!Number.isFinite(quantity) || quantity <= 0) { message.style.color = "#b00020"; message.textContent = "Enter a quantity greater than zero."; return; }
+    const currentStock = Number(item.current_stock || 0);
+    if (quantity > currentStock) { message.style.color = "#b00020"; message.textContent = `Not enough stock. Current stock is ${currentStock} ${item.unit || ""}; usage was not recorded.`; return; }
+    const newStock = currentStock - quantity;
+    const movementNote = `Manual ingredient usage — ${reason}; used ${quantity} ${item.unit || ""}${note ? `; Note: ${note}` : ""}`;
+    if (!confirm(`Record ${quantity} ${item.unit || ""} of ${item.name} as “${reason}”?\n\nStock: ${currentStock} → ${newStock} ${item.unit || ""}\n\nThis will deduct stock and create a stock movement, not a customer sale.`)) return;
+    button.disabled = true;
+    message.style.color = "#555"; message.textContent = "Recording usage and updating stock…";
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/save_inventory_ingredient`, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          p_ingredient_id: ingredientId,
+          p_name: item.name,
+          p_unit: item.unit,
+          p_minimum_stock: Number(item.minimum_stock || 0),
+          p_current_stock: newStock,
+          p_category: item.category || null,
+          p_adjustment_note: movementNote,
+          p_max_stock: Number(item.max_stock || item.maximum_stock || Math.max(newStock, Number(item.minimum_stock || 0), 1))
+        })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || result?.details || JSON.stringify(result));
+      message.style.color = "#18794e";
+      message.textContent = `Usage recorded. ${item.name}: ${currentStock} → ${newStock} ${item.unit || ""}. A manual stock movement was saved; no customer order was created.`;
+      document.getElementById("manual-usage-quantity").value = "";
+      document.getElementById("manual-usage-notes").value = "";
+      await loadInventory();
+      await loadStockMovements();
+      await loadMarginsAndRecipes();
+    } catch (error) {
+      message.style.color = "#b00020";
+      message.textContent = `Could not record usage: ${error.message}`;
+    } finally { button.disabled = false; }
+  }
+
   async function loadInventory() {
     const list = document.getElementById("inventory-list");
     const summary = document.getElementById("inventory-summary");
@@ -3273,6 +3350,14 @@ ${errorText}`
       if (cats.some(c => c.name === selectedCategory)) ingredientCategory.value = selectedCategory;
       select.innerHTML = '<option value="">Select ingredient</option>';
       data.forEach(ingredient => { const o=document.createElement("option"); o.value=ingredient.id; o.textContent=`${ingredient.name} (${ingredient.unit})`; select.appendChild(o); });
+      const usageSelect = document.getElementById("manual-usage-ingredient");
+      if (usageSelect) {
+        const previousUsageId = usageSelect.value;
+        usageSelect.innerHTML = '<option value="">Select ingredient</option>';
+        data.forEach(ingredient => { const o=document.createElement("option"); o.value=ingredient.id; o.textContent=`${ingredient.name} (${ingredient.unit})`; usageSelect.appendChild(o); });
+        if (data.some(i => String(i.id) === previousUsageId)) usageSelect.value = previousUsageId;
+        updateManualUsageStockHint();
+      }
       renderInventoryTable();
     } catch (error) {
       list.innerHTML = `<tr><td colspan="6" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
