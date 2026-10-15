@@ -802,10 +802,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
             <label>From date<input id="order-log-from" type="date" onchange="loadOrderLog()"></label>
             <label>To date<input id="order-log-to" type="date" onchange="loadOrderLog()"></label>
             <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
+            <label>Rows<select id="order-log-row-limit" onchange="renderOrderLog()"><option value="25" selected>25 rows</option><option value="all">Show all</option></select></label>
           </div>
           <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
           <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px;text-align:right">Fee</th><th style="padding:10px 8px;text-align:right">Net</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="9" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
-          <p class="placeholder-note" style="margin-top:10px">The log loads the latest 1,000 orders available to your account. Use the date filters to narrow the results.</p>
+          <p class="placeholder-note" style="margin-top:10px">By default, 25 matching orders are shown. Choose “Show all” to display every matching order in the latest 1,000 loaded orders.</p>
         </section>
 
         <div class="section" style="margin-top:22px">
@@ -991,6 +992,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
               <label>From date<input id="movement-from" type="date" onchange="loadStockMovements()"></label>
               <label>To date<input id="movement-to" type="date" onchange="loadStockMovements()"></label>
               <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
+              <label>Rows<select id="movement-row-limit" onchange="renderStockMovements()"><option value="25" selected>25 rows</option><option value="all">Show all</option></select></label>
             </div>
             <div id="stock-movement-summary" class="orders-summary" style="margin-bottom:12px">Loading stock movements…</div>
             <div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th><th>Actions</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="7">Loading stock movements…</td></tr></tbody></table></div>
@@ -1554,9 +1556,11 @@ function renderOrderLog() {
   const total = filtered.reduce((sum,o) => sum + Math.max(0, Number(o.subtotal ?? o.total ?? 0) - (String(o.discount_funding || "cafe") === "cafe" ? Number(o.discount_amount || 0) : 0)), 0);
   const fees = filtered.reduce((sum,o) => sum + Number(o.platform_fee || 0), 0);
   const net = total - fees;
-  summary.textContent = `${filtered.length} order${filtered.length===1?"":"s"} shown · Gross ฿${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} · Fees ฿${fees.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} · Net ฿${net.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const rowLimit = document.getElementById("order-log-row-limit")?.value || "25";
+  const visible = rowLimit === "all" ? filtered : filtered.slice(0, 25);
+  summary.textContent = `Showing ${visible.length} of ${filtered.length} matching order${filtered.length===1?"":"s"} · Gross ฿${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} · Fees ฿${fees.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} · Net ฿${net.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   if (!filtered.length) { body.innerHTML = '<tr><td colspan="9" style="padding:14px 8px">No orders match these filters.</td></tr>'; return; }
-  body.innerHTML = filtered.map(o => {
+  body.innerHTML = visible.map(o => {
     const date = o.created_at ? new Date(o.created_at).toLocaleString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
     const status = String(o.status || "new").toLowerCase();
     const source = o.order_source || o.source || o.order_type || "—";
@@ -3235,9 +3239,11 @@ ${errorText}`
     const from=document.getElementById("movement-from")?.value || "", to=document.getElementById("movement-to")?.value || "", type=document.getElementById("movement-type")?.value || "";
     const rows=stockMovementRows.filter(r=>{const d=String(r.date||"").slice(0,10);return (!from||d>=from)&&(!to||d<=to)&&(!type||r.type===type);});
     const purchases=rows.filter(r=>r.type==="purchase").length, usage=rows.filter(r=>r.type==="sale_usage").length, adjustments=rows.filter(r=>r.type==="manual_adjustment").length;
-    summary.innerHTML=`<span>${rows.length.toLocaleString()} recorded movements</span><span>${purchases} purchases</span><span>${usage} order-usage lines</span><span>${adjustments} adjustments</span>`;
+    const rowLimit=document.getElementById("movement-row-limit")?.value || "25";
+    const visibleRows=rowLimit==="all"?rows:rows.slice(0,25);
+    summary.innerHTML=`<span>Showing ${visibleRows.length.toLocaleString()} of ${rows.length.toLocaleString()} movements</span><span>${purchases} purchases</span><span>${usage} order-usage lines</span><span>${adjustments} adjustments</span>`;
     if(!rows.length){body.innerHTML='<tr><td colspan="7">No recorded movements for these filters.</td></tr>';return;}
-    body.innerHTML=rows.slice(0,1000).map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.label)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}${r.before!==null&&r.before!==undefined?`<div style="color:#777;font-size:12px">${Number(r.before).toLocaleString()} → ${Number(r.after).toLocaleString()}</div>`:""}</td><td><button type="button" class="refresh-orders-button" onclick="editStockMovementDate(${Number(r.id)})">Edit date</button></td></tr>`).join("");
+    body.innerHTML=visibleRows.map(r=>`<tr><td>${escapeHtml(r.date?new Date(r.date).toLocaleString("en-GB",{timeZone:"Asia/Bangkok"}):"—")}</td><td>${escapeHtml(r.ingredient?.name||"Unknown")} <span style="color:#777">(${escapeHtml(r.ingredient?.unit||"")})</span></td><td>${escapeHtml(r.label)}</td><td style="text-align:right;color:${r.quantity<0?'#a33':'#18794e'};font-variant-numeric:tabular-nums">${r.quantity>0?'+':''}${r.quantity.toLocaleString("en-US",{maximumFractionDigits:4})}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(r.notes||"—")}${r.before!==null&&r.before!==undefined?`<div style="color:#777;font-size:12px">${Number(r.before).toLocaleString()} → ${Number(r.after).toLocaleString()}</div>`:""}</td><td><button type="button" class="refresh-orders-button" onclick="editStockMovementDate(${Number(r.id)})">Edit date</button></td></tr>`).join("");
   }
 
   async function editStockMovementDate(id) {
