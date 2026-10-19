@@ -697,7 +697,248 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 #product-options-manager .product-options-manager-header .product-options-page-subtitle{display:block;font-size:18px!important;line-height:1.35;font-weight:650!important;letter-spacing:-.02em;color:#171717;margin:0!important;padding:0 0 12px;border-bottom:1px solid var(--mc-line);text-transform:none}
 #product-options-manager .product-options-manager-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 #product-options-manager .product-options-manager-header p{margin:12px 0 0;color:var(--mc-muted)}
-</style></head>
+</style>
+<style id="mansion-craft-orange-theme">
+/* Mansion.craft orange-base UI refresh — visual-only overrides; preserve application behavior */
+:root{
+ --mc-bg:#fff8f0;--mc-card:#ffffff;--mc-line:#f0dfd0;--mc-ink:#38271e;--mc-muted:#806b5d;--mc-orange:#c96b35;--mc-soft:#fff0e3;
+ --line:#f0dfd0;--surface:#fffdf9;--accent:#c96b35;--app-bg:#fff8f0;
+}
+html,body{background:#fff8f0!important;color:#38271e!important}
+.app-shell{background:#fff8f0!important}
+.sidebar{background:#fffdf9!important;border-right:1px solid #f0dfd0!important;color:#5b4638!important;box-shadow:2px 0 14px rgba(111,63,30,.035)}
+.brand{border-bottom-color:#f0dfd0!important}
+.brand h1{background:#c96b35!important;box-shadow:0 5px 14px rgba(201,107,53,.22)}
+.nav-button{color:#795b49!important}
+.nav-button:hover{background:#fff0e3!important;color:#a84e25!important}
+.nav-button.active{background:#ffead9!important;border-color:#f0c3a3!important;color:#a84e25!important}
+.nav-button.active:before{background:#c96b35!important}
+.app-content,.page-content{background:#fff8f0!important}
+.app-header{background:#fff8f0!important;border-bottom-color:#f0dfd0!important}
+.app-header h2,.orders-header h2,.inventory-panel h3,.section h2,.section h3{color:#38271e!important}
+.app-header p,.orders-header p,.placeholder-note{color:#806b5d!important}
+.section,.inventory-panel,.stat-card,.margin-menu-panel{background:#fffdf9!important;border-color:#f0dfd0!important;border-radius:16px!important;box-shadow:0 3px 14px rgba(111,63,30,.035)!important}
+.stat-card{background:#fff!important}
+.stat-card .stat-label,.stat-label{color:#806b5d!important}
+.stat-card .stat-value{color:#38271e!important}
+button{border-radius:11px!important}
+.checkout-button,#checkout-button,.product-card-content .add-button{background:#c96b35!important;border-color:#c96b35!important;color:#fff!important;box-shadow:0 3px 8px rgba(201,107,53,.13)}
+.checkout-button:hover,#checkout-button:hover,.product-card-content .add-button:hover{background:#a84e25!important;border-color:#a84e25!important}
+.refresh-orders-button,.margin-menu-actions button{background:#fff!important;color:#8e4825!important;border:1px solid #edc6ab!important}
+.refresh-orders-button:hover,.margin-menu-actions button:hover{background:#fff0e3!important;border-color:#d9976c!important}
+input,select,textarea,.order-menu-heading input,.order-details-pane input,.order-details-pane select,.order-details-pane textarea{border-color:#ead8c9!important;background:#fff!important;color:#38271e!important}
+input:focus,select:focus,textarea:focus{outline:2px solid #f3c6a5!important;border-color:#c96b35!important}
+label{color:#795b49!important}
+.inventory-table th{background:#fff0e3!important;color:#80553d!important;border-bottom-color:#f0dfd0!important}
+.inventory-table td,.margin-menu-table td{border-bottom-color:#f0dfd0!important}
+.inventory-category-group-row td,.margin-menu-table .margin-category-row td{background:#ffead9!important;color:#87431f!important;border-bottom-color:#f0c3a3!important}
+.margin-menu-table th{background:#fff8f0!important;border-bottom-color:#e9c4aa!important}
+.margin-price,.margin-profit{color:#8e4825!important}
+.margin-bar{background:#f4e2d4!important;border-radius:999px!important}
+.margin-bar span{background:#c96b35!important;border-radius:999px!important}
+.margin-edit-btn{color:#a85b31!important}
+.margin-edit-btn:hover{background:#fff0e3!important;color:#8e4825!important}
+.recipe-editor-row{background:#fff8f0!important;border-color:#f0dfd0!important}
+#recipe-editor-form{border-color:#f0dfd0!important;background:#fffdf9!important}
+.order-workspace-section{border-color:#f0dfd0!important;background:#fffdf9!important}
+.add-order-header{background:#fffdf9!important;border-bottom-color:#f0dfd0!important}
+.eyebrow{color:#b55b2d!important}
+.add-order-layout{background:#fff8f0!important;color:#38271e!important}
+.order-menu-pane{border-right-color:#f0dfd0!important}
+.order-menu-category-btn{border-color:#edc6ab!important;color:#795b49!important;background:#fffdf9!important}
+.order-menu-category-btn.active{background:#c96b35!important;border-color:#c96b35!important;color:#fff!important}
+#products .product{border-color:#f0dfd0!important;background:#fffdf9!important;border-radius:16px!important}
+#products .product:hover{box-shadow:0 8px 24px rgba(111,63,30,.10)!important}
+.product-card-image-empty{background:radial-gradient(circle at 70% 25%,#fff0df 0 12%,transparent 13%),linear-gradient(145deg,#f9dfc8,#e6b18b 58%,#c96b35)!important}
+.product-card-content h3,.product-card-content .price{color:#38271e!important}
+.product-card-content .category{color:#927766!important}
+.order-details-pane{background:#fffdf9!important}
+#cart{border-color:#f0dfd0!important;background:#fffaf5!important}
+.cart-item{border-bottom-color:#f0dfd0!important}
+.order-details-pane .cart-total{border-bottom-color:#f0dfd0!important}
+.auth-overlay{background:rgba(56,39,30,.68)!important}
+.auth-card{border:1px solid #f0dfd0!important;border-radius:20px!important;background:#fffdf9!important}
+.auth-card button{background:#c96b35!important;color:#fff!important}
+.auth-card button:hover{background:#a84e25!important}
+.auth-user button{border-color:#edc6ab!important;color:#8e4825!important;background:#fffdf9!important}
+.equipment-status.in-use{background:#fff0e3!important;border-color:#edc6ab!important;color:#8e4825!important}
+.equipment-status.retired{background:#f7eee7!important}
+@media(max-width:850px){.sidebar{background:#fffdf9!important}.order-menu-pane{border-bottom-color:#f0dfd0!important}}
+</style>
+
+<style id="mansion-clean-orange-usable">
+:root {
+  --mc-orange: #c96b35;
+  --mc-ink: #38271e;
+  --mc-muted: #806b5d;
+  --mc-bg: #fff8f0;
+  --mc-card: #fffdf9;
+  --mc-line: #f0dfd0;
+  --mc-soft: #fff0e3;
+}
+html, body { background: var(--mc-bg) !important; color: var(--mc-ink); }
+body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.app-shell { grid-template-columns: 236px minmax(0, 1fr) !important; background: var(--mc-bg); }
+/* Text-and-icon navigation only: no decorative sidebar photography or image backgrounds. */
+.sidebar, .sidebar::before, .sidebar::after { background-image: none !important; }
+.sidebar { background: #fffdf9 !important; color: #5b4638 !important; border-right: 1px solid var(--mc-line) !important; box-shadow: 2px 0 14px rgba(111,63,30,.035); padding: 18px 12px !important; align-items: stretch !important; }
+.brand { display: flex !important; align-items: center; gap: 11px; text-align: left !important; min-height: 54px; padding: 0 8px 18px !important; margin: 0 0 14px !important; border-bottom: 1px solid var(--mc-line) !important; }
+.brand h1 { flex: 0 0 auto !important; width: auto !important; height: auto !important; margin: 0 !important; background: transparent !important; color: var(--mc-ink) !important; box-shadow: none !important; display: block !important; font-size: 16px !important; font-weight: 750; letter-spacing: -.035em; white-space: nowrap; }
+.brand h1::after { content: none !important; }
+.brand p { display: block !important; color: var(--mc-muted) !important; font-size: 11px !important; margin: 3px 0 0 !important; white-space: nowrap; }
+.sidebar-toggle { width: 100% !important; justify-content: flex-start !important; margin: 0 0 12px !important; padding: 9px 12px !important; border-color: var(--mc-line) !important; color: var(--mc-muted) !important; background: #fffdf9 !important; }
+.sidebar-toggle-label { display: inline !important; }
+.sidebar nav { width: 100%; display: flex; flex-direction: column; gap: 5px; }
+.nav-button, .sidebar-expanded .nav-button { position: relative; display: flex !important; align-items: center; justify-content: flex-start !important; gap: 10px !important; width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 42px !important; margin: 0 !important; padding: 10px 12px !important; overflow: visible; white-space: normal; border: 1px solid transparent !important; border-radius: 10px !important; background: transparent !important; color: #795b49 !important; font-size: 13px !important; font-weight: 550; box-shadow: none !important; }
+.nav-button .nav-icon { display: inline-flex !important; flex: 0 0 20px; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 17px; color: currentColor; }
+.nav-button .nav-label, .sidebar-expanded .nav-button .nav-label { display: inline !important; overflow: hidden; text-overflow: ellipsis; }
+.nav-button:hover { background: var(--mc-soft) !important; color: #a84e25 !important; }
+.nav-button.active, .sidebar-expanded .nav-button.active { background: #ffead9 !important; border-color: #f0c3a3 !important; color: #a84e25 !important; font-weight: 700 !important; }
+.nav-button.active::before { content: none !important; }
+.app-content, .page-content { background: var(--mc-bg) !important; min-width: 0; }
+.app-header { background: var(--mc-bg) !important; border-bottom: 1px solid var(--mc-line) !important; padding: 22px 30px !important; }
+.app-header h2 { color: var(--mc-ink) !important; font-size: 27px !important; font-weight: 750; letter-spacing: -.04em; }
+.app-header p, .orders-header p, .placeholder-note { color: var(--mc-muted) !important; }
+.page-content { max-width: 1600px !important; padding: 24px 30px 40px !important; }
+.section, .inventory-panel, .stat-card, .margin-menu-panel { background: var(--mc-card) !important; border: 1px solid var(--mc-line) !important; border-radius: 14px !important; box-shadow: 0 2px 8px rgba(111,63,30,.025) !important; }
+.section { padding: 22px !important; }
+.inventory-panel { padding: 18px !important; min-width: 0; }
+.stat-card { padding: 17px !important; }
+button, input, select, textarea { font-family: inherit; }
+button { transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease; }
+input, select, textarea { border-color: #e8d9cc !important; border-radius: 9px !important; background-color: #fff !important; color: var(--mc-ink) !important; }
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(201,107,53,.22) !important; border-color: var(--mc-orange) !important; }
+/* Tables stay compact, readable, and horizontally scrollable on small screens. */
+table { border-collapse: separate; border-spacing: 0; }
+th { color: #795b49 !important; background: #fff5eb !important; font-weight: 650 !important; }
+td, th { border-color: #f0e4da !important; }
+@media (max-width: 1000px) {
+  .app-shell, .app-shell.sidebar-expanded { grid-template-columns: 1fr !important; }
+  .sidebar, .sidebar-expanded .sidebar { position: relative !important; top: auto !important; height: auto !important; padding: 10px !important; border-right: 0 !important; border-bottom: 1px solid var(--mc-line) !important; }
+  .brand { display: flex !important; padding: 4px 8px 10px !important; margin-bottom: 8px !important; }
+  .sidebar-toggle { display: none !important; }
+  .sidebar nav { flex-direction: row !important; overflow-x: auto; padding-bottom: 3px; gap: 5px; }
+  .nav-button, .sidebar-expanded .nav-button { flex: 0 0 auto !important; width: auto !important; min-width: max-content !important; min-height: 40px !important; padding: 8px 10px !important; }
+  .page-content { padding: 18px !important; }
+  .app-header { padding: 18px !important; }
+}
+@media (max-width: 600px) {
+  .page-content { padding: 12px !important; }
+  .section, .inventory-panel { padding: 14px !important; }
+  .app-header h2 { font-size: 23px !important; }
+  .brand { min-height: 42px; }
+}
+</style>
+
+<style id="mansion-minimal-ui">
+/* Minimal UI refinement: less decoration, flatter surfaces, clearer hierarchy. */
+:root {
+  --mc-orange: #c7652d;
+  --mc-ink: #2d2926;
+  --mc-muted: #77716c;
+  --mc-bg: #faf9f6;
+  --mc-card: #ffffff;
+  --mc-line: #e9e5df;
+  --mc-soft: #fff1e7;
+}
+html, body, .app-content, .page-content { background: var(--mc-bg) !important; }
+.sidebar { background: #fff !important; border-right: 1px solid var(--mc-line) !important; box-shadow: none !important; padding: 16px 10px !important; }
+.brand { border-bottom: 1px solid var(--mc-line) !important; margin-bottom: 10px !important; padding-bottom: 14px !important; }
+.brand h1 { font-size: 15px !important; letter-spacing: -.02em !important; }
+.brand p { color: var(--mc-muted) !important; }
+.sidebar-toggle { border-color: var(--mc-line) !important; border-radius: 7px !important; box-shadow: none !important; }
+.sidebar nav { gap: 3px !important; }
+.nav-button, .sidebar-expanded .nav-button { min-height: 39px !important; padding: 9px 10px !important; border-radius: 7px !important; font-weight: 500 !important; color: #5e5852 !important; }
+.nav-button:hover { background: #f7f4f0 !important; color: var(--mc-ink) !important; }
+.nav-button.active, .sidebar-expanded .nav-button.active { background: #fff0e5 !important; border-color: transparent !important; color: #a94e20 !important; font-weight: 650 !important; }
+.app-header { background: var(--mc-bg) !important; border-bottom: 1px solid var(--mc-line) !important; padding: 18px 26px !important; }
+.app-header h2 { font-size: 24px !important; font-weight: 680 !important; letter-spacing: -.025em !important; }
+.page-content { padding: 20px 26px 32px !important; }
+.section, .inventory-panel, .stat-card, .margin-menu-panel { background: #fff !important; border: 1px solid var(--mc-line) !important; border-radius: 10px !important; box-shadow: none !important; }
+.section { padding: 18px !important; }
+.inventory-panel { padding: 16px !important; }
+.stat-card { padding: 15px !important; }
+button { box-shadow: none !important; }
+input, select, textarea { border-color: #ded9d2 !important; border-radius: 7px !important; box-shadow: none !important; }
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(199,101,45,.16) !important; border-color: var(--mc-orange) !important; }
+th { background: #f7f5f1 !important; color: #625b54 !important; }
+td, th { border-color: #eeeae5 !important; }
+@media (max-width: 1000px) { .page-content { padding: 16px !important; } .app-header { padding: 16px !important; } }
+@media (max-width: 600px) { .page-content { padding: 10px !important; } .section, .inventory-panel { padding: 12px !important; } .app-header h2 { font-size: 21px !important; } }
+</style>
+
+<style id="mansion-proportional-clean-type">
+/* Final typography and spacing pass: preserve all existing app behavior. */
+:root {
+  --mc-orange: #c7652d;
+  --mc-ink: #292522;
+  --mc-muted: #746d66;
+  --mc-bg: #faf9f6;
+  --mc-card: #ffffff;
+  --mc-line: #e9e5df;
+  --mc-soft: #fff1e7;
+}
+html { font-size: 14px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body, button, input, select, textarea, table {
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-kerning: normal;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+body { font-size: 13px !important; line-height: 1.45 !important; letter-spacing: 0 !important; }
+.app-shell { grid-template-columns: 224px minmax(0, 1fr) !important; gap: 0 !important; }
+.sidebar { padding: 16px 10px !important; }
+.brand { min-height: 48px !important; gap: 9px !important; padding: 0 8px 13px !important; margin-bottom: 12px !important; }
+.brand h1 { font-size: 14px !important; line-height: 1.25 !important; font-weight: 650 !important; letter-spacing: -.025em !important; }
+.brand p { font-size: 11px !important; line-height: 1.35 !important; }
+.nav-button, .sidebar-expanded .nav-button { min-height: 38px !important; padding: 8px 10px !important; gap: 9px !important; border-radius: 7px !important; font-size: 12.5px !important; font-weight: 500 !important; line-height: 1.3 !important; }
+.nav-button .nav-icon { flex-basis: 18px !important; width: 18px !important; height: 18px !important; font-size: 16px !important; }
+.app-header { padding: 17px 24px !important; min-height: 68px; }
+.app-header h2 { font-size: clamp(21px, 1.7vw, 25px) !important; line-height: 1.2 !important; font-weight: 650 !important; letter-spacing: -.035em !important; margin: 0 !important; }
+.app-header p { font-size: 12px !important; line-height: 1.45 !important; margin-top: 4px !important; }
+.page-content { width: 100%; max-width: 1680px !important; margin: 0 auto !important; padding: 20px 24px 30px !important; box-sizing: border-box; }
+.section, .inventory-panel, .stat-card, .margin-menu-panel { border-radius: 10px !important; border-color: var(--mc-line) !important; box-shadow: none !important; }
+.section { padding: 18px !important; }
+.inventory-panel { padding: 15px !important; }
+.stat-card { padding: 14px !important; min-width: 0; }
+.stat-card .stat-label, .stat-label { font-size: 11px !important; line-height: 1.35 !important; letter-spacing: .01em !important; text-transform: none !important; font-weight: 500 !important; }
+.stat-card .stat-value { font-size: clamp(20px, 1.55vw, 25px) !important; line-height: 1.2 !important; letter-spacing: -.035em !important; font-weight: 650 !important; margin-top: 7px !important; overflow-wrap: anywhere; }
+.orders-header { gap: 12px !important; margin-bottom: 16px !important; padding-bottom: 14px !important; }
+.orders-header h2, .orders-header h3, .inventory-panel h3, .section h3 { font-size: 15px !important; line-height: 1.35 !important; font-weight: 650 !important; letter-spacing: -.015em !important; }
+p, .placeholder-note { line-height: 1.5; }
+button { font-size: 12.5px; font-weight: 550; border-radius: 7px; box-shadow: none !important; }
+input, select, textarea { min-height: 36px; padding: 8px 10px; box-sizing: border-box; font-size: 12.5px !important; line-height: 1.35 !important; border-radius: 7px !important; }
+textarea { min-height: 76px; }
+table { width: 100%; font-size: 12px !important; line-height: 1.4 !important; }
+th, td { padding: 9px 10px !important; vertical-align: middle; }
+th { font-size: 11px !important; font-weight: 600 !important; white-space: nowrap; }
+/* Keep dense dashboards balanced and avoid oversized gaps on wide screens. */
+.stat-grid, .dashboard-financial-grid { gap: 12px !important; }
+@media (min-width: 1400px) {
+  .page-content { padding-left: 28px !important; padding-right: 28px !important; }
+}
+@media (max-width: 1100px) {
+  .app-shell, .app-shell.sidebar-expanded { grid-template-columns: 1fr !important; }
+  .sidebar, .sidebar-expanded .sidebar { position: relative !important; height: auto !important; padding: 9px 12px !important; border-right: 0 !important; border-bottom: 1px solid var(--mc-line) !important; }
+  .brand { min-height: 38px !important; padding: 0 5px 8px !important; margin-bottom: 7px !important; }
+  .sidebar-toggle { display: none !important; }
+  .sidebar nav { flex-direction: row !important; overflow-x: auto; gap: 5px !important; padding-bottom: 2px; }
+  .nav-button, .sidebar-expanded .nav-button { flex: 0 0 auto !important; width: auto !important; min-width: max-content !important; min-height: 36px !important; padding: 7px 10px !important; }
+  .page-content { padding: 16px !important; }
+  .app-header { padding: 15px 16px !important; }
+}
+@media (max-width: 640px) {
+  body { font-size: 12.5px !important; }
+  .page-content { padding: 10px !important; }
+  .section, .inventory-panel { padding: 12px !important; }
+  .stat-grid, .dashboard-financial-grid { gap: 8px !important; }
+  .stat-card { padding: 11px !important; }
+  .stat-card .stat-value { font-size: 19px !important; }
+  .app-header h2 { font-size: 21px !important; }
+  th, td { padding: 7px 8px !important; }
+}
+</style>
+
+</head>
 
 <body>
 
@@ -714,14 +955,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
   </form>
 </div>
 
-<div class="app-shell">
+<div class="app-shell sidebar-expanded">
   <aside class="sidebar">
     <div class="brand">
       <h1>Mansion.craft</h1>
-      <p>POS & Cafe Management</p>
     </div>
-    <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Expand sidebar" aria-expanded="false" title="Expand sidebar" onclick="toggleSidebar()">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span class="sidebar-toggle-label">Expand menu</span>
+    <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span class="sidebar-toggle-label">Collapse menu</span>
     </button>
     <div class="sidebar-label">WORKSPACE</div>
     <nav aria-label="Main navigation">
@@ -746,12 +986,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
         <div class="section" style="margin-bottom:14px;padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
           <div class="placeholder-note" id="dashboard-period-caption" style="margin:0;flex:1;min-width:220px">All recorded sales since opening day, excluding cancelled/refunded orders.</div>
           <div style="display:flex;gap:10px;align-items:end;justify-content:flex-end;flex-wrap:wrap;margin-left:auto">
-            <label style="margin:0;min-width:180px">Dashboard period
-              <select id="dashboard-period" onchange="onDashboardPeriodChange()" style="margin-top:5px">
-                <option value="all">All-time · Since opening</option>
-                <option value="month">Selected month</option>
-              </select>
-            </label>
+            <select id="dashboard-period" aria-label="Dashboard period" onchange="onDashboardPeriodChange()" style="margin:0;min-width:120px">
+              <option value="all">All time</option>
+              <option value="month">Month</option>
+            </select>
             <label id="dashboard-month-wrap" style="margin:0;min-width:150px;display:none">Month
               <input type="month" id="dashboard-month" onchange="onDashboardPeriodChange()" style="margin-top:5px" />
             </label>
@@ -818,7 +1056,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f6c48f!important;outl
 
       <section class="page" id="orders-page">
         <section class="section order-workspace-section" aria-labelledby="add-order-title">
-          <div class="add-order-header"><div><div class="eyebrow">MANSION.CRAFT · QUICK ORDER</div><h2 id="add-order-title">Create Order</h2><p>Tap a drink to add it. Your cart and checkout stay beside the menu.</p></div><button type="button" class="clear-button" onclick="clearCart()">Clear Order</button></div>
+          <div class="add-order-header"><div><div class="eyebrow">MANSION.CRAFT · QUICK ORDER</div><h2 id="add-order-title">Create Order</h2><p>Tap a drink to add it. Your cart and checkout stay beside the menu.</p></div></div>
             <div class="add-order-layout">
               <section class="order-menu-pane"><div class="order-menu-heading"><div><h3>Menu</h3><p>Tap a product to add or customize it.</p></div><input id="order-menu-search" type="search" placeholder="Search menu…" oninput="filterOrderMenu()" aria-label="Search menu"></div><div id="order-menu-categories" class="order-menu-categories" role="group" aria-label="Filter menu by category"></div><div id="products">Loading products...</div></section>
                       <section class="order-details-pane" id="new-order-section">
