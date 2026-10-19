@@ -938,6 +938,151 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 }
 </style>
 
+<style>
+/* Balance Sell Summary period filter: keep controls together on one baseline. */
+#dashboard-period-controls { flex: 0 0 auto; }
+#dashboard-period-controls #dashboard-period { width: 132px !important; min-width: 132px !important; }
+#dashboard-period-controls #dashboard-month-wrap { width: 160px; min-width: 160px; }
+#dashboard-period-controls #dashboard-month { width: 100%; }
+#dashboard-period-controls .refresh-orders-button { white-space: nowrap; align-self: center; }
+@media (max-width: 700px) {
+  #dashboard-page > .section:first-child { align-items: stretch !important; }
+  #dashboard-period-controls { width: 100%; margin-left: 0 !important; flex-wrap: wrap !important; justify-content: flex-start !important; }
+  #dashboard-period-controls #dashboard-period { flex: 0 0 132px; }
+}
+</style>
+
+<style id="dashboard-and-product-options-alignment-fix">
+/* Keep dashboard period controls aligned along one baseline. */
+#dashboard-period-controls {
+  align-items: flex-end !important;
+  gap: 10px !important;
+}
+#dashboard-period-controls > select {
+  align-self: flex-end;
+  height: 42px;
+}
+#dashboard-month-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 170px !important;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mc-muted);
+}
+#dashboard-month-wrap input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 42px;
+  margin-top: 0 !important;
+  text-transform: none;
+  letter-spacing: normal;
+}
+#dashboard-period-controls > button {
+  height: 42px;
+  white-space: nowrap;
+}
+
+/* Product Options: align every field input, even when a label wraps. */
+#option-stock-map-form {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  column-gap: 14px !important;
+  row-gap: 14px !important;
+  align-items: start !important;
+}
+#option-stock-map-form > div:not(:first-child) > label {
+  display: flex;
+  align-items: flex-start;
+  min-height: 36px;
+  margin: 0 0 7px !important;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+#option-stock-map-form > div:not(:first-child) > select,
+#option-stock-map-form > div:not(:first-child) > input {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-width: 0;
+  margin: 0;
+}
+#option-stock-map-form > div[style*="grid-column:1/-1"]:not(:first-child) {
+  grid-column: 1 / -1 !important;
+}
+@media (max-width: 1050px) {
+  #option-stock-map-form { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 650px) {
+  #dashboard-period-controls { width: 100%; flex-wrap: wrap !important; margin-left: 0 !important; justify-content: flex-start !important; }
+  #dashboard-period-controls > select { flex: 1 1 120px !important; }
+  #dashboard-month-wrap { flex: 1 1 150px; }
+  #dashboard-period-controls > button { flex: 0 0 auto; }
+  #option-stock-map-form { grid-template-columns: minmax(0, 1fr) !important; }
+}
+</style>
+
+<style id="dashboard-filter-final-alignment">
+/* Give the period selector, month picker and export action a shared label row and control baseline. */
+#dashboard-period-controls {
+  position: relative !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding-top: 20px !important;
+  margin-left: auto !important;
+}
+#dashboard-period-controls::before {
+  content: "PERIOD";
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--mc-muted, #806d60);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+#dashboard-period-controls > #dashboard-period {
+  box-sizing: border-box !important;
+  height: 42px !important;
+  margin: 0 !important;
+  align-self: flex-end !important;
+}
+#dashboard-period-controls > #dashboard-month-wrap {
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  margin: 0 !important;
+  line-height: 14px !important;
+}
+#dashboard-period-controls > #dashboard-month-wrap input {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 42px !important;
+  margin: 0 !important;
+}
+#dashboard-period-controls > button {
+  box-sizing: border-box !important;
+  height: 42px !important;
+  margin: 0 0 0 2px !important;
+  align-self: flex-end !important;
+  white-space: nowrap !important;
+}
+#dashboard-page > .section:first-child { align-items: center !important; }
+@media (max-width: 700px) {
+  #dashboard-period-controls { margin-left: 0 !important; flex-wrap: wrap !important; }
+}
+</style>
+
 </head>
 
 <body>
@@ -985,8 +1130,8 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
       <section class="page active" id="dashboard-page">
         <div class="section" style="margin-bottom:14px;padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
           <div class="placeholder-note" id="dashboard-period-caption" style="margin:0;flex:1;min-width:220px">All recorded sales since opening day, excluding cancelled/refunded orders.</div>
-          <div style="display:flex;gap:10px;align-items:end;justify-content:flex-end;flex-wrap:wrap;margin-left:auto">
-            <select id="dashboard-period" aria-label="Dashboard period" onchange="onDashboardPeriodChange()" style="margin:0;min-width:120px">
+          <div id="dashboard-period-controls" style="display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:nowrap;margin-left:auto">
+            <select id="dashboard-period" aria-label="Dashboard period" onchange="onDashboardPeriodChange()" style="margin:0;width:132px;min-width:132px;flex:0 0 132px">
               <option value="all">All time</option>
               <option value="month">Month</option>
             </select>
@@ -4565,17 +4710,88 @@ async function deleteOptionStockMap(id) {if(!confirm('Remove this stock mapping?
   
 <script>
 function toggleSidebar(){
-  const shell=document.querySelector('.app-shell');
-  const button=document.getElementById('sidebar-toggle');
-  if(!shell||!button)return;
-  const expanded=shell.classList.toggle('sidebar-expanded');
-  button.setAttribute('aria-expanded',String(expanded));
-  button.setAttribute('aria-label',expanded?'Collapse sidebar':'Expand sidebar');
-  button.setAttribute('title',expanded?'Collapse sidebar':'Expand sidebar');
-  const label=button.querySelector('.sidebar-toggle-label');
-  if(label)label.textContent=expanded?'Collapse menu':'Expand menu';
+  const shell = document.querySelector('.app-shell');
+  const button = document.getElementById('sidebar-toggle');
+  if (!shell || !button) return;
+  const isExpanded = shell.classList.contains('sidebar-expanded');
+  shell.classList.toggle('sidebar-expanded', !isExpanded);
+  shell.classList.toggle('sidebar-collapsed', isExpanded);
+  button.setAttribute('aria-expanded', String(!isExpanded));
+  button.setAttribute('aria-label', isExpanded ? 'Expand sidebar' : 'Collapse sidebar');
+  button.setAttribute('title', isExpanded ? 'Expand sidebar' : 'Collapse sidebar');
+  const label = button.querySelector('.sidebar-toggle-label');
+  if (label) label.textContent = isExpanded ? 'Expand menu' : 'Collapse menu';
 }
 </script>
+
+<style id="sidebar-collapse-fix">
+/* Explicit collapsed state overrides earlier navigation styling. */
+.app-shell.sidebar-collapsed { grid-template-columns: 64px minmax(0, 1fr) !important; }
+.app-shell.sidebar-collapsed .sidebar { align-items: center !important; padding: 16px 7px !important; }
+.app-shell.sidebar-collapsed .brand { justify-content: center !important; padding: 0 0 14px !important; }
+.app-shell.sidebar-collapsed .brand h1 { display: none !important; }
+.app-shell.sidebar-collapsed .brand h1:after { content: "☕" !important; display: inline !important; font-size: 21px !important; }
+.app-shell.sidebar-collapsed .brand p { display: none !important; }
+.app-shell.sidebar-collapsed .sidebar-toggle { width: 42px !important; min-width: 42px !important; justify-content: center !important; margin: 0 auto 12px !important; padding: 9px !important; }
+.app-shell.sidebar-collapsed .sidebar-toggle svg { transform: none !important; }
+.app-shell.sidebar-collapsed .sidebar-toggle-label { display: none !important; }
+.app-shell.sidebar-collapsed .sidebar nav { align-items: center !important; }
+.app-shell.sidebar-collapsed .nav-button,
+.app-shell.sidebar-collapsed .sidebar-expanded .nav-button { justify-content: center !important; width: 44px !important; min-width: 44px !important; max-width: 44px !important; padding: 10px 0 !important; gap: 0 !important; }
+.app-shell.sidebar-collapsed .nav-button .nav-label { display: none !important; }
+@media (max-width: 1000px) {
+  .app-shell.sidebar-collapsed, .app-shell.sidebar-expanded { grid-template-columns: 1fr !important; }
+  .app-shell.sidebar-collapsed .sidebar-toggle { display: none !important; }
+}
+</style>
+
+
+<style id="dashboard-period-layout-redesign">
+/* Redesign the Sell Summary filter as a balanced two-row toolbar. */
+#dashboard-page > .section:first-child {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: start !important;
+  justify-content: stretch !important;
+  gap: 14px !important;
+  padding: 20px !important;
+}
+#dashboard-page > .section:first-child #dashboard-period-caption {
+  width: 100%;
+  min-width: 0 !important;
+  flex: initial !important;
+  margin: 0 !important;
+  line-height: 1.5;
+}
+#dashboard-page > .section:first-child #dashboard-period-controls {
+  display: flex !important;
+  width: 100%;
+  margin: 0 !important;
+  justify-content: flex-start !important;
+  align-items: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+#dashboard-period-controls #dashboard-period {
+  width: 160px !important;
+  min-width: 160px !important;
+  flex: 0 0 160px !important;
+}
+#dashboard-period-controls #dashboard-month-wrap {
+  width: 190px !important;
+  min-width: 190px !important;
+  flex: 0 0 190px !important;
+}
+#dashboard-period-controls > button { margin-left: 0 !important; }
+@media (max-width: 600px) {
+  #dashboard-page > .section:first-child { padding: 15px !important; }
+  #dashboard-page > .section:first-child #dashboard-period-controls { align-items: stretch !important; }
+  #dashboard-period-controls #dashboard-period,
+  #dashboard-period-controls #dashboard-month-wrap,
+  #dashboard-period-controls > button { width: 100% !important; min-width: 0 !important; flex: 1 1 100% !important; }
+}
+</style>
+
 </body>
   
 </html>
