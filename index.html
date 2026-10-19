@@ -740,6 +740,16 @@ label{color:#795b49!important}
 .margin-edit-btn:hover{background:#fff0e3!important;color:#8e4825!important}
 .recipe-editor-row{background:#fff8f0!important;border-color:#f0dfd0!important}
 #recipe-editor-form{border-color:#f0dfd0!important;background:#fffdf9!important}
+.recipe-photo-panel{grid-column:1/-1;border:1px solid var(--mc-line,#e6e2d9);border-radius:12px;padding:16px;margin:14px 0;background:#fff}
+.recipe-photo-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px}
+.recipe-photo-heading label{display:block;font-weight:700;margin-bottom:5px}
+.recipe-photo-heading .placeholder-note{margin:0}
+.recipe-photo-preview{width:104px;height:104px;flex:0 0 104px;border:1px dashed #d8c8b8;border-radius:10px;background:#faf6f0;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#a66a42;font-size:28px}
+.recipe-photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+#recipe-product-photo{display:block;width:100%;max-width:520px;padding:10px;border:1px solid var(--mc-line,#e6e2d9);border-radius:8px;background:#fff}
+#recipe-photo-message{margin-top:8px}
+@media(max-width:600px){.recipe-photo-heading{align-items:flex-start;flex-direction:column}.recipe-photo-preview{width:88px;height:88px;flex-basis:88px}}
+
 .order-workspace-section{border-color:#f0dfd0!important;background:#fffdf9!important}
 .add-order-header{background:#fffdf9!important;border-bottom-color:#f0dfd0!important}
 .eyebrow{color:#b55b2d!important}
@@ -1433,6 +1443,11 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
             <p class="placeholder-note">Set each channel's price manually. Direct price remains the default base price for costing and existing product compatibility.</p>
             <label for="recipe-product-category">Menu category</label><div class="recipe-category-control"><select id="recipe-product-category" required><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha & Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option><option value="__custom__">＋ Add a new category…</option></select><input id="recipe-product-category-custom" type="text" maxlength="60" placeholder="Type new menu category" style="display:none" aria-label="New menu category"></div>
             <p class="placeholder-note">Choose the menu category used to group this item in Menu Margin Table.</p>
+            <div class="recipe-photo-panel">
+              <div class="recipe-photo-heading"><div><label for="recipe-product-photo">Product photo</label><p class="placeholder-note">Upload a JPG, PNG, or WebP image (max 5 MB). The photo appears on the Ordering page.</p></div><div id="recipe-photo-preview" class="recipe-photo-preview"><span>☕</span></div></div>
+              <input id="recipe-product-photo" type="file" accept="image/jpeg,image/png,image/webp">
+              <div id="recipe-photo-message" class="placeholder-note" aria-live="polite">Choose a product to see its current photo.</div>
+            </div>
             <div id="recipe-editor-lines"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button type="button" class="refresh-orders-button" onclick="addRecipeEditorLine()">+ Add ingredient</button><button type="submit" class="checkout-button" id="recipe-save-button">Save product & recipe</button></div>
             <div id="recipe-editor-message" style="margin-top:12px"></div>
@@ -4405,6 +4420,82 @@ ${errorText}`
   let recipeEditorProducts = [];
   let recipeEditorIngredients = [];
 
+  const PRODUCT_PHOTO_BUCKET = "product-photos";
+  const PRODUCT_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
+  function productPhotoUrl(product) {
+    return product?.image_url || product?.image || product?.product_image || product?.imageUrl || "";
+  }
+
+  function setRecipePhotoPreview(url, message = "") {
+    const preview = document.getElementById("recipe-photo-preview");
+    const status = document.getElementById("recipe-photo-message");
+    if (preview) {
+      const safeUrl = typeof url === "string" && /^(https?:\/\/|blob:)/i.test(url) ? url : "";
+      preview.innerHTML = safeUrl
+        ? `<img src="${safeUrl.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}" alt="Current product photo preview">`
+        : "<span>☕</span>";
+    }
+    if (status) status.textContent = message || (url ? "Current product photo. Choose another file to replace it." : "No photo saved yet.");
+  }
+
+  function resetRecipePhotoInput(product = null) {
+    const input = document.getElementById("recipe-product-photo");
+    if (input) input.value = "";
+    setRecipePhotoPreview(productPhotoUrl(product), product ? (productPhotoUrl(product) ? "Current product photo. Choose another file to replace it." : "No photo saved yet.") : "Choose a product, then select a photo.");
+  }
+
+  function validateRecipePhotoFile(file) {
+    if (!file) return true;
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
+    if (file.size > PRODUCT_PHOTO_MAX_BYTES) throw new Error("The photo must be 5 MB or smaller.");
+    return true;
+  }
+
+  async function uploadRecipeProductPhoto(productId, file) {
+    validateRecipePhotoFile(file);
+    const userId = authSession?.user?.id;
+    if (!userId) throw new Error("Please sign in again before uploading a product photo.");
+    const extensionByType = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const extension = extensionByType[file.type];
+    const filePath = `${userId}/${Number(productId)}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabaseClient.storage
+      .from(PRODUCT_PHOTO_BUCKET)
+      .upload(filePath, file, { contentType: file.type, cacheControl: "3600", upsert: false });
+    if (uploadError) {
+      const detail = uploadError.message || String(uploadError);
+      if (/bucket/i.test(detail) && /not found|does not exist/i.test(detail)) {
+        throw new Error(`Supabase Storage bucket "${PRODUCT_PHOTO_BUCKET}" was not found. Create it and apply the supplied SQL setup file.`);
+      }
+      throw new Error(`Photo upload failed: ${detail}. Check the "${PRODUCT_PHOTO_BUCKET}" bucket and its storage policies.`);
+    }
+    const { data } = supabaseClient.storage.from(PRODUCT_PHOTO_BUCKET).getPublicUrl(filePath);
+    if (!data?.publicUrl) throw new Error("The photo uploaded, but Supabase did not return a public URL.");
+    const updateResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${Number(productId)}`, {
+      method: "PATCH",
+      headers: authHeaders({ "Content-Type": "application/json", "Prefer": "return=minimal" }),
+      body: JSON.stringify({ image_url: data.publicUrl })
+    });
+    if (!updateResponse.ok) {
+      throw new Error(`The photo uploaded, but the product could not save image_url: ${await updateResponse.text()}. Confirm the products.image_url column and UPDATE policy exist.`);
+    }
+    return data.publicUrl;
+  }
+
+  document.getElementById("recipe-product-photo")?.addEventListener("change", event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      validateRecipePhotoFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setRecipePhotoPreview(objectUrl, `${file.name} selected — it will upload when you save the product.`);
+    } catch (error) {
+      event.target.value = "";
+      setRecipePhotoPreview("", error.message);
+    }
+  });
+
   async function initializeRecipeEditor() {
     const headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}` };
     const [pr, ir, rr] = await Promise.all([
@@ -4437,6 +4528,7 @@ ${errorText}`
         document.getElementById("recipe-product-lineman-price").value = "";
         categorySelect.value = "";
         customCategoryInput.value = ""; syncCustomCategory();
+        resetRecipePhotoInput(null);
         addRecipeEditorLine(); return;
       }
       const product = recipeEditorProducts.find(p => Number(p.id) === Number(select.value));
@@ -4453,6 +4545,7 @@ ${errorText}`
       }
       categorySelect.value = existingCategory;
       customCategoryInput.value = ""; syncCustomCategory();
+      resetRecipePhotoInput(product);
       const lines = recipes.filter(r => Number(r.product_id) === Number(product.id));
       if (lines.length) lines.forEach(line => addRecipeEditorLine(line.ingredient_id, line.quantity)); else addRecipeEditorLine();
     };
@@ -4503,7 +4596,26 @@ ${errorText}`
         body: JSON.stringify({ price, direct_price: price, grab_price: grabPrice, lineman_price: linemanPrice })
       });
       if (!channelPriceResponse.ok) throw new Error(`Product recipe saved, but channel prices could not be saved: ${await channelPriceResponse.text()}`);
-      message.style.color = "#18794e"; message.textContent = selectedProduct === "new" ? "New product and recipe created." : "Product and recipe saved.";
+      const photoFile = document.getElementById("recipe-product-photo").files?.[0];
+      if (photoFile) {
+        try {
+          validateRecipePhotoFile(photoFile);
+          message.style.color = "#555"; message.textContent = "Product saved. Uploading photo…";
+          const savedPhotoUrl = await uploadRecipeProductPhoto(savedProductId, photoFile);
+          const savedProduct = recipeEditorProducts.find(p => Number(p.id) === savedProductId);
+          if (savedProduct) savedProduct.image_url = savedPhotoUrl;
+          setRecipePhotoPreview(savedPhotoUrl, "Photo uploaded and saved.");
+        } catch (photoError) {
+          message.style.color = "#b00020";
+          message.textContent = `Product and recipe were saved, but the photo was not saved: ${photoError.message}`;
+          console.error("Product photo upload error:", photoError);
+          await loadProducts(); await loadMarginsAndRecipes(); await initializeRecipeEditor();
+          document.getElementById("recipe-product").value = String(savedProductId);
+          document.getElementById("recipe-product").dispatchEvent(new Event("change"));
+          return;
+        }
+      }
+      message.style.color = "#18794e"; message.textContent = selectedProduct === "new" ? (photoFile ? "New product, recipe, and photo created." : "New product and recipe created.") : (photoFile ? "Product, recipe, and photo saved." : "Product and recipe saved.");
       await loadProducts(); await loadMarginsAndRecipes(); await initializeRecipeEditor();
       document.getElementById("recipe-product").value = String(savedProductId);
       document.getElementById("recipe-product").dispatchEvent(new Event("change"));
