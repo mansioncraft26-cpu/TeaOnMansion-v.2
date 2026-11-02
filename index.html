@@ -2250,8 +2250,10 @@ async function saveOrderEdits(event, orderId) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate) ||
       Number.isNaN(new Date(`${chosenDate}T12:00:00+07:00`).getTime()) ||
       new Date(`${chosenDate}T12:00:00+07:00`).toISOString().slice(0,10) !== chosenDate) {
-    message.textContent = "Please choose a valid sale date.";
-    message.className = "order-edit-error";
+    if (message) {
+      message.textContent = "Please choose a valid sale date.";
+      message.className = "order-edit-error";
+    }
     return;
   }
   saveButton.disabled = true;
@@ -2283,8 +2285,9 @@ async function saveOrderEdits(event, orderId) {
       body:JSON.stringify(payload)
     });
     if (!response.ok) throw new Error(await response.text());
+    // Refresh the historical order table only. loadTodayOrders belongs to
+    // the dashboard and its elements are not present on the Orders page.
     if (typeof loadOrderLog === "function") await loadOrderLog();
-    if (typeof loadTodayOrders === "function") await loadTodayOrders();
     await selectOrderForDetails(orderId);
     const panel = document.getElementById("order-detail-panel");
     if (panel) {
