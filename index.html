@@ -1206,6 +1206,130 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 @media(max-width:560px){#dashboard-page .section{padding:16px!important;border-radius:16px!important}.dashboard-welcome h1{font-size:28px}.dashboard-welcome-copy{gap:10px}.dashboard-sun-icon{font-size:30px}.dashboard-welcome-tools{display:grid;grid-template-columns:1fr 1fr;align-items:end}.dashboard-period-group,.dashboard-month-filter{min-width:0}.dashboard-welcome-tools select,.dashboard-welcome-tools input{width:100%;min-width:0}.dashboard-export-button{grid-column:1/-1;width:100%}.dashboard-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-kpi-card{min-height:95px;padding:12px;gap:9px}.dashboard-kpi-icon{width:36px;height:36px;flex-basis:36px;border-radius:12px;font-size:19px}.dashboard-kpi-copy .stat-value{font-size:20px!important}.dashboard-kpi-copy .stat-label{font-size:9px!important}.dashboard-kpi-note{font-size:9px}.dashboard-main-grid{gap:12px}.dashboard-trend-chart{gap:4px;min-height:180px}.dashboard-chart-bar-wrap{height:125px}.dashboard-chart-label{font-size:9px}.dashboard-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.dashboard-quick-actions button{min-height:58px;padding:10px!important;font-size:11px}.dashboard-quick-actions button:last-child{grid-column:1/-1}.dashboard-order-filters{grid-template-columns:1fr}.dashboard-report-toolbar{align-items:stretch;flex-direction:column;padding:0 16px 12px}.dashboard-report-toolbar label{width:100%}.dashboard-system-status{align-items:flex-start;flex-direction:column;gap:8px}.dashboard-panel-heading h2{font-size:18px!important}}
 </style>
 
+<style>
+
+/* iPad landscape refinement for the Orders history page */
+@media (min-width: 821px) and (max-width: 1400px) {
+  .order-history-page,
+  .order-history-card,
+  .order-history-card .dashboard-order-log,
+  .order-history-card .orders-split-view,
+  .orders-list-pane,
+  .order-detail-panel {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .order-history-card {
+    padding: clamp(14px, 1.6vw, 20px);
+  }
+
+  /* Search gets its own full-width row; the remaining controls align evenly. */
+  .order-history-card .dashboard-order-filters {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 14px !important;
+    align-items: end !important;
+  }
+
+  .order-history-card .dashboard-order-filters label {
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+  }
+
+  .order-history-card .dashboard-order-filters label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .order-history-card .dashboard-order-filters input,
+  .order-history-card .dashboard-order-filters select {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+  }
+
+  .order-history-card .orders-split-view {
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, .85fr) !important;
+    gap: 14px !important;
+    align-items: start;
+  }
+
+  .orders-list-pane {
+    overflow: hidden;
+  }
+
+  .orders-table-scroll {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .orders-table-scroll .dashboard-order-table {
+    width: max-content;
+    min-width: 760px;
+    table-layout: auto;
+  }
+
+  .orders-table-scroll .dashboard-order-table th,
+  .orders-table-scroll .dashboard-order-table td {
+    white-space: nowrap;
+  }
+
+  .order-detail-panel {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100dvh - 150px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+  }
+
+  .order-detail-panel-head h2 {
+    font-size: clamp(19px, 2vw, 25px);
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1050px) {
+  .order-history-card .orders-split-view {
+    grid-template-columns: minmax(0, 1.2fr) minmax(290px, .9fr) !important;
+    gap: 10px !important;
+  }
+
+  .order-detail-panel {
+    padding: 13px;
+  }
+}
+
+@media (max-width: 820px) {
+  .order-history-card .dashboard-order-filters {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .order-history-card .dashboard-order-filters label:first-child {
+    grid-column: auto;
+  }
+
+  .order-history-card .orders-split-view {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .orders-table-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+</style>
 </head>
 
 <body>
