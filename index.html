@@ -2244,7 +2244,7 @@ async function saveOrderEdits(event, orderId) {
   event.preventDefault();
   const form = event.currentTarget;
   const saveButton = form.querySelector('button[type="submit"]');
-  const message = document.getElementById("order-edit-message");
+  const message = form.querySelector('#order-edit-message');
   const formData = new FormData(form);
   const chosenDate = String(formData.get("sale_date") || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate) ||
@@ -2256,8 +2256,10 @@ async function saveOrderEdits(event, orderId) {
     }
     return;
   }
-  saveButton.disabled = true;
-  saveButton.textContent = "Saving…";
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving…";
+  }
   if (message) message.textContent = "";
   try {
     const existingResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=created_at`, {
@@ -2285,16 +2287,22 @@ async function saveOrderEdits(event, orderId) {
       body:JSON.stringify(payload)
     });
     if (!response.ok) throw new Error(await response.text());
-    // Refresh the historical order table only. loadTodayOrders belongs to
-    // the dashboard and its elements are not present on the Orders page.
-    if (typeof loadOrderLog === "function") await loadOrderLog();
-    await selectOrderForDetails(orderId);
-    const panel = document.getElementById("order-detail-panel");
-    if (panel) {
-      const notice = document.createElement("div");
-      notice.className = "order-edit-success";
-      notice.textContent = "Order information saved.";
-      panel.prepend(notice);
+
+    // The PATCH above is the save operation. Do not run page loaders or
+    // replace the edit form afterward: those routines may target elements
+    // that are absent on this page and falsely report a failed save.
+    const savedAt = orderLogData.findIndex(row => Number(row.id) === Number(orderId));
+    if (savedAt >= 0) orderLogData[savedAt] = {...orderLogData[savedAt], ...payload};
+    try { renderOrderLog(); } catch (refreshError) {
+      console.warn("Order was saved, but the order table could not refresh:", refreshError);
+    }
+    if (message) {
+      message.textContent = "Order information saved successfully.";
+      message.className = "order-edit-success";
+    }
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = "Saved";
     }
   } catch (error) {
     console.error("Save order edits error:", error);
@@ -2302,8 +2310,10 @@ async function saveOrderEdits(event, orderId) {
       message.textContent = `Could not save changes: ${error.message}`;
       message.className = "order-edit-error";
     }
-    saveButton.disabled = false;
-    saveButton.textContent = "Save changes";
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = "Save changes";
+    }
   }
 }
 
