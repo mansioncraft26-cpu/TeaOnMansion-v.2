@@ -1093,6 +1093,119 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 }
 </style>
 
+
+<style id="mansion-dashboard-warm-redesign">
+:root{--dash-cream:#fbf6f0;--dash-paper:#fffdfa;--dash-beige:#f4e8dc;--dash-orange:#c87545;--dash-orange-dark:#a9572b;--dash-brown:#654c3c;--dash-ink:#30231c;--dash-muted:#89796d;--dash-line:#efdfd1;--dash-shadow:0 7px 22px rgba(117,76,45,.075)}
+#dashboard-page{color:var(--dash-ink)}
+.app-header.dashboard-header{display:flex;justify-content:flex-end;align-items:center;min-height:46px;padding:8px 24px!important;background:transparent!important;border:0!important}.app-header.dashboard-header h2,.app-header.dashboard-header p{display:none}
+#dashboard-page .section{background:var(--dash-paper)!important;border:1px solid var(--dash-line)!important;border-radius:19px!important;box-shadow:var(--dash-shadow)!important;padding:22px!important}
+.dashboard-welcome{display:flex;align-items:center;justify-content:space-between;gap:22px;margin:2px 0 8px}
+.dashboard-welcome-copy{display:flex;align-items:center;gap:15px;min-width:0}
+.dashboard-sun-icon{font-size:38px;line-height:1;color:var(--dash-orange);filter:drop-shadow(0 3px 4px rgba(200,117,69,.14))}
+.dashboard-welcome h1{font-family:Georgia,serif;font-size:clamp(27px,3vw,38px);line-height:1.12;letter-spacing:-.8px;margin:0;color:#321f16}
+.dashboard-welcome-copy p{margin:6px 0 0;color:var(--dash-muted);font-size:14px}
+.dashboard-welcome-tools{display:flex;align-items:flex-end;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.dashboard-period-group,.dashboard-month-filter{display:flex;flex-direction:column;gap:5px;margin:0!important;color:var(--dash-muted);font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.dashboard-welcome-tools select,.dashboard-welcome-tools input{height:42px!important;min-width:132px;padding:0 13px!important;border:1px solid var(--dash-line)!important;border-radius:13px!important;background:#fff!important;color:var(--dash-ink)!important;font-size:13px!important}
+.dashboard-welcome-tools .dashboard-month-filter{display:none;min-width:155px}
+.dashboard-welcome-tools .dashboard-month-filter input{width:100%}
+.dashboard-export-button{height:42px;padding:0 15px!important;border:1px solid #e6c7b2!important;border-radius:13px!important;background:#fffaf5!important;color:var(--dash-orange-dark)!important;font-weight:750!important;white-space:nowrap}
+.dashboard-export-button:hover{background:var(--dash-beige)!important}
+.dashboard-period-caption{margin:0 0 17px;color:var(--dash-muted);font-size:12px;line-height:1.5}
+.dashboard-kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.dashboard-kpi-card{position:relative;display:flex;align-items:center;gap:14px;min-width:0;min-height:112px;padding:19px 20px;border:1px solid var(--dash-line);border-radius:20px;background:linear-gradient(135deg,#fffdfa 0%,#fffaf5 100%);box-shadow:var(--dash-shadow);overflow:hidden}
+.dashboard-kpi-card:after{content:"";position:absolute;width:116px;height:76px;right:-37px;bottom:-40px;border-radius:50%;background:rgba(245,205,171,.2);transform:rotate(-24deg)}
+.dashboard-kpi-primary{background:linear-gradient(135deg,#fffaf4,#fff3e8);border-color:#efd8c7}
+.dashboard-kpi-icon{flex:0 0 52px;width:52px;height:52px;display:grid;place-items:center;border-radius:17px;background:#fff0e2;color:var(--dash-orange-dark);font-size:26px;font-weight:700}
+.dashboard-kpi-copy{position:relative;z-index:1;min-width:0}
+.dashboard-kpi-copy .stat-label{color:var(--dash-muted)!important;font-size:11px!important;font-weight:750;letter-spacing:.035em;text-transform:uppercase}
+.dashboard-kpi-copy .stat-value{margin-top:5px!important;color:#352219!important;font-size:clamp(22px,2.1vw,30px)!important;font-weight:800!important;letter-spacing:-.045em;line-height:1.1;overflow-wrap:anywhere}
+.dashboard-kpi-note{margin-top:7px;color:var(--dash-muted);font-size:10px;line-height:1.35}
+.dashboard-profit-disclaimer{margin:10px 2px 20px;color:var(--dash-muted);font-size:11px;line-height:1.5}
+.dashboard-main-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);gap:16px;align-items:stretch}
+.dashboard-panel{min-width:0}
+.dashboard-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.dashboard-panel-heading h2{margin:0!important;color:#3d281d;font-family:Georgia,serif;font-size:20px!important;letter-spacing:-.3px}
+.dashboard-panel-heading p{margin:5px 0 0;color:var(--dash-muted);font-size:11px}
+.dashboard-panel-tag{padding:7px 11px;border:1px solid var(--dash-line);border-radius:11px;color:var(--dash-brown);font-size:11px;font-weight:700;background:#fffaf5}
+.dashboard-chart-toggle{display:flex;gap:3px;padding:3px;border-radius:12px;background:#f8eee5}
+.dashboard-chart-toggle button{min-width:70px;padding:8px 12px!important;border-radius:9px!important;background:transparent!important;color:var(--dash-brown)!important;font-weight:650!important}
+.dashboard-chart-toggle button.active{background:var(--dash-orange)!important;color:white!important;box-shadow:0 3px 8px rgba(180,91,43,.18)}
+.dashboard-trend-chart{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:9px;align-items:end;min-height:205px;padding:12px 4px 0;border-bottom:1px solid var(--dash-line);background:repeating-linear-gradient(to bottom,transparent 0,transparent 48px,#f2e8df 49px,#f2e8df 50px)}
+.dashboard-chart-column{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;min-width:0}
+.dashboard-chart-value{font-size:10px;color:var(--dash-muted);white-space:nowrap}
+.dashboard-chart-bar-wrap{width:100%;height:145px;display:flex;align-items:flex-end;justify-content:center}
+.dashboard-chart-bar{width:min(100%,34px);min-height:3px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,#f8b16f,#dc7b3e);box-shadow:0 3px 8px rgba(200,117,69,.13);transition:height .2s ease}
+.dashboard-chart-label{max-width:100%;padding:0 1px 8px;color:var(--dash-muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-chart-empty{grid-column:1/-1;align-self:center;padding:30px 10px;text-align:center;color:var(--dash-muted);font-size:12px}
+.dashboard-top-table{width:100%;border-collapse:collapse;font-size:12px}
+.dashboard-top-table thead th{padding:0 7px 10px;color:var(--dash-muted);font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.06em;text-align:right}
+.dashboard-top-table thead th:first-child{text-align:left}
+.dashboard-top-table tbody td{padding:13px 7px;border-top:1px solid #f1e7df;color:#4c3a30;text-align:right;white-space:nowrap}
+.dashboard-top-table tbody td:first-child{text-align:left;font-weight:650;white-space:normal}
+.dashboard-top-table tbody td:nth-child(2){color:var(--dash-orange-dark);font-weight:750}
+.dashboard-quick-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;margin:16px 0}
+.dashboard-quick-actions button{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;min-height:70px;padding:13px 15px!important;border:1px solid var(--dash-line)!important;border-radius:17px!important;background:var(--dash-paper)!important;color:var(--dash-brown)!important;box-shadow:var(--dash-shadow);font-size:12px;font-weight:750!important;text-align:left}
+.dashboard-quick-actions button>span:first-child{font-size:23px;color:var(--dash-orange-dark)}
+.dashboard-quick-actions .dashboard-action-primary{background:linear-gradient(135deg,#e18c4d,#c66a32)!important;border-color:#d47b43!important;color:#fff!important}
+.dashboard-quick-actions .dashboard-action-primary>span:first-child{color:#fff}
+.dashboard-action-arrow{font-size:22px!important;color:var(--dash-orange)!important}
+.dashboard-quick-actions .dashboard-action-primary .dashboard-action-arrow{color:#fff!important}
+.dashboard-operations-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.dashboard-count-badge{display:inline-grid;place-items:center;min-width:23px;height:23px;padding:0 6px;border-radius:50px;background:#fff0e2;color:var(--dash-orange-dark);font:700 11px Arial,sans-serif;vertical-align:middle}
+.dashboard-text-link{padding:7px 0!important;background:transparent!important;color:var(--dash-orange-dark)!important;font-size:11px!important;font-weight:750!important;white-space:nowrap}
+.dashboard-stock-list{display:flex;flex-direction:column;gap:12px}
+.dashboard-stock-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f1e7df}
+.dashboard-stock-name{font-size:12px;font-weight:700;color:#4c3a30}
+.dashboard-stock-meta{margin-top:3px;color:var(--dash-muted);font-size:10px}
+.dashboard-stock-track{height:7px;margin-top:7px;border-radius:99px;background:#f1e2d6;overflow:hidden}
+.dashboard-stock-fill{height:100%;border-radius:99px;background:#e67c51}
+.dashboard-stock-qty{font-size:11px;color:#59483d;white-space:nowrap}
+.dashboard-stock-status{padding:5px 8px;border-radius:9px;background:#fff0ed;color:#bf4a35;font-size:10px;font-weight:750;white-space:nowrap}
+.dashboard-stock-status.soon{background:#fff1d8;color:#94601c}
+.dashboard-channel-breakdown{display:flex;flex-direction:column;gap:14px}
+.dashboard-channel-total{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 10px;border-bottom:1px solid #f1e7df}
+.dashboard-channel-total strong{font-size:25px;color:#3c281e}
+.dashboard-channel-total span{font-size:11px;color:var(--dash-muted)}
+.dashboard-channel-row{display:grid;grid-template-columns:minmax(85px,1fr) minmax(60px,1.3fr) auto;align-items:center;gap:9px;font-size:11px}
+.dashboard-channel-name{display:flex;align-items:center;gap:7px;color:#57463b;white-space:nowrap}
+.dashboard-channel-dot{width:9px;height:9px;border-radius:50%;background:#d7783c;flex:0 0 auto}
+.dashboard-channel-track{height:9px;border-radius:99px;background:#f2e5d9;overflow:hidden}
+.dashboard-channel-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#f7b16b,#c96a32)}
+.dashboard-channel-value{color:#514034;font-weight:700;white-space:nowrap;text-align:right}
+.dashboard-monthly-report{margin-top:16px!important;padding:0!important;overflow:hidden}
+.dashboard-monthly-report summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:19px 22px;cursor:pointer;list-style:none}
+.dashboard-monthly-report summary::-webkit-details-marker{display:none}
+.dashboard-monthly-report summary strong{display:block;color:#3d281d;font-family:Georgia,serif;font-size:18px}
+.dashboard-monthly-report summary small{display:block;margin-top:4px;color:var(--dash-muted);font-size:11px}
+.dashboard-details-chevron{color:var(--dash-orange-dark);font-size:22px;transition:transform .2s}
+.dashboard-monthly-report[open] .dashboard-details-chevron{transform:rotate(180deg)}
+.dashboard-report-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:0 22px 14px}
+.dashboard-report-toolbar p{max-width:720px;margin:0;color:var(--dash-muted);font-size:11px;line-height:1.5}
+.dashboard-report-toolbar label{width:115px;margin:0;color:var(--dash-muted);font-size:10px;font-weight:700;text-transform:uppercase}
+.dashboard-report-toolbar select{height:38px;margin-top:5px;border:1px solid var(--dash-line);border-radius:10px;background:#fff;padding:0 10px}
+.dashboard-report-table,.dashboard-order-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+.dashboard-report-table th,.dashboard-order-table th{padding:11px 10px;background:#f8f1ea;color:#756457;font-size:9px;letter-spacing:.06em;text-align:left;text-transform:uppercase}
+.dashboard-report-table td,.dashboard-order-table td{padding:11px 10px;border-top:1px solid #f1e7df;color:#514034}
+.dashboard-report-table th:not(:first-child),.dashboard-report-table td:not(:first-child){text-align:right}
+.dashboard-report-table tfoot td{font-weight:800;border-top:2px solid #dfcbbb}
+.dashboard-order-log{margin-top:16px!important}
+.dashboard-order-filters{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+.dashboard-order-filters label{margin:0;color:var(--dash-muted);font-size:9px;font-weight:750;letter-spacing:.05em;text-transform:uppercase}
+.dashboard-order-filters input,.dashboard-order-filters select{height:38px;margin-top:5px;padding:0 9px;border:1px solid var(--dash-line);border-radius:9px;font-size:11px}
+.dashboard-order-summary{display:block!important;margin-bottom:10px!important;color:var(--dash-muted)!important;font-size:11px}
+.dashboard-system-status{display:flex;align-items:center;gap:18px;margin-top:16px!important;padding:14px 18px!important;font-size:11px}
+.dashboard-system-status>div:first-child{display:flex;align-items:center;gap:10px}
+.dashboard-db-pill{padding:5px 9px;border-radius:20px;background:#eaf4eb;color:#39734b;font-weight:750}
+#dashboard-page #status{font-size:10px;color:var(--dash-muted)}
+#dashboard-page #error{font-size:10px;max-width:100%;overflow-wrap:anywhere}
+#dashboard-page .refresh-orders-button{border:1px solid #e6c7b2!important;border-radius:10px!important;background:#fffaf5!important;color:var(--dash-orange-dark)!important;font-weight:700!important}
+#dashboard-page .orders-header{align-items:center}
+@media(max-width:1100px){.dashboard-main-grid{grid-template-columns:minmax(0,1fr) minmax(280px,.9fr)}.dashboard-kpi-card{padding:15px;gap:10px}.dashboard-kpi-icon{width:44px;height:44px;flex-basis:44px}.dashboard-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:820px){.dashboard-welcome{align-items:flex-start;flex-direction:column}.dashboard-welcome-tools{width:100%;justify-content:flex-start}.dashboard-main-grid,.dashboard-operations-grid{grid-template-columns:1fr}.dashboard-order-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-kpi-grid{gap:10px}.dashboard-kpi-card{min-height:100px}}
+@media(max-width:560px){#dashboard-page .section{padding:16px!important;border-radius:16px!important}.dashboard-welcome h1{font-size:28px}.dashboard-welcome-copy{gap:10px}.dashboard-sun-icon{font-size:30px}.dashboard-welcome-tools{display:grid;grid-template-columns:1fr 1fr;align-items:end}.dashboard-period-group,.dashboard-month-filter{min-width:0}.dashboard-welcome-tools select,.dashboard-welcome-tools input{width:100%;min-width:0}.dashboard-export-button{grid-column:1/-1;width:100%}.dashboard-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-kpi-card{min-height:95px;padding:12px;gap:9px}.dashboard-kpi-icon{width:36px;height:36px;flex-basis:36px;border-radius:12px;font-size:19px}.dashboard-kpi-copy .stat-value{font-size:20px!important}.dashboard-kpi-copy .stat-label{font-size:9px!important}.dashboard-kpi-note{font-size:9px}.dashboard-main-grid{gap:12px}.dashboard-trend-chart{gap:4px;min-height:180px}.dashboard-chart-bar-wrap{height:125px}.dashboard-chart-label{font-size:9px}.dashboard-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.dashboard-quick-actions button{min-height:58px;padding:10px!important;font-size:11px}.dashboard-quick-actions button:last-child{grid-column:1/-1}.dashboard-order-filters{grid-template-columns:1fr}.dashboard-report-toolbar{align-items:stretch;flex-direction:column;padding:0 16px 12px}.dashboard-report-toolbar label{width:100%}.dashboard-system-status{align-items:flex-start;flex-direction:column;gap:8px}.dashboard-panel-heading h2{font-size:18px!important}}
+</style>
+
 </head>
 
 <body>
@@ -1138,75 +1251,115 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 
     <div class="page-content">
       <section class="page active" id="dashboard-page">
-        <div class="section" style="margin-bottom:14px;padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-          <div class="placeholder-note" id="dashboard-period-caption" style="margin:0;flex:1;min-width:220px">All recorded sales since opening day, excluding cancelled/refunded orders.</div>
-          <div id="dashboard-period-controls" style="display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:nowrap;margin-left:auto">
-            <select id="dashboard-period" aria-label="Dashboard period" onchange="onDashboardPeriodChange()" style="margin:0;width:132px;min-width:132px;flex:0 0 132px">
-              <option value="all">All time</option>
-              <option value="month">Month</option>
-            </select>
-            <label id="dashboard-month-wrap" style="margin:0;min-width:150px;display:none">Month
-              <input type="month" id="dashboard-month" onchange="onDashboardPeriodChange()" style="margin-top:5px" />
-            </label>
-            <button type="button" class="refresh-orders-button" onclick="exportSellSummaryCSV()">↓ Export CSV</button>
-          </div>
-        </div>
-        <div class="placeholder-note" style="margin-bottom:10px">Revenue and order counts use the selected period. Profit is an estimate based on saved recipes and current ingredient costs; it excludes packaging, labor, rent, and other overhead.</div>
-        <div class="stat-grid dashboard-financial-grid">
-          <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value" id="dashboard-revenue">฿0.00</div></div>
-          <div class="stat-card"><div class="stat-label">Net to Cafe</div><div class="stat-value" id="dashboard-net">฿0.00</div></div>
-          <div class="stat-card"><div class="stat-label">Profit (After Cost)</div><div class="stat-value" id="dashboard-profit">฿0.00</div></div>
-          <div class="stat-card"><div class="stat-label">Platform Fees</div><div class="stat-value" id="dashboard-fees">฿0.00</div></div>
-          <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="dashboard-order-count">Loading…</div></div>
-          <div class="stat-card"><div class="stat-label">Cups Sold</div><div class="stat-value" id="dashboard-cup-count">Loading…</div></div>
-          <div class="stat-card"><div class="stat-label">Database</div><div class="stat-value" style="font-size:18px" id="dashboard-db-status">Connecting…</div></div>
-        </div>
-        <div class="page-grid" style="margin-top:22px">
-          <div class="section">
-            <div class="orders-header"><div><h2>Top Selling Items</h2><p id="top-selling-subtitle">Units sold this year · excludes cancelled/refunded orders</p></div><button class="refresh-orders-button" onclick="loadSalesAnalytics()">Refresh</button></div>
-            <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:360px"><thead><tr><th style="text-align:left;padding:10px 8px">Item</th><th style="text-align:right;padding:10px 8px">Cups Sold</th><th style="text-align:right;padding:10px 8px">Gross Sales</th></tr></thead><tbody id="top-selling-body"><tr><td colspan="3" style="padding:12px 8px">Loading sales data…</td></tr></tbody></table></div>
-          </div>
-          <div class="section">
-            <div class="orders-header"><div><h2>Monthly Report</h2><p>Monthly order and revenue summary</p></div><label style="min-width:100px;margin:0">Year <select id="monthly-report-year" onchange="loadSalesAnalytics()" style="margin-top:4px"></select></label></div>
-            <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:590px"><thead><tr><th style="text-align:left;padding:10px 8px">Month</th><th style="text-align:right;padding:10px 8px">Orders</th><th style="text-align:right;padding:10px 8px">Gross Revenue</th><th style="text-align:right;padding:10px 8px">Fees &amp; VAT</th><th style="text-align:right;padding:10px 8px">Net Revenue</th></tr></thead><tbody id="monthly-report-body"><tr><td colspan="5" style="padding:12px 8px">Loading monthly report…</td></tr></tbody><tfoot id="monthly-report-foot"></tfoot></table></div>
-            <p class="placeholder-note" style="margin-top:10px">Fees &amp; VAT includes the platform fee and any VAT/tax amount saved on the order. If VAT is not stored in your orders table, this column will show platform fees only.</p>
-          </div>
-        </div>
-        <div class="page-grid">
-          <div class="section">
-            <div class="orders-header"><div><h2>Quick actions</h2><p>Jump to common tasks</p></div></div>
-            <div class="page-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-              <button class="checkout-button" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders'); openAddOrderModal();">+ Create Order</button>
-              <button class="checkout-button" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels');">+ Record Purchase</button>
+        <div class="dashboard-welcome">
+          <div class="dashboard-welcome-copy">
+            <div class="dashboard-sun-icon" aria-hidden="true">☀</div>
+            <div>
+              <h1 id="dashboard-greeting">Good morning!</h1>
+              <p>Here's today's overview at Mansion.craft</p>
             </div>
           </div>
-          <div class="section">
-            <h2>Getting started</h2>
-            <p class="placeholder-note">Use Inventory to monitor ingredients and record purchases. Use Margins &amp; Recipes to review recipe quantities and calculate drink costs. Cost and margin calculations will be connected in the next stage.</p>
+          <div class="dashboard-welcome-tools">
+            <div class="dashboard-period-group">
+              <label class="dashboard-filter-label" for="dashboard-period">Period</label>
+              <select id="dashboard-period" aria-label="Dashboard period" onchange="onDashboardPeriodChange()">
+                <option value="all">All time</option>
+                <option value="month">Month</option>
+              </select>
+            </div>
+            <label id="dashboard-month-wrap" class="dashboard-month-filter">Month
+              <input type="month" id="dashboard-month" onchange="onDashboardPeriodChange()" />
+            </label>
+            <button type="button" class="dashboard-export-button" onclick="exportSellSummaryCSV()">↓ Export CSV</button>
           </div>
         </div>
-        <section class="section" id="order-log-section" style="margin-top:22px">
-          <div class="orders-header">
-            <div><h2>Sales Summary · Order Log</h2><p>Search historical sales, review fees and net revenue, and open an order to see its items.</p></div>
-            <button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">
+        <p class="dashboard-period-caption" id="dashboard-period-caption">All recorded sales since opening day, excluding cancelled/refunded orders.</p>
+
+        <div class="dashboard-kpi-grid">
+          <article class="dashboard-kpi-card dashboard-kpi-primary">
+            <div class="dashboard-kpi-icon" aria-hidden="true">฿</div>
+            <div class="dashboard-kpi-copy"><div class="stat-label">Sales</div><div class="stat-value" id="dashboard-revenue">฿0.00</div><div class="dashboard-kpi-note">Gross café sales</div></div>
+          </article>
+          <article class="dashboard-kpi-card">
+            <div class="dashboard-kpi-icon" aria-hidden="true">▤</div>
+            <div class="dashboard-kpi-copy"><div class="stat-label">Orders</div><div class="stat-value" id="dashboard-order-count">Loading…</div><div class="dashboard-kpi-note">Excludes cancelled/refunded</div></div>
+          </article>
+          <article class="dashboard-kpi-card">
+            <div class="dashboard-kpi-icon" aria-hidden="true">↗</div>
+            <div class="dashboard-kpi-copy"><div class="stat-label">Net to Cafe</div><div class="stat-value" id="dashboard-net">฿0.00</div><div class="dashboard-kpi-note">Sales less fees &amp; tax</div></div>
+          </article>
+          <article class="dashboard-kpi-card dashboard-kpi-secondary">
+            <div class="dashboard-kpi-icon" aria-hidden="true">◈</div>
+            <div class="dashboard-kpi-copy"><div class="stat-label">Profit (After Cost)</div><div class="stat-value" id="dashboard-profit">฿0.00</div><div class="dashboard-kpi-note">After fees and recipe ingredient cost</div></div>
+          </article>
+          <article class="dashboard-kpi-card dashboard-kpi-secondary">
+            <div class="dashboard-kpi-icon" aria-hidden="true">☕</div>
+            <div class="dashboard-kpi-copy"><div class="stat-label">Cups Sold</div><div class="stat-value" id="dashboard-cup-count">Loading…</div><div class="dashboard-kpi-note">Total item quantity</div></div>
+          </article>
+          <article class="dashboard-kpi-card dashboard-kpi-secondary">
+            <div class="dashboard-kpi-icon" aria-hidden="true">◉</div>
+            <div class="dashboard-kpi-copy"><div class="stat-label">Platform Fees</div><div class="stat-value" id="dashboard-fees">฿0.00</div><div class="dashboard-kpi-note">Platform fees and saved tax</div></div>
+          </article>
+        </div>
+        <p class="dashboard-profit-disclaimer">Profit is an estimate based on saved recipes and current ingredient costs. It excludes packaging, labor, rent and other overhead. An asterisk (*) indicates incomplete recipe cost data.</p>
+
+        <div class="dashboard-main-grid">
+          <section class="section dashboard-panel dashboard-trend-panel">
+            <div class="dashboard-panel-heading">
+              <div><h2>Sales Trend</h2><p id="dashboard-trend-subtitle">Sales performance over time</p></div>
+              <div class="dashboard-chart-toggle" role="group" aria-label="Sales trend metric">
+                <button type="button" class="active" data-trend-mode="sales" onclick="setDashboardTrendMode('sales')">Sales</button>
+                <button type="button" data-trend-mode="orders" onclick="setDashboardTrendMode('orders')">Orders</button>
+              </div>
+            </div>
+            <div id="dashboard-trend-chart" class="dashboard-trend-chart" role="img" aria-label="Sales trend chart"><div class="dashboard-chart-empty">Loading sales trend…</div></div>
+          </section>
+          <section class="section dashboard-panel dashboard-top-products">
+            <div class="dashboard-panel-heading"><div><h2>Top Selling Drinks</h2><p id="top-selling-subtitle">Best-selling products in the selected period</p></div><span class="dashboard-panel-tag">Top 5</span></div>
+            <div class="dashboard-top-table-wrap"><table class="dashboard-top-table"><thead><tr><th>Drink</th><th>Cups</th><th>Sales</th></tr></thead><tbody id="top-selling-body"><tr><td colspan="3">Loading sales data…</td></tr></tbody></table></div>
+          </section>
+        </div>
+
+        <div class="dashboard-quick-actions" aria-label="Quick actions">
+          <button type="button" class="dashboard-action-primary" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders'); openAddOrderModal();"><span aria-hidden="true">＋</span><span>New Order</span><span class="dashboard-action-arrow">›</span></button>
+          <button type="button" class="dashboard-action-card" onclick="document.getElementById('order-log-section').scrollIntoView({behavior:'smooth',block:'start'});"><span aria-hidden="true">▤</span><span>View Orders</span><span class="dashboard-action-arrow">›</span></button>
+          <button type="button" class="dashboard-action-card" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels');"><span aria-hidden="true">◇</span><span>Update Stock</span><span class="dashboard-action-arrow">›</span></button>
+          <button type="button" class="dashboard-action-card" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns');"><span aria-hidden="true">☕</span><span>Edit Recipes</span><span class="dashboard-action-arrow">›</span></button>
+          <button type="button" class="dashboard-action-card" onclick="document.getElementById('monthly-report-details').scrollIntoView({behavior:'smooth',block:'start'}); document.getElementById('monthly-report-details').open=true;"><span aria-hidden="true">▥</span><span>View Reports</span><span class="dashboard-action-arrow">›</span></button>
+        </div>
+
+        <div class="dashboard-operations-grid">
+          <section class="section dashboard-panel">
+            <div class="dashboard-panel-heading"><div><h2>Stock Alerts <span id="dashboard-stock-alert-count" class="dashboard-count-badge">—</span></h2><p>Ingredients below 20% of maximum stock</p></div><button type="button" class="dashboard-text-link" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')">View Inventory →</button></div>
+            <div id="dashboard-stock-alerts" class="dashboard-stock-list"><div class="dashboard-chart-empty">Loading stock levels…</div></div>
+          </section>
+          <section class="section dashboard-panel">
+            <div class="dashboard-panel-heading"><div><h2>Orders by Channel</h2><p>Order source breakdown in the selected period</p></div></div>
+            <div id="dashboard-channel-breakdown" class="dashboard-channel-breakdown"><div class="dashboard-chart-empty">Loading channel data…</div></div>
+          </section>
+        </div>
+
+        <details class="section dashboard-monthly-report" id="monthly-report-details">
+          <summary><span><strong>Monthly Report</strong><small>Monthly order and revenue summary</small></span><span class="dashboard-details-chevron">⌄</span></summary>
+          <div class="dashboard-report-toolbar"><p>Fees &amp; VAT includes platform fees and any VAT/tax amount saved on the order. If VAT is not stored in your orders table, this column shows platform fees only.</p><label>Year<select id="monthly-report-year" onchange="loadSalesAnalytics()"></select></label></div>
+          <div style="overflow-x:auto"><table class="dashboard-report-table"><thead><tr><th>Month</th><th>Orders</th><th>Gross Revenue</th><th>Fees &amp; VAT</th><th>Net Revenue</th></tr></thead><tbody id="monthly-report-body"><tr><td colspan="5">Loading monthly report…</td></tr></tbody><tfoot id="monthly-report-foot"></tfoot></table></div>
+        </details>
+
+        <section class="section dashboard-order-log" id="order-log-section">
+          <div class="orders-header"><div><h2>Sales Order Log</h2><p>Search historical sales, review fees and net revenue, and open an order to see its items.</p></div><button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button></div>
+          <div class="dashboard-order-filters">
             <label>Search order / customer / app no.<input id="order-log-search" type="search" placeholder="Order number or customer" oninput="renderOrderLog()"></label>
             <label>From date<input id="order-log-from" type="date" onchange="loadOrderLog()"></label>
             <label>To date<input id="order-log-to" type="date" onchange="loadOrderLog()"></label>
             <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
             <label>Rows<select id="order-log-row-limit" onchange="renderOrderLog()"><option value="25" selected>25 rows</option><option value="all">Show all</option></select></label>
           </div>
-          <div id="order-log-summary" class="orders-summary" style="margin-bottom:12px"><span>Loading order log…</span></div>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:10px 8px">Date &amp; Time</th><th style="padding:10px 8px">Order</th><th style="padding:10px 8px">Customer</th><th style="padding:10px 8px">Source</th><th style="padding:10px 8px">Status</th><th style="padding:10px 8px;text-align:right">Total</th><th style="padding:10px 8px;text-align:right">Fee</th><th style="padding:10px 8px;text-align:right">Net</th><th style="padding:10px 8px">Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="9" style="padding:14px 8px">Loading order log…</td></tr></tbody></table></div>
+          <div id="order-log-summary" class="orders-summary dashboard-order-summary"><span>Loading order log…</span></div>
+          <div style="overflow-x:auto"><table class="dashboard-order-table"><thead><tr><th>Date &amp; Time</th><th>Order</th><th>Customer</th><th>Source</th><th>Status</th><th>Total</th><th>Fee</th><th>Net</th><th>Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="9">Loading order log…</td></tr></tbody></table></div>
           <p class="placeholder-note" style="margin-top:10px">By default, 25 matching orders are shown. Choose “Show all” to display every matching order in the latest 1,000 loaded orders.</p>
         </section>
 
-        <div class="section" style="margin-top:22px">
-          <h2>Database status</h2>
-          <div id="status">Connecting...</div>
-          <div id="error"></div>
-        </div>
+        <section class="section dashboard-system-status"><div><strong>Database connection</strong><span id="dashboard-db-status" class="dashboard-db-pill">Connecting…</span></div><div id="status">Connecting...</div><div id="error"></div></section>
       </section>
 
       <section class="page" id="orders-page">
@@ -4155,6 +4308,113 @@ ${errorText}`
     }
   }
 
+  let dashboardTrendMode = "sales";
+
+  function setDashboardGreeting() {
+    const target = document.getElementById("dashboard-greeting");
+    if (!target) return;
+    const hour = Number(new Intl.DateTimeFormat("en-US", {timeZone:"Asia/Bangkok",hour:"numeric",hourCycle:"h23"}).format(new Date()));
+    target.textContent = hour < 12 ? "Good morning!" : hour < 18 ? "Good afternoon!" : "Good evening!";
+  }
+
+  function setDashboardTrendMode(mode) {
+    dashboardTrendMode = mode === "orders" ? "orders" : "sales";
+    document.querySelectorAll(".dashboard-chart-toggle button").forEach(button => button.classList.toggle("active", button.dataset.trendMode === dashboardTrendMode));
+    if (window.dashboardTrendOrders) renderDashboardTrend(window.dashboardTrendOrders);
+  }
+
+  function renderDashboardTrend(orders) {
+    const chart = document.getElementById("dashboard-trend-chart");
+    const subtitle = document.getElementById("dashboard-trend-subtitle");
+    if (!chart) return;
+    const valid = (orders || []).filter(o => !["cancelled","refunded"].includes(String(o.status || "").toLowerCase()));
+    const bounds = dashboardPeriodBounds();
+    const buckets = [];
+    const moneyValue = o => Math.max(0, Number(o.subtotal ?? o.total ?? 0) - (String(o.discount_funding || "cafe") === "cafe" ? Number(o.discount_amount || 0) : 0));
+    const fmtMonth = date => new Intl.DateTimeFormat("en-US", {timeZone:"Asia/Bangkok",month:"short"}).format(date);
+    if (bounds.period === "month") {
+      const year = Number(bounds.month.slice(0,4)), month = Number(bounds.month.slice(5,7));
+      const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+      for (let day=1; day<=days; day++) buckets.push({key:`${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`,label:String(day),value:0,count:0});
+      if (subtitle) subtitle.textContent = `Daily ${dashboardTrendMode === "sales" ? "sales" : "order count"} · ${bounds.month}`;
+    } else {
+      const nowParts = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit"}).format(new Date());
+      const [currentYear,currentMonth] = nowParts.split("-").map(Number);
+      for (let offset=7; offset>=0; offset--) {
+        const date = new Date(Date.UTC(currentYear,currentMonth-1-offset,1));
+        const year = date.getUTCFullYear(), month = date.getUTCMonth()+1;
+        buckets.push({key:`${year}-${String(month).padStart(2,"0")}`,label:fmtMonth(new Date(Date.UTC(year,month-1,1))),value:0,count:0});
+      }
+      if (subtitle) subtitle.textContent = `Monthly ${dashboardTrendMode === "sales" ? "sales" : "order count"} · last 8 months`;
+    }
+    const bucketMap = new Map(buckets.map(bucket => [bucket.key,bucket]));
+    valid.forEach(order => {
+      if (!order.created_at) return;
+      const date = new Date(order.created_at);
+      const key = bounds.period === "month"
+        ? new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit",day:"2-digit"}).format(date)
+        : new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit"}).format(date);
+      const bucket = bucketMap.get(key);
+      if (!bucket) return;
+      bucket.value += moneyValue(order);
+      bucket.count += 1;
+    });
+    const max = Math.max(1,...buckets.map(bucket => dashboardTrendMode === "sales" ? bucket.value : bucket.count));
+    const shown = bounds.period === "month" && buckets.length > 16 ? buckets.filter((bucket,index) => index % Math.ceil(buckets.length/16) === 0 || index === buckets.length-1) : buckets;
+    chart.style.gridTemplateColumns = `repeat(${shown.length},minmax(0,1fr))`;
+    chart.innerHTML = shown.map(bucket => {
+      const value = dashboardTrendMode === "sales" ? bucket.value : bucket.count;
+      const height = value ? Math.max(4, value/max*100) : 2;
+      const label = dashboardTrendMode === "sales" ? `฿${value.toLocaleString("en-US",{maximumFractionDigits:0})}` : `${value} orders`;
+      return `<div class="dashboard-chart-column" title="${escapeHtml(bucket.label)} · ${escapeHtml(label)}"><span class="dashboard-chart-value">${dashboardTrendMode === "sales" ? (value ? `฿${value>=1000?(value/1000).toFixed(1)+"k":Math.round(value)}` : "") : value}</span><div class="dashboard-chart-bar-wrap"><div class="dashboard-chart-bar" style="height:${height}%"></div></div><span class="dashboard-chart-label">${escapeHtml(bucket.label)}</span></div>`;
+    }).join("");
+    window.dashboardTrendOrders = valid;
+  }
+
+  function renderDashboardChannels(orders) {
+    const target = document.getElementById("dashboard-channel-breakdown");
+    if (!target) return;
+    const counts = new Map();
+    (orders || []).filter(o => !["cancelled","refunded"].includes(String(o.status || "").toLowerCase())).forEach(order => {
+      const raw = String(order.order_source || order.source || order.order_type || "direct").toLowerCase();
+      const key = raw.includes("grab") ? "Grab" : raw.includes("line") ? "LINE MAN" : "Direct";
+      counts.set(key,(counts.get(key)||0)+1);
+    });
+    const total = [...counts.values()].reduce((sum,value)=>sum+value,0);
+    if (!total) { target.innerHTML = '<div class="dashboard-chart-empty">No orders recorded in this period yet.</div>'; return; }
+    const colors = {"Direct":"#c96a32","Grab":"#f2a35d","LINE MAN":"#ffd18b"};
+    target.innerHTML = `<div class="dashboard-channel-total"><div><strong>${total.toLocaleString("en-US")}</strong><div><span>Valid orders</span></div></div><span>By order source</span></div>` + ["Direct","Grab","LINE MAN"].map(name => {
+      const count = counts.get(name)||0, percent = count/total*100;
+      return `<div class="dashboard-channel-row"><span class="dashboard-channel-name"><i class="dashboard-channel-dot" style="background:${colors[name]}"></i>${name}</span><div class="dashboard-channel-track"><div class="dashboard-channel-fill" style="width:${percent}%"></div></div><span class="dashboard-channel-value">${count} · ${Math.round(percent)}%</span></div>`;
+    }).join("");
+  }
+
+  async function loadDashboardStockAlerts() {
+    const target = document.getElementById("dashboard-stock-alerts");
+    const count = document.getElementById("dashboard-stock-alert-count");
+    if (!target || !count) return;
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/ingredients?select=*&is_active=eq.true&order=name.asc`, {headers:authHeaders()});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || JSON.stringify(data));
+      const low = (Array.isArray(data) ? data : []).filter(item => {
+        const maximum = Number(item.max_stock || 0);
+        return maximum > 0 && Number(item.current_stock || 0)/maximum < .20;
+      }).sort((a,b) => Number(a.current_stock||0)/Number(a.max_stock||1) - Number(b.current_stock||0)/Number(b.max_stock||1));
+      count.textContent = String(low.length);
+      if (!low.length) { target.innerHTML = '<div class="dashboard-chart-empty">All active ingredients are above the low-stock threshold.</div>'; return; }
+      target.innerHTML = low.slice(0,4).map(item => {
+        const stock = Number(item.current_stock||0), maximum = Number(item.max_stock||0), percent = Math.max(0,Math.min(100,maximum ? stock/maximum*100 : 0));
+        const unit = escapeHtml(item.unit || "");
+        const status = percent <= 10 ? "Low" : "Refill soon";
+        return `<div class="dashboard-stock-row"><div><div class="dashboard-stock-name">${escapeHtml(item.name || "Ingredient")}</div><div class="dashboard-stock-track"><div class="dashboard-stock-fill" style="width:${percent}%"></div></div></div><span class="dashboard-stock-qty">${stock.toLocaleString("en-US",{maximumFractionDigits:3})} ${unit} left</span><span class="dashboard-stock-status ${status === "Refill soon" ? "soon" : ""}">${status}</span></div>`;
+      }).join("");
+    } catch (error) {
+      count.textContent = "!";
+      target.innerHTML = `<div class="dashboard-chart-empty">Could not load stock alerts: ${escapeHtml(error.message)}</div>`;
+    }
+  }
+
   async function loadSalesAnalytics() {
     const topBody = document.getElementById("top-selling-body");
     const reportBody = document.getElementById("monthly-report-body");
@@ -4182,6 +4442,9 @@ ${errorText}`
       if (!ordersResponse.ok) throw new Error(ordersData?.message || JSON.stringify(ordersData));
       const allOrders = Array.isArray(ordersData) ? ordersData : [];
       const validAllOrders = allOrders.filter(o => !["cancelled", "refunded"].includes(String(o.status || "").toLowerCase()));
+      renderDashboardTrend(allOrders);
+      const channelBounds = dashboardPeriodBounds();
+      renderDashboardChannels(allOrders.filter(o => { const status=String(o.status||"").toLowerCase(); if (["cancelled","refunded"].includes(status)) return false; if (channelBounds.period === "month") { const d=new Date(o.created_at); return d>=channelBounds.start && d<channelBounds.end; } return true; }));
       const validOrders = validAllOrders.filter(o => { const d=new Date(o.created_at); return d >= start && d < end; });
       const bounds = dashboardPeriodBounds();
       const topOrders = bounds.period === "month" ? validAllOrders.filter(o => { const d=new Date(o.created_at); return d >= bounds.start && d < bounds.end; }) : validAllOrders;
@@ -4240,13 +4503,18 @@ ${errorText}`
     });
     document.getElementById("page-title").textContent = title;
     document.getElementById("page-subtitle").textContent = subtitle;
+    document.querySelector(".app-header")?.classList.toggle("dashboard-header", pageId === "dashboard-page");
     if (pageId === "inventory-page") { loadInventory(); loadStockMovements(); }
     if (pageId === "purchases-page") loadPurchaseHistory();
     if (pageId === "margins-page") loadMarginsAndRecipes();
     if (pageId === "product-options-page") loadProductOptionsManager();
-    if (pageId === "dashboard-page") { loadDashboardStats(); loadSalesAnalytics(); loadOrderLog(); }
+    if (pageId === "dashboard-page") { setDashboardGreeting(); loadDashboardStats(); loadSalesAnalytics(); loadOrderLog(); loadDashboardStockAlerts(); }
     if (pageId === "orders-page") loadOrderLog();
   }
+
+  document.querySelector(".app-header")?.classList.add("dashboard-header");
+  setDashboardGreeting();
+  loadDashboardStockAlerts();
 
   document.getElementById("purchase-quantity").addEventListener("input", updatePurchaseTotal);
   document.getElementById("purchase-package-cost").addEventListener("input", updatePurchaseTotal);
