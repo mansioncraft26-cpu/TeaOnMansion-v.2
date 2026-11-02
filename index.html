@@ -1479,16 +1479,22 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 
       <section class="page order-history-page" id="order-history-page">
         <div class="orders-page-heading">
-          <div><div class="eyebrow">MANSION.CRAFT · POS 2.0</div><h1>Orders</h1><p>Manage orders · Track status · Review order history</p></div>
-          <button type="button" class="refresh-orders-button" onclick="loadOrderLog()">↻ Refresh</button>
+          <div class="orders-page-heading-copy"><div class="eyebrow">MANSION.CRAFT · POS 2.0</div><h1>Orders</h1><p>Manage orders · Track status · Review order history</p></div>
+          <div class="orders-page-heading-tools">
+            <div class="orders-date-range-control" aria-label="Filter orders by date range">
+              <span class="orders-date-range-icon" aria-hidden="true">▦</span>
+              <label>From<input id="orders-header-from" type="date" aria-label="From date" onchange="applyOrdersHeaderDateRange()"></label>
+              <span class="orders-date-range-separator">to</span>
+              <label>To<input id="orders-header-to" type="date" aria-label="To date" onchange="applyOrdersHeaderDateRange()"></label>
+            </div>
+            <button type="button" class="refresh-orders-button" onclick="loadOrderLog()">↻ Refresh</button>
+          </div>
         </div>
         <div class="order-history-card">
           <section class="section dashboard-order-log" id="order-log-section">
           <div class="orders-header"><div><h2>Sales Order Log</h2><p>Search historical sales, review fees and net revenue, and open an order to see its items.</p></div><button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button></div>
           <div class="dashboard-order-filters">
             <label>Search order / customer / app no.<input id="order-log-search" type="search" placeholder="Order number or customer" oninput="renderOrderLog()"></label>
-            <label>From date<input id="order-log-from" type="date" onchange="loadOrderLog()"></label>
-            <label>To date<input id="order-log-to" type="date" onchange="loadOrderLog()"></label>
             <label>Status<select id="order-log-status" onchange="renderOrderLog()"><option value="">All statuses</option><option value="new">New</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="picked_up">Picked up</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></label>
             <label>Rows<select id="order-log-row-limit" onchange="renderOrderLog()"><option value="25" selected>25 rows</option><option value="all">Show all</option></select></label>
           </div>
@@ -2230,6 +2236,35 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
   // ==========================================
 // ORDER LOG: historical orders with search and filters
 let orderLogData = [];
+function applyOrdersHeaderDateRange() {
+  const fromValue = document.getElementById("orders-header-from")?.value || "";
+  const toValue = document.getElementById("orders-header-to")?.value || "";
+  const fromFilter = document.getElementById("order-log-from");
+  const toFilter = document.getElementById("order-log-to");
+
+  if (fromValue && toValue && fromValue > toValue) {
+    alert("The To date must be the same as or later than the From date.");
+    const toField = document.getElementById("orders-header-to");
+    if (toField) toField.value = fromValue;
+    if (toFilter) toFilter.value = fromValue;
+    if (fromFilter) fromFilter.value = fromValue;
+    loadOrderLog();
+    return;
+  }
+  if (fromFilter) fromFilter.value = fromValue;
+  if (toFilter) toFilter.value = toValue;
+  loadOrderLog();
+}
+
+function initializeOrdersHeaderDate() {
+  const fromHeader = document.getElementById("orders-header-from");
+  const toHeader = document.getElementById("orders-header-to");
+  const fromFilter = document.getElementById("order-log-from");
+  const toFilter = document.getElementById("order-log-to");
+  if (fromHeader && fromFilter) fromHeader.value = fromFilter.value || "";
+  if (toHeader && toFilter) toHeader.value = toFilter.value || "";
+}
+
 async function loadOrderLog() {
   const body = document.getElementById("order-log-body");
   const summary = document.getElementById("order-log-summary");
@@ -3318,6 +3353,7 @@ async function openProductModal(product) {
 
   // Default the sale date to today in Thailand, without overwriting a date the user selected.
   document.addEventListener("DOMContentLoaded", () => {
+    initializeOrdersHeaderDate();
     const saleDate = document.getElementById("order-sale-date");
     if (saleDate && !saleDate.value) saleDate.value = bangkokDateInputValue();
   });
@@ -6195,3 +6231,25 @@ function setOrderingSource(source){
 </body>
   
 </html>
+
+<style id="orders-ipad-date-range-header">
+/* Put the From–To date range beside Refresh in the Orders page heading. */
+#order-history-page .orders-page-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;min-width:0}
+#order-history-page .orders-page-heading-copy{min-width:0;flex:1 1 auto}
+#order-history-page .orders-page-heading-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex:0 0 auto;min-width:0}
+#order-history-page .orders-date-range-control{display:flex;align-items:center;gap:9px;min-height:48px;padding:6px 12px;border:1px solid #ead8c8;border-radius:14px;background:#fffaf5;color:#875333;box-sizing:border-box;white-space:nowrap}
+#order-history-page .orders-date-range-icon{font-size:19px;line-height:1;margin-right:2px}
+#order-history-page .orders-date-range-control label{display:flex;align-items:center;gap:6px;margin:0;color:#745541;font-size:11px;font-weight:700}
+#order-history-page .orders-date-range-control input{width:132px;min-width:0;height:32px;padding:3px 5px;border:1px solid #ead8c8!important;border-radius:8px;background:#fff!important;color:#38271d;font-size:12px!important;box-sizing:border-box}
+#order-history-page .orders-date-range-separator{font-size:12px;color:#9b806c}
+#order-history-page .dashboard-order-filters{grid-template-columns:minmax(240px,1.6fr) repeat(2,minmax(150px,1fr));gap:12px;align-items:end}
+#order-history-page .dashboard-order-filters label{min-width:0}
+#order-history-page .dashboard-order-filters input,#order-history-page .dashboard-order-filters select{width:100%;min-width:0}
+#order-history-page .orders-split-view{grid-template-columns:minmax(0,1.2fr) minmax(360px,.9fr);gap:16px;align-items:start}
+#order-history-page .orders-list-pane{min-width:0}
+#order-history-page .orders-table-scroll{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+#order-history-page .order-detail-panel{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+@media(max-width:1100px){#order-history-page .orders-page-heading{align-items:flex-start;flex-direction:column}#order-history-page .orders-page-heading-tools{width:100%;justify-content:space-between}#order-history-page .orders-split-view{grid-template-columns:minmax(0,1fr) minmax(300px,.9fr)}}
+@media(max-width:760px){#order-history-page .orders-page-heading-tools{align-items:stretch;flex-direction:column;width:100%}#order-history-page .orders-date-range-control{justify-content:space-between;flex-wrap:wrap}#order-history-page .orders-split-view{grid-template-columns:minmax(0,1fr)}#order-history-page .order-detail-panel{position:static;max-height:none}}
+@media(max-width:520px){#order-history-page .dashboard-order-filters{grid-template-columns:minmax(0,1fr)}#order-history-page .orders-date-range-control{align-items:flex-start;flex-direction:column}#order-history-page .orders-date-range-control label{width:100%;justify-content:space-between}#order-history-page .orders-date-range-control input{width:65%}#order-history-page .orders-page-heading-tools .refresh-orders-button{width:100%}}
+</style>
