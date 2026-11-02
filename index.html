@@ -1235,6 +1235,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
     <nav aria-label="Main navigation">
       <button class="nav-button active" data-page="dashboard-page" aria-label="Sell Summary" title="Sell Summary" onclick="showPage('dashboard-page','Sell Summary','Revenue, performance, and order history')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="nav-label">Sell Summary</span></button>
       <button class="nav-button" data-page="orders-page" aria-label="Ordering" title="Ordering" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4-8 4V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="nav-label">Ordering</span></button>
+      <button class="nav-button" data-page="order-history-page" aria-label="Orders" title="Orders" onclick="showPage('order-history-page','Orders','Manage orders and review order history')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5L12 21l-4-1.5L6 21z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span class="nav-label">Orders</span></button>
       <button class="nav-button" data-page="inventory-page" aria-label="Inventory" title="Inventory" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg></span><span class="nav-label">Inventory</span></button>
       <button class="nav-button" data-page="margins-page" aria-label="Margins & Recipes" title="Margins & Recipes" onclick="showPage('margins-page','Margins & Recipes','Track menu item profitability and build detailed recipe cost breakdowns')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M8 7h8M8 11h8"/></svg></span><span class="nav-label">Margins &amp; Recipes</span></button>
       <button class="nav-button" data-page="product-options-page" aria-label="Product Options" title="Product Options" onclick="showPage('product-options-page','Product Options','Manage option groups, drink add-ons, and ingredient stock mapping')"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="8"/></svg></span><span class="nav-label">Product Options</span></button>
@@ -1345,7 +1346,20 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
           <div style="overflow-x:auto"><table class="dashboard-report-table"><thead><tr><th>Month</th><th>Orders</th><th>Gross Revenue</th><th>Fees &amp; VAT</th><th>Net Revenue</th></tr></thead><tbody id="monthly-report-body"><tr><td colspan="5">Loading monthly report…</td></tr></tbody><tfoot id="monthly-report-foot"></tfoot></table></div>
         </details>
 
-        <section class="section dashboard-order-log" id="order-log-section">
+        <section class="section dashboard-order-log-shortcut">
+          <div class="orders-header"><div><h2>Order History</h2><p>Search past orders, review fees and net revenue, and view order details.</p></div><button class="refresh-orders-button" onclick="showPage('order-history-page','Orders','Manage orders and review order history')">Open Orders →</button></div>
+        </section>
+
+        <section class="section dashboard-system-status"><div><strong>Database connection</strong><span id="dashboard-db-status" class="dashboard-db-pill">Connecting…</span></div><div id="status">Connecting...</div><div id="error"></div></section>
+      </section>
+
+      <section class="page order-history-page" id="order-history-page">
+        <div class="orders-page-heading">
+          <div><div class="eyebrow">MANSION.CRAFT · POS 2.0</div><h1>Orders</h1><p>Manage orders · Track status · Review order history</p></div>
+          <button type="button" class="refresh-orders-button" onclick="loadOrderLog()">↻ Refresh</button>
+        </div>
+        <div class="order-history-card">
+          <section class="section dashboard-order-log" id="order-log-section">
           <div class="orders-header"><div><h2>Sales Order Log</h2><p>Search historical sales, review fees and net revenue, and open an order to see its items.</p></div><button class="refresh-orders-button" onclick="loadOrderLog()">Refresh log</button></div>
           <div class="dashboard-order-filters">
             <label>Search order / customer / app no.<input id="order-log-search" type="search" placeholder="Order number or customer" oninput="renderOrderLog()"></label>
@@ -1355,11 +1369,18 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
             <label>Rows<select id="order-log-row-limit" onchange="renderOrderLog()"><option value="25" selected>25 rows</option><option value="all">Show all</option></select></label>
           </div>
           <div id="order-log-summary" class="orders-summary dashboard-order-summary"><span>Loading order log…</span></div>
-          <div style="overflow-x:auto"><table class="dashboard-order-table"><thead><tr><th>Date &amp; Time</th><th>Order</th><th>Customer</th><th>Source</th><th>Status</th><th>Total</th><th>Fee</th><th>Net</th><th>Details</th></tr></thead><tbody id="order-log-body"><tr><td colspan="9">Loading order log…</td></tr></tbody></table></div>
+          <div class="orders-split-view">
+            <div class="orders-list-pane">
+              <div class="orders-list-pane-heading"><strong>Order history</strong><span>Choose an order to view its details</span></div>
+              <div class="orders-table-scroll"><table class="dashboard-order-table"><thead><tr><th>Date &amp; Time</th><th>Order</th><th>Customer</th><th>Source</th><th>Status</th><th>Total</th><th>Fee</th><th>Net</th></tr></thead><tbody id="order-log-body"><tr><td colspan="8">Loading order log…</td></tr></tbody></table></div>
+            </div>
+            <aside class="order-detail-panel" id="order-detail-panel" aria-live="polite">
+              <div class="order-detail-empty"><span class="order-detail-empty-icon">▤</span><strong>Select an order</strong><p>Order items, customer information and payment summary will appear here.</p></div>
+            </aside>
+          </div>
           <p class="placeholder-note" style="margin-top:10px">By default, 25 matching orders are shown. Choose “Show all” to display every matching order in the latest 1,000 loaded orders.</p>
         </section>
-
-        <section class="section dashboard-system-status"><div><strong>Database connection</strong><span id="dashboard-db-status" class="dashboard-db-pill">Connecting…</span></div><div id="status">Connecting...</div><div id="error"></div></section>
+        </div>
       </section>
 
       <section class="page" id="orders-page">
@@ -2089,7 +2110,7 @@ async function loadOrderLog() {
   const body = document.getElementById("order-log-body");
   const summary = document.getElementById("order-log-summary");
   if (!body || !summary) return;
-  body.innerHTML = '<tr><td colspan="9" style="padding:14px 8px">Loading order log…</td></tr>';
+  body.innerHTML = '<tr><td colspan="8" style="padding:14px 8px">Loading order log…</td></tr>';
   summary.textContent = "Loading order log…";
   try {
     const params = new URLSearchParams({select:"*", order:"created_at.desc", limit:"1000"});
@@ -2108,6 +2129,181 @@ async function loadOrderLog() {
     summary.textContent = "Order log failed to load";
   }
 }
+
+let activeOrderDetailId = null;
+
+async function selectOrderForDetails(orderId, rowEl) {
+  activeOrderDetailId = Number(orderId);
+  document.querySelectorAll(".order-log-select-row.is-selected").forEach(row => row.classList.remove("is-selected"));
+  if (rowEl) rowEl.classList.add("is-selected");
+  const panel = document.getElementById("order-detail-panel");
+  if (!panel) return;
+  panel.innerHTML = `<div class="order-detail-loading"><span class="order-detail-spinner"></span><strong>Loading order…</strong></div>`;
+  try {
+    const headers = {"apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${getAccessToken()}`};
+    const [orderResponse, itemsResponse] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=*`, {headers}),
+      fetch(`${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${encodeURIComponent(orderId)}&select=*`, {headers})
+    ]);
+    const [orders, items] = await Promise.all([orderResponse.json(), itemsResponse.json()]);
+    if (!orderResponse.ok) throw new Error(orders?.message || JSON.stringify(orders));
+    if (!itemsResponse.ok) throw new Error(items?.message || JSON.stringify(items));
+    const order = orders[0];
+    if (!order) throw new Error("Order not found.");
+    const money = n => `฿${Number(n || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    const esc = v => escapeHtml(String(v ?? ""));
+    const status = String(order.status || "new").replaceAll("_"," ");
+    const source = order.order_source || order.source || order.order_type || "—";
+    const date = order.created_at ? new Date(order.created_at).toLocaleString("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
+    const gross = Number(order.total ?? order.subtotal ?? 0);
+    const fee = Number(order.platform_fee || 0);
+    const discount = Number(order.discount_amount || 0);
+    const rows = (items || []).map(item => {
+      const options = Array.isArray(item.options) ? item.options.map(option => option.name).filter(Boolean).join(" · ") : "";
+      return `<div class="order-detail-item"><div class="order-detail-item-copy"><strong>${esc(item.product_name || "Item")}</strong><small>${esc(options || item.item_note || "")}</small></div><span>× ${Number(item.quantity || 1)}</span><strong>${money(item.subtotal)}</strong></div>`;
+    }).join("");
+    panel.innerHTML = `
+      <div class="order-detail-panel-head"><div><span class="eyebrow">ORDER DETAILS</span><h2>${esc(order.order_number || `#${order.id}`)}</h2></div><span class="order-detail-status">${esc(status)}</span></div>
+      <div class="order-detail-meta">
+        <div><span>Customer</span><strong>${esc(order.customer_name || "Walk-in customer")}</strong></div>
+        <div><span>Order channel</span><strong>${esc(source)}</strong></div>
+        <div><span>Order date</span><strong>${esc(date)}</strong></div>
+        <div><span>Payment method</span><strong>${esc(order.payment_method || "—")}</strong></div>
+        ${order.platform_order_number ? `<div class="order-detail-meta-wide"><span>App order number</span><strong>${esc(order.platform_order_number)}</strong></div>` : ""}
+        ${order.customer_address ? `<div class="order-detail-meta-wide"><span>Address</span><strong>${esc(order.customer_address)}</strong></div>` : ""}
+      </div>
+      <div class="order-detail-items-head"><strong>Items</strong><span>${(items || []).length} line items</span></div>
+      <div class="order-detail-items">${rows || `<p class="order-detail-muted">No item details found for this order.</p>`}</div>
+      ${order.notes ? `<div class="order-detail-note"><span>Order note</span><p>${esc(order.notes)}</p></div>` : ""}
+      <div class="order-detail-totals">
+        <div><span>Subtotal</span><strong>${money(order.subtotal ?? gross)}</strong></div>
+        ${discount > 0 ? `<div><span>Discount</span><strong>− ${money(discount)}</strong></div>` : ""}
+        <div><span>Platform fee</span><strong>${money(fee)}</strong></div>
+        <div class="order-detail-grand-total"><span>Total</span><strong>${money(gross)}</strong></div>
+        <div><span>Net after fee</span><strong>${money(gross-fee)}</strong></div>
+      </div>
+      <div class="order-detail-actions"><button type="button" class="refresh-orders-button" onclick="openOrderEditForm(${Number(order.id)})">Edit Order</button></div>`;
+  } catch (error) {
+    console.error("Order detail panel error:", error);
+    panel.innerHTML = `<div class="order-detail-error"><strong>Could not load order details</strong><p>${escapeHtml(error.message || "Please try again.")}</p></div>`;
+  }
+}
+
+
+async function openOrderEditForm(orderId) {
+  const panel = document.getElementById("order-detail-panel");
+  if (!panel) return;
+  panel.innerHTML = `<div class="order-detail-loading"><span class="order-detail-spinner"></span><strong>Loading edit form…</strong></div>`;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=*`, {
+      headers: authHeaders()
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.message || JSON.stringify(data));
+    const order = data[0];
+    if (!order) throw new Error("Order not found.");
+    const esc = value => escapeHtml(String(value ?? ""));
+    const saleDate = order.created_at
+      ? new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(order.created_at))
+      : bangkokDateInputValue();
+    const payment = String(order.payment_method || "cash").toLowerCase();
+    panel.innerHTML = `
+      <div class="order-detail-panel-head">
+        <div><span class="eyebrow">EDIT ORDER</span><h2>${esc(order.order_number || `#${order.id}`)}</h2></div>
+        <span class="order-detail-status">Details only</span>
+      </div>
+      <form id="order-edit-form" class="order-edit-form" onsubmit="saveOrderEdits(event, ${Number(order.id)})">
+        <label>Customer name<input name="customer_name" type="text" maxlength="160" value="${esc(order.customer_name)}" placeholder="Walk-in customer"></label>
+        <label>Delivery address<textarea name="customer_address" rows="2" maxlength="1000" placeholder="Delivery address">${esc(order.customer_address)}</textarea></label>
+        <label>Delivery app order number<input name="platform_order_number" type="text" maxlength="120" value="${esc(order.platform_order_number)}" placeholder="Optional"></label>
+        <label>Sale date<input name="sale_date" type="date" required value="${esc(saleDate)}"></label>
+        <label>Payment method
+          <select name="payment_method">
+            <option value="cash" ${payment==="cash"?"selected":""}>Cash</option>
+            <option value="transfer" ${payment==="transfer"?"selected":""}>Bank transfer</option>
+            <option value="promptpay" ${payment==="promptpay"?"selected":""}>PromptPay</option>
+            <option value="card" ${payment==="card"?"selected":""}>Card</option>
+            <option value="other" ${payment==="other"?"selected":""}>Other</option>
+          </select>
+        </label>
+        <label>Order notes<textarea name="notes" rows="3" maxlength="2000" placeholder="Order notes">${esc(order.notes)}</textarea></label>
+        <p class="order-edit-hint">This form edits order information only. Products, quantities, discounts, totals, order channel and stock movements are left unchanged.</p>
+        <div class="order-edit-actions">
+          <button type="button" class="refresh-orders-button" onclick="selectOrderForDetails(${Number(order.id)})">Cancel</button>
+          <button type="submit" class="refresh-orders-button order-edit-save">Save changes</button>
+        </div>
+        <div id="order-edit-message" role="status" aria-live="polite"></div>
+      </form>`;
+  } catch (error) {
+    console.error("Open order edit form error:", error);
+    panel.innerHTML = `<div class="order-detail-error"><strong>Could not open edit form</strong><p>${escapeHtml(error.message || "Please try again.")}</p></div>`;
+  }
+}
+
+async function saveOrderEdits(event, orderId) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const saveButton = form.querySelector('button[type="submit"]');
+  const message = document.getElementById("order-edit-message");
+  const formData = new FormData(form);
+  const chosenDate = String(formData.get("sale_date") || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(chosenDate) ||
+      Number.isNaN(new Date(`${chosenDate}T12:00:00+07:00`).getTime()) ||
+      new Date(`${chosenDate}T12:00:00+07:00`).toISOString().slice(0,10) !== chosenDate) {
+    message.textContent = "Please choose a valid sale date.";
+    message.className = "order-edit-error";
+    return;
+  }
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving…";
+  if (message) message.textContent = "";
+  try {
+    const existingResponse = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=created_at`, {
+      headers: authHeaders()
+    });
+    const existingData = await existingResponse.json();
+    if (!existingResponse.ok) throw new Error(existingData?.message || JSON.stringify(existingData));
+    const currentTimestamp = existingData[0]?.created_at ? new Date(existingData[0].created_at) : new Date();
+    const timeParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone:"Asia/Bangkok",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+    }).formatToParts(currentTimestamp);
+    const time = Object.fromEntries(timeParts.map(part => [part.type,part.value]));
+    const createdAt = new Date(`${chosenDate}T${time.hour}:${time.minute}:${time.second}+07:00`).toISOString();
+    const payload = {
+      customer_name: String(formData.get("customer_name") || "").trim() || null,
+      customer_address: String(formData.get("customer_address") || "").trim() || null,
+      platform_order_number: String(formData.get("platform_order_number") || "").trim() || null,
+      payment_method: String(formData.get("payment_method") || "cash").trim(),
+      notes: String(formData.get("notes") || "").trim() || null,
+      created_at: createdAt
+    };
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
+      method:"PATCH",
+      headers:authHeaders({"Content-Type":"application/json","Prefer":"return=minimal"}),
+      body:JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error(await response.text());
+    if (typeof loadOrderLog === "function") await loadOrderLog();
+    if (typeof loadTodayOrders === "function") await loadTodayOrders();
+    await selectOrderForDetails(orderId);
+    const panel = document.getElementById("order-detail-panel");
+    if (panel) {
+      const notice = document.createElement("div");
+      notice.className = "order-edit-success";
+      notice.textContent = "Order information saved.";
+      panel.prepend(notice);
+    }
+  } catch (error) {
+    console.error("Save order edits error:", error);
+    if (message) {
+      message.textContent = `Could not save changes: ${error.message}`;
+      message.className = "order-edit-error";
+    }
+    saveButton.disabled = false;
+    saveButton.textContent = "Save changes";
+  }
+}
+
 function renderOrderLog() {
   const body = document.getElementById("order-log-body");
   const summary = document.getElementById("order-log-summary");
@@ -2136,7 +2332,7 @@ function renderOrderLog() {
     const fee = Number(o.platform_fee || 0);
     const net = gross - fee;
     const saleDate = o.created_at ? new Date(o.created_at).toLocaleDateString("en-CA", {timeZone:"Asia/Bangkok"}) : bangkokDateInputValue();
-    return `<tr style="border-top:1px solid var(--line)"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px">${safe(o.order_number || `#${o.id}`)}<div style="font-size:11px;color:var(--muted)">ID ${safe(o.id)}</div></td><td style="padding:10px 8px">${safe(o.customer_name || "—")}</td><td style="padding:10px 8px">${safe(source)}</td><td style="padding:10px 8px">${safe(status.replaceAll("_"," "))}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(gross)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(fee)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap"><strong>${money(net)}</strong></td><td style="padding:10px 8px;white-space:nowrap"><button class="refresh-orders-button" onclick="showOrderDetails(${Number(o.id)})">View</button> <button class="refresh-orders-button" onclick="editOrderSaleDate(${Number(o.id)}, '${safe(saleDate)}')">Edit date</button></td></tr>`;
+    return `<tr class="order-log-select-row" data-order-id="${Number(o.id)}" onclick="selectOrderForDetails(${Number(o.id)}, this)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectOrderForDetails(${Number(o.id)},this)}" style="border-top:1px solid var(--line);cursor:pointer"><td style="padding:10px 8px;white-space:nowrap">${safe(date)}</td><td style="padding:10px 8px">${safe(o.order_number || `#${o.id}`)}<div style="font-size:11px;color:var(--muted)">ID ${safe(o.id)}</div></td><td style="padding:10px 8px">${safe(o.customer_name || "—")}</td><td style="padding:10px 8px">${safe(source)}</td><td style="padding:10px 8px">${safe(status.replaceAll("_"," "))}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(gross)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap">${money(fee)}</td><td style="padding:10px 8px;text-align:right;white-space:nowrap"><strong>${money(net)}</strong></td></tr>`;
   }).join("");
 }
 
@@ -4517,7 +4713,7 @@ ${errorText}`
     if (pageId === "margins-page") loadMarginsAndRecipes();
     if (pageId === "product-options-page") loadProductOptionsManager();
     if (pageId === "dashboard-page") { setDashboardGreeting(); loadDashboardStats(); loadSalesAnalytics(); loadOrderLog(); loadDashboardStockAlerts(); }
-    if (pageId === "orders-page") loadOrderLog();
+    if (pageId === "order-history-page") loadOrderLog();
   }
 
   document.querySelector(".app-header")?.classList.add("dashboard-header");
@@ -5736,6 +5932,97 @@ function toggleSidebar(){
   }
 }
 
+
+/* Dedicated Orders history page — inspired by the supplied reference, using existing order data/actions */
+.order-history-page{max-width:1500px;margin:0 auto}
+.orders-page-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:4px 0 22px;padding:4px 2px 18px;border-bottom:1px solid var(--line)}
+.orders-page-heading .eyebrow{font-size:10px;letter-spacing:.16em;font-weight:800;color:#c87545;margin-bottom:6px}
+.orders-page-heading h1{font-size:30px;line-height:1.15;margin:0;color:#402719}
+.orders-page-heading p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.order-history-card{background:#fffaf5;border:1px solid #ead9ca;border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(91,55,30,.055);min-width:0}
+.order-history-card .dashboard-order-log{border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;background:transparent!important}
+.order-history-card .orders-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 16px;margin:0 0 16px;border-bottom:1px solid #ead9ca}
+.order-history-card .orders-header h2{font-size:20px;color:#402719;margin:0}
+.order-history-card .orders-header p{margin:5px 0 0;color:#82766e;font-size:13px}
+.order-history-card .dashboard-order-filters{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(4,minmax(130px,1fr));gap:12px;align-items:end;margin:0 0 14px}
+.order-history-card .dashboard-order-filters label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;font-weight:800;letter-spacing:.08em;color:#876b58;text-transform:uppercase}
+.order-history-card .dashboard-order-filters input,.order-history-card .dashboard-order-filters select{width:100%;height:42px;min-width:0;border:1px solid #e8d8ca;border-radius:11px;background:#fffdfb;padding:0 12px;color:#38271d;font-size:13px;box-sizing:border-box}
+.order-history-card .orders-summary{margin:0 0 12px;padding:11px 13px;border-radius:11px;background:#fbf0e6;color:#75533c;font-size:12px;line-height:1.5}
+.order-history-card > .dashboard-order-log > div[style*="overflow-x"]{overflow-x:auto;border:1px solid #eee2d8;border-radius:12px}
+.order-history-card .dashboard-order-table{width:100%;border-collapse:collapse;min-width:850px;background:#fffdfb}
+.order-history-card .dashboard-order-table th{background:#f8eee5;color:#75533c;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:13px 11px;text-align:left;white-space:nowrap}
+.order-history-card .dashboard-order-table td{padding:12px 11px;border-top:1px solid #f0e6de;color:#4b382c;font-size:12px;vertical-align:middle}
+.order-history-card .dashboard-order-table tbody tr:hover{background:#fff7ef}
+.order-history-card .dashboard-order-table td button{margin:2px 3px 2px 0}
+.order-history-card .placeholder-note{color:#8a7b70;font-size:11px}
+.dashboard-order-log-shortcut{margin-top:18px}
+@media(max-width:1050px){.order-history-card .dashboard-order-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.orders-page-heading{align-items:flex-start}.orders-page-heading h1{font-size:25px}.order-history-card{padding:13px;border-radius:15px}.order-history-card .dashboard-order-filters{grid-template-columns:1fr}.order-history-card .orders-header{align-items:flex-start;flex-wrap:wrap}}
+
+/* Orders split list + right-side detail panel */
+.order-history-card .orders-split-view{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(330px,.85fr);gap:18px;align-items:start;margin-top:14px}
+.orders-list-pane,.order-detail-panel{min-width:0;border:1px solid var(--line,#eadbce);border-radius:16px;background:#fffdfa;overflow:hidden}
+.orders-list-pane-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line,#eadbce)}
+.orders-list-pane-heading strong{font-size:15px;color:var(--ink,#38251b)}
+.orders-list-pane-heading span{font-size:12px;color:var(--muted,#8b7769)}
+.orders-table-scroll{max-width:100%;overflow:auto}
+.orders-table-scroll .dashboard-order-table{min-width:720px;margin:0}
+.orders-table-scroll .dashboard-order-table th{position:sticky;top:0;background:#f8f1e9;z-index:1}
+.order-log-select-row{transition:background .15s,box-shadow .15s}
+.order-log-select-row:hover{background:#fff5eb}
+.order-log-select-row.is-selected{background:#fff0e1;box-shadow:inset 3px 0 #cf7132}
+.order-log-select-row:focus-visible{outline:2px solid #cf7132;outline-offset:-2px}
+.order-detail-panel{position:sticky;top:16px;padding:18px;max-height:calc(100vh - 150px);overflow:auto}
+.order-detail-empty,.order-detail-loading{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#806b5d;gap:10px;padding:24px}
+.order-detail-empty-icon{width:54px;height:54px;border-radius:16px;background:#fff0e1;color:#b65e28;display:grid;place-items:center;font-size:28px}
+.order-detail-empty strong,.order-detail-loading strong{font-size:17px;color:#40291d}
+.order-detail-empty p{max-width:250px;margin:0;font-size:13px;line-height:1.55}
+.order-detail-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:15px;border-bottom:1px solid #eee1d5}
+.order-detail-panel-head .eyebrow{font-size:10px;letter-spacing:.13em;color:#bd6a35;font-weight:800}
+.order-detail-panel-head h2{font-size:27px;margin:5px 0 0;color:#38251b}
+.order-detail-status{background:#ffedce;color:#94500d;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;text-transform:capitalize}
+.order-detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;padding:16px 0;border-bottom:1px solid #eee1d5}
+.order-detail-meta>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.order-detail-meta span,.order-detail-note>span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#947d6d;font-weight:700}
+.order-detail-meta strong{font-size:13px;color:#3c2a20;overflow-wrap:anywhere}
+.order-detail-meta-wide{grid-column:1/-1}
+.order-detail-items-head{display:flex;justify-content:space-between;align-items:center;padding:16px 0 8px}
+.order-detail-items-head strong{font-size:15px;color:#3c2a20}
+.order-detail-items-head span{font-size:11px;color:#947d6d}
+.order-detail-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #f0e7df;font-size:13px}
+.order-detail-item-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.order-detail-item-copy strong{color:#3c2a20;overflow-wrap:anywhere}
+.order-detail-item-copy small{font-size:11px;color:#927d6e}
+.order-detail-item>span{color:#6f5b4d;white-space:nowrap}
+.order-detail-item>strong{white-space:nowrap;color:#3c2a20}
+.order-detail-muted{font-size:13px;color:#927d6e}
+.order-detail-note{padding:12px;margin:14px 0;background:#fbf5ee;border-radius:10px}
+.order-detail-note p{margin:6px 0 0;font-size:13px;color:#554237;white-space:pre-wrap}
+.order-detail-totals{display:flex;flex-direction:column;gap:10px;padding:16px 0}
+.order-detail-totals>div{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#6f5b4d}
+.order-detail-totals strong{color:#3c2a20}
+.order-detail-grand-total{margin:2px -6px;padding:12px 10px;border-radius:10px;background:#fff0e1;font-size:17px!important;font-weight:800;color:#3c2a20!important}
+.order-detail-grand-total strong{font-size:21px}
+.order-detail-actions{display:flex;justify-content:flex-end;padding-top:10px;border-top:1px solid #eee1d5}
+.order-detail-error{padding:22px;color:#9c2e22}
+.order-detail-error p{font-size:13px;overflow-wrap:anywhere}
+.order-detail-spinner{width:25px;height:25px;border:3px solid #f2dfcf;border-top-color:#c86b32;border-radius:50%;animation:orderDetailSpin .8s linear infinite}
+@keyframes orderDetailSpin{to{transform:rotate(360deg)}}
+@media(max-width:1100px){.order-history-card .orders-split-view{grid-template-columns:minmax(0,1fr) minmax(290px,.8fr);gap:12px}.order-detail-panel{padding:14px}}
+@media(max-width:820px){.order-history-card .orders-split-view{grid-template-columns:1fr}.order-detail-panel{position:static;max-height:none;overflow:visible;order:-1}.order-detail-empty{min-height:150px}.orders-table-scroll .dashboard-order-table{min-width:700px}}
+
+.order-edit-form{display:flex;flex-direction:column;gap:13px;padding-top:16px}
+.order-edit-form label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:750;letter-spacing:.04em;color:#806b5d}
+.order-edit-form input,.order-edit-form textarea,.order-edit-form select{width:100%;box-sizing:border-box;border:1px solid #e8d8c8;border-radius:10px;background:#fffdfa;padding:11px 12px;color:#38251b;font:inherit;font-size:13px;letter-spacing:normal;outline:none}
+.order-edit-form input:focus,.order-edit-form textarea:focus,.order-edit-form select:focus{border-color:#cb7137;box-shadow:0 0 0 3px #cb71371c}
+.order-edit-form textarea{resize:vertical;min-height:58px}
+.order-edit-hint{margin:0;padding:11px 12px;border-radius:10px;background:#fbf3e9;color:#826d5d;font-size:11px;line-height:1.5}
+.order-edit-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:5px}
+.order-edit-save{background:#c96d32!important;color:#fff!important;border-color:#c96d32!important}
+.order-edit-save:disabled{opacity:.6;cursor:wait}
+.order-edit-error{font-size:12px;color:#a52b20;padding-top:8px;overflow-wrap:anywhere}
+.order-edit-success{padding:10px 12px;margin-bottom:12px;border-radius:9px;background:#edf6eb;color:#356b3b;font-size:12px;font-weight:700}
+@media(max-width:820px){.order-edit-form{gap:11px}.order-edit-form input,.order-edit-form textarea,.order-edit-form select{font-size:16px}}
 </style>
 
 
