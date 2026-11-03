@@ -2256,16 +2256,73 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
   </div>
 
   <div class="mc-workspace-panel" data-mc-panel="settings" hidden>
-    <div class="stat-card mc-settings-card">
-      <h3>Profit calculation settings</h3>
-      <div class="mc-settings-grid">
-        <div><label for="margin-hidden-cost-rate">Hidden cost (% of selling price)</label><input id="margin-hidden-cost-rate" max="100" min="0" step="0.5" type="number" value="20"/></div>
-        <div><label for="margin-platform-fee-rate">Estimated delivery platform fee (%)</label><input id="margin-platform-fee-rate" max="100" min="0" step="0.5" type="number" value="33"/></div>
-        <div><label for="margin-low-threshold">Low-margin warning below (%)</label><input id="margin-low-threshold" max="100" min="0" step="1" type="number" value="30"/></div>
-        <div class="mc-settings-save"><button class="checkout-button" onclick="saveMarginSettings()" type="button">Save settings</button></div>
+    <div class="mc-settings-page">
+      <div class="mc-settings-intro">
+        <div>
+          <span class="mc-settings-eyebrow">MARGIN CONFIGURATION</span>
+          <h3>Profit calculation settings</h3>
+          <p>Adjust the assumptions used to estimate your menu profitability.</p>
+        </div>
+        <div class="mc-settings-intro-icon" aria-hidden="true">⚙</div>
       </div>
-      <p class="placeholder-note">Hidden cost applies to Direct, Grab, and LINE MAN. Delivery platform fee is estimated separately for Grab and LINE MAN only. These settings affect this browser's margin calculations; they do not change selling prices, ingredient costs, stock, or saved orders.</p>
-      <p class="placeholder-note">Adjusted cost for profit calculation = actual recipe ingredient cost + hidden cost. Actual ingredient inventory cost stays unchanged. Profit before platform fee and estimated profit after platform fee are shown separately.</p>
+
+      <div class="mc-settings-grid">
+        <section class="mc-setting-option">
+          <div class="mc-setting-option-head">
+            <span class="mc-setting-icon">＋</span>
+            <span class="mc-setting-index">01 / COST</span>
+          </div>
+          <label for="margin-hidden-cost-rate">Hidden cost</label>
+          <p class="mc-setting-description">Extra operating cost applied to every sales channel.</p>
+          <div class="mc-setting-input-wrap">
+            <input id="margin-hidden-cost-rate" max="100" min="0" step="0.5" type="number" value="20"/>
+            <span>%</span>
+          </div>
+          <small>Applied to Direct, Grab, and LINE MAN.</small>
+        </section>
+
+        <section class="mc-setting-option">
+          <div class="mc-setting-option-head">
+            <span class="mc-setting-icon">▤</span>
+            <span class="mc-setting-index">02 / PLATFORM</span>
+          </div>
+          <label for="margin-platform-fee-rate">Delivery platform fee</label>
+          <p class="mc-setting-description">Estimated commission charged by delivery platforms.</p>
+          <div class="mc-setting-input-wrap">
+            <input id="margin-platform-fee-rate" max="100" min="0" step="0.5" type="number" value="33"/>
+            <span>%</span>
+          </div>
+          <small>Applied to Grab and LINE MAN only.</small>
+        </section>
+
+        <section class="mc-setting-option">
+          <div class="mc-setting-option-head">
+            <span class="mc-setting-icon">⚑</span>
+            <span class="mc-setting-index">03 / ALERT</span>
+          </div>
+          <label for="margin-low-threshold">Low-margin warning</label>
+          <p class="mc-setting-description">Flag menu items when their estimated margin is too low.</p>
+          <div class="mc-setting-input-wrap">
+            <input id="margin-low-threshold" max="100" min="0" step="1" type="number" value="30"/>
+            <span>%</span>
+          </div>
+          <small>Items below this margin are marked as low-margin.</small>
+        </section>
+      </div>
+
+      <div class="mc-settings-info">
+        <div class="mc-settings-info-icon">ⓘ</div>
+        <div>
+          <strong>How these settings affect your calculations</strong>
+          <p>Adjusted cost = actual recipe ingredient cost + hidden cost. Profit before platform fee and estimated profit after platform fee are shown separately. Direct has no platform fee.</p>
+          <p>These settings only affect this browser’s margin calculations. They do not change selling prices, ingredient costs, stock, or saved orders.</p>
+        </div>
+      </div>
+
+      <div class="mc-settings-footer">
+        <span>Changes apply to your margin calculations after saving.</span>
+        <button class="checkout-button mc-settings-save-button" onclick="saveMarginSettings()" type="button">Save settings <span aria-hidden="true">→</span></button>
+      </div>
     </div>
   </div>
 
@@ -7467,4 +7524,35 @@ function setOrderingSource(source){
 @media(max-width:1100px){#order-history-page .orders-page-heading{align-items:flex-start;flex-direction:column}#order-history-page .orders-page-heading-tools{width:100%;justify-content:space-between}#order-history-page .orders-split-view{grid-template-columns:minmax(0,1fr) minmax(300px,.9fr)}}
 @media(max-width:760px){#order-history-page .orders-page-heading-tools{align-items:stretch;flex-direction:column;width:100%}#order-history-page .orders-date-range-control{justify-content:space-between;flex-wrap:wrap}#order-history-page .orders-split-view{grid-template-columns:minmax(0,1fr)}#order-history-page .order-detail-panel{position:static;max-height:none}}
 @media(max-width:520px){#order-history-page .dashboard-order-filters{grid-template-columns:minmax(0,1fr)}#order-history-page .orders-date-range-control{align-items:flex-start;flex-direction:column}#order-history-page .orders-date-range-control label{width:100%;justify-content:space-between}#order-history-page .orders-date-range-control input{width:65%}#order-history-page .orders-page-heading-tools .refresh-orders-button{width:100%}}
+
+/* Margins & Recipes — refreshed settings workspace */
+.mc-settings-page{background:#fff;border:1px solid #eee5df;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:18px}
+.mc-settings-intro{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:2px 2px 16px;border-bottom:1px solid #f0e8e2}
+.mc-settings-eyebrow{display:block;color:#b66c43;font-size:10px;font-weight:800;letter-spacing:.12em;margin-bottom:7px}
+.mc-settings-intro h3{margin:0 0 5px;font-size:18px;color:#3d3029}
+.mc-settings-intro p{margin:0;color:#887d75;font-size:12px}
+.mc-settings-intro-icon{width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#fff2e9;color:#c66b32;display:grid;place-items:center;font-size:21px}
+.mc-settings-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.mc-setting-option{min-width:0;border:1px solid #eee5df;border-radius:13px;padding:16px;background:#fffdfa;display:flex;flex-direction:column;gap:8px}
+.mc-setting-option-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.mc-setting-icon{width:30px;height:30px;border-radius:9px;background:#fff0e5;color:#c66b32;display:grid;place-items:center;font-size:16px;font-weight:700}
+.mc-setting-index{font-size:9px;letter-spacing:.1em;color:#a89a90;font-weight:800}
+.mc-setting-option label{font-size:13px;font-weight:750;color:#45362e}
+.mc-setting-description{font-size:11px;line-height:1.5;color:#8b8078;margin:0;min-height:34px}
+.mc-setting-input-wrap{height:46px;border:1px solid #e8ddd5;border-radius:9px;background:#fff;display:flex;align-items:center;padding:0 12px;gap:8px}
+.mc-setting-input-wrap:focus-within{border-color:#d77b43;box-shadow:0 0 0 3px rgba(215,123,67,.10)}
+.mc-setting-input-wrap input{width:100%;min-width:0;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;padding:0!important;font-size:18px!important;font-weight:750;color:#3e3028}
+.mc-setting-input-wrap>span{font-size:13px;font-weight:700;color:#9a8b80}
+.mc-setting-option small{font-size:10px;line-height:1.45;color:#9a8c82}
+.mc-settings-info{display:flex;gap:11px;padding:14px 15px;border-radius:11px;background:#fff7f1;border:1px solid #f5e5d8}
+.mc-settings-info-icon{flex:0 0 22px;width:22px;height:22px;border-radius:50%;background:#f8e4d4;color:#b96737;display:grid;place-items:center;font-size:13px;font-weight:800}
+.mc-settings-info strong{display:block;font-size:11px;color:#654633;margin-bottom:5px}
+.mc-settings-info p{font-size:10px;line-height:1.6;color:#8b786b;margin:0 0 4px}
+.mc-settings-info p:last-child{margin-bottom:0}
+.mc-settings-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:2px}
+.mc-settings-footer>span{font-size:10px;color:#9a8d83}
+.mc-settings-save-button{min-width:170px;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 18px!important;border-radius:9px!important}
+.mc-settings-save-button span{font-size:16px}
+@media(max-width:900px){.mc-settings-grid{grid-template-columns:1fr 1fr}.mc-setting-option:last-child{grid-column:1/-1}}
+@media(max-width:600px){.mc-settings-page{padding:14px;gap:14px}.mc-settings-grid{grid-template-columns:1fr}.mc-setting-option:last-child{grid-column:auto}.mc-setting-description{min-height:0}.mc-settings-footer{align-items:stretch;flex-direction:column}.mc-settings-save-button{width:100%}}
 </style>
