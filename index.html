@@ -1463,6 +1463,55 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
     width:100%;
   }
 }
+
+/* Compact Stock Movement filters: prevent controls from overlapping on iPad */
+#stock-movement-filters{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:8px !important;
+  margin:12px 0 !important;
+  align-items:end;
+}
+#stock-movement-filters label{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:5px !important;
+  min-width:0 !important;
+  width:100% !important;
+  font-size:10px !important;
+  line-height:1.2 !important;
+}
+#stock-movement-filters input,
+#stock-movement-filters select{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:36px !important;
+  box-sizing:border-box !important;
+  padding:7px 9px !important;
+  font-size:12px !important;
+  border-radius:8px !important;
+}
+#stock-movement-section .orders-header{
+  gap:10px;
+  align-items:center;
+}
+#stock-movement-section .orders-header .placeholder-note{
+  margin-top:4px;
+  max-width:680px;
+  font-size:12px;
+}
+#stock-movement-section .refresh-orders-button{
+  flex:0 0 auto;
+  padding:8px 11px;
+  font-size:11px;
+  white-space:nowrap;
+}
+@media(max-width:760px){
+  #stock-movement-filters{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  #stock-movement-section .orders-header{align-items:flex-start;flex-direction:column;}
+}
 </style>
 </head>
 <body>
@@ -1816,7 +1865,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </section>
 <section class="inventory-panel" id="stock-movement-section" style="margin-top:20px">
 <div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">A permanent ledger of actual stock changes: purchases, order usage, opening balances, and manual corrections.</p></div><button class="refresh-orders-button" onclick="loadStockMovements()" type="button">↻ Refresh movements</button></div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
+<div class="stock-movement-filters" id="stock-movement-filters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
 <label>From date<input id="movement-from" onchange="loadStockMovements()" type="date"/></label>
 <label>To date<input id="movement-to" onchange="loadStockMovements()" type="date"/></label>
 <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
