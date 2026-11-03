@@ -1761,6 +1761,16 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 @media(max-width:720px){
   .equipment-list-item{grid-template-columns:36px minmax(0,1fr) minmax(54px,64px) auto 12px}
 }
+</style><style id='equipment-column-ratio'>
+/* Equipment workspace: 60% browser / 40% details */
+#inventory-equipment-workspace .equipment-redesign-grid{
+  grid-template-columns:minmax(0, 3fr) minmax(0, 2fr)!important;
+}
+@media(max-width:720px){
+  #inventory-equipment-workspace .equipment-redesign-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+}
 </style></head>
 <body>
 <div aria-labelledby="auth-title" aria-modal="true" class="auth-overlay" id="auth-overlay" role="dialog">
