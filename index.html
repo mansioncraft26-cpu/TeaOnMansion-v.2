@@ -2250,12 +2250,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
   <div class="mc-workspace-panel" data-mc-panel="margins" hidden>
     <div class="margin-menu-panel">
       <div class="margin-menu-heading"><h3>Menu Margin Table · by sales channel</h3><div class="margin-menu-actions"><button class="refresh-orders-button" onclick="exportMarginsCSV()" type="button">⇩ Export CSV</button></div></div>
-      <div style="overflow-x:auto">
-        <table class="inventory-table margin-menu-table" style="width:100%;border-collapse:collapse;min-width:1180px">
-          <thead><tr><th style="text-align:left">Item</th><th style="text-align:left">Channel</th><th style="text-align:right">Ingredient Cost</th><th style="text-align:right">Selling Price</th><th style="text-align:right">Hidden Cost</th><th style="text-align:right">Platform Fee</th><th style="text-align:right">Adjusted Cost*</th><th style="text-align:right">Profit Before Fee</th><th style="text-align:right">Profit After Fee</th><th style="text-align:left">Margin / Status</th><th aria-label="Actions"></th></tr></thead>
-          <tbody id="margins-list"><tr><td colspan="11">Loading products and recipes…</td></tr></tbody>
-        </table>
-      </div>
+      <div id="margins-list" class="mc-margin-card-list" aria-live="polite">Loading products and recipes…</div>
       <p class="placeholder-note">*Adjusted Cost = Ingredient Cost + Hidden Cost. Profit After Fee = Selling Price − Ingredient Cost − Hidden Cost − estimated platform fee.</p>
     </div>
   </div>
@@ -5689,7 +5684,7 @@ ${errorText}`
     if (!tbody) return;
     initializeMarginSettings();
     const settings = getMarginSettings();
-    tbody.innerHTML = '<tr><td colspan="11">Loading products and recipes…</td></tr>';
+    tbody.innerHTML = '<div class="mc-margin-loading">Loading products and recipes…</div>';
     if (breakdowns) breakdowns.innerHTML = "";
     message.textContent = "Calculating ingredient cost, hidden cost, and channel profit…";
     try {
@@ -5715,7 +5710,7 @@ ${errorText}`
       const groupedProducts = new Map();
       productsData.forEach(product => { const category = String(product.category || product.product_category || product.menu_category || "Menu").trim() || "Menu"; if (!groupedProducts.has(category)) groupedProducts.set(category, []); groupedProducts.get(category).push(product); });
       [...groupedProducts.entries()].forEach(([category, categoryProducts]) => {
-        const groupRow = document.createElement("tr"); groupRow.className = "margin-category-row"; groupRow.innerHTML = `<td colspan="11">${escapeHtml(category)} <span>· ${categoryProducts.length}</span></td>`; tbody.appendChild(groupRow);
+        const groupRow = document.createElement("div"); groupRow.className = "mc-margin-category-heading"; groupRow.innerHTML = `<strong>${escapeHtml(category)}</strong><span>${categoryProducts.length} products</span>`; tbody.appendChild(groupRow);
         categoryProducts.forEach(product => {
           const productId = Number(product.id), recipe = recipesByProduct.get(productId) || [];
           const hasRecipe = recipe.length > 0;
@@ -5736,7 +5731,19 @@ ${errorText}`
             { key:"grab", label:"Grab", price:Number(product.grab_price ?? product.price ?? product.selling_price ?? 0), platformFeeRate:settings.platformFeeRate },
             { key:"lineman", label:"LINE MAN", price:Number(product.lineman_price ?? product.price ?? product.selling_price ?? 0), platformFeeRate:settings.platformFeeRate }
           ];
-          channelConfigs.forEach((channel, index) => {
+          const productCard = document.createElement("section");
+          productCard.className = "mc-margin-product-card";
+          productCard.innerHTML = `<header class="mc-margin-product-title"><strong>${escapeHtml(productName)}</strong><button type="button" class="margin-edit-btn" title="Edit product and recipe" aria-label="Edit ${escapeHtml(productName)}" onclick="editMarginProduct(${productId})">✎ Edit</button></header>`;
+          const channelGrid = document.createElement("div");
+          channelGrid.className = "mc-margin-channel-grid";
+          productCard.appendChild(channelGrid);
+          const allDetails = document.createElement("div");
+          allDetails.className = "mc-margin-all-details";
+          allDetails.id = `mc-margin-all-details-${productId}`;
+          allDetails.hidden = true;
+          productCard.appendChild(allDetails);
+          tbody.appendChild(productCard);
+          channelConfigs.forEach(channel => {
             const price = Number.isFinite(channel.price) ? channel.price : 0;
             const hiddenCost = price * settings.hiddenCostRate / 100;
             const platformFee = channel.platformFeeRate ? price * channel.platformFeeRate / 100 : 0;
@@ -5746,23 +5753,27 @@ ${errorText}`
             const margin = price > 0 ? profitAfterFee / price * 100 : null;
             const lowMargin = margin !== null && margin < settings.lowMarginThreshold;
             if (hasRecipe && complete && price > 0) margins.push(margin);
-            window.currentMarginExportRows.push({ category, name:productName, channel:channel.label, ingredientCost:hasRecipe ? cost : null, price, hiddenCost, platformFee, adjustedCost:hasRecipe ? adjustedCost : null, profitBeforeFee:hasRecipe ? profitBeforeFee : null, profitAfterFee:hasRecipe ? profitAfterFee : null, margin:hasRecipe && margin !== null ? margin : null, recipeStatus:hasRecipe ? (complete ? (lowMargin ? "Low margin" : "Costed") : "Check costs") : "No recipe" });
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              ${index === 0 ? `<td class="margin-item-name" rowspan="3">${escapeHtml(productName)}</td>` : ""}
-              <td>${channel.label}</td>
-              <td class="margin-number">${hasRecipe ? money(cost) : "—"}</td>
-              <td class="margin-number margin-price">${money(price)}</td>
-              <td class="margin-number">${money(hiddenCost)}</td>
-              <td class="margin-number">${money(platformFee)}</td>
-              <td class="margin-number">${hasRecipe ? money(adjustedCost) : "—"}</td>
-              <td class="margin-number">${hasRecipe ? money(profitBeforeFee) : "—"}</td>
-              <td class="margin-number margin-profit">${hasRecipe ? money(profitAfterFee) : "—"}</td>
-              <td><div class="margin-bar-cell"><div class="margin-bar"><span style="width:${hasRecipe && margin !== null ? Math.max(0,Math.min(100,margin)) : 0}%"></span></div><strong>${hasRecipe && margin !== null ? `${margin.toFixed(1)}%` : "—"}</strong></div>${hasRecipe && margin !== null && lowMargin ? `<small style="display:block;color:#b42318;font-weight:700">⚠ Below ${settings.lowMarginThreshold}%</small>` : ""}${hasRecipe && !complete ? '<small style="display:block;color:#b42318">Check ingredient costs</small>' : ""}</td>
-              ${index === 0 ? `<td class="margin-row-actions" rowspan="3"><button type="button" class="margin-edit-btn" title="Edit product and recipe" aria-label="Edit ${escapeHtml(productName)}" onclick="editMarginProduct(${productId})">✎</button></td>` : ""}
-            `;
-            tbody.appendChild(tr);
+            const exportRow = { category, name:productName, channel:channel.label, ingredientCost:hasRecipe ? cost : null, price, hiddenCost, platformFee, adjustedCost:hasRecipe ? adjustedCost : null, profitBeforeFee:hasRecipe ? profitBeforeFee : null, profitAfterFee:hasRecipe ? profitAfterFee : null, margin:hasRecipe && margin !== null ? margin : null, recipeStatus:hasRecipe ? (complete ? (lowMargin ? "Low margin" : "Costed") : "Check costs") : "No recipe" };
+            window.currentMarginExportRows.push(exportRow);
+            const detailId = `mc-margin-detail-${productId}-${channel.key}`;
+            const status = !hasRecipe ? "No recipe" : !complete ? "Check costs" : lowMargin ? "Low margin" : "Healthy";
+            const statusClass = !hasRecipe || !complete || lowMargin ? "is-warning" : "is-good";
+            const channelCard = document.createElement("div");
+            channelCard.className = "mc-margin-channel-card";
+            channelCard.innerHTML = `<div class="mc-margin-channel-name">${channel.label}</div><strong class="mc-margin-channel-price">${money(price)}</strong><strong class="mc-margin-channel-margin ${statusClass}">${hasRecipe && margin !== null ? `${margin.toFixed(1)}%` : "—"}</strong><span class="mc-margin-channel-status ${statusClass}">${status}</span><div class="mc-margin-channel-profit">Profit ${hasRecipe ? money(profitAfterFee) : "—"}</div>`;
+            channelGrid.appendChild(channelCard);
+            const detail = document.createElement("div");
+            detail.id = detailId;
+            detail.className = "mc-margin-detail-row";
+            detail.hidden = true;
+            const detailIngredients = detailLines.length ? `<div class="mc-margin-ingredient-list"><strong>Recipe ingredient cost</strong>${detailLines.map(line=>`<div><span>${escapeHtml(line.name)} · ${line.quantity.toLocaleString()} ${escapeHtml(line.unit)}</span><b>${line.lineCost===null?"Missing":money(line.lineCost)}</b></div>`).join("")}</div>` : `<p class="placeholder-note">No recipe ingredients have been added for this product.</p>`;
+            detail.innerHTML = `<div class="mc-margin-detail-panel"><div class="mc-margin-cost-grid"><div><span>Ingredient cost</span><b>${hasRecipe?money(cost):"—"}</b></div><div><span>Selling price</span><b>${money(price)}</b></div><div><span>Hidden cost (${settings.hiddenCostRate}%)</span><b>${money(hiddenCost)}</b></div><div><span>Platform fee (${channel.platformFeeRate||0}%)</span><b>${money(platformFee)}</b></div><div><span>Adjusted cost</span><b>${hasRecipe?money(adjustedCost):"—"}</b></div><div><span>Profit before fee</span><b>${hasRecipe?money(profitBeforeFee):"—"}</b></div><div class="mc-margin-final-profit"><span>Profit after fee</span><b>${hasRecipe?money(profitAfterFee):"—"}</b></div></div>${detailIngredients}${!complete?'<p class="mc-margin-cost-warning">Some ingredient costs are missing or zero. Update ingredient costs or recipe mapping for a reliable estimate.</p>':""}</div>`;
+            allDetails.appendChild(detail);
           });
+          const ingredientFooter = document.createElement("div");
+          ingredientFooter.className = "mc-margin-product-footer";
+          ingredientFooter.innerHTML = `<span>Ingredient cost / serving <strong>${hasRecipe ? money(cost) : "No recipe"}</strong></span><button type="button" class="mc-margin-all-breakdown" aria-expanded="false" aria-controls="${allDetails.id}" onclick="toggleAllMarginBreakdowns('${allDetails.id}',this)">View 3 channel breakdowns⌄</button>`;
+          productCard.appendChild(ingredientFooter);
           if (hasRecipe && breakdowns) {
             const card = document.createElement("div"); card.className = "stat-card"; card.style.marginTop = "12px";
             const detailRows = detailLines.map(line => `<tr><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(line.name)}</td><td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${line.quantity.toLocaleString()} ${escapeHtml(line.unit)}</td><td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${line.unitCost === null ? "Missing ingredient" : money(line.unitCost) + (line.unit ? ` / ${escapeHtml(line.unit)}` : "")}</td><td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${line.lineCost === null ? "—" : money(line.lineCost)}</td></tr>`).join("");
@@ -5771,13 +5782,13 @@ ${errorText}`
           }
         });
       });
-      if (!productsData.length) tbody.innerHTML = '<tr><td colspan="11">No products found.</td></tr>';
+      if (!productsData.length) tbody.innerHTML = '<div class="mc-margin-loading">No products found.</div>';
       recipeCount.textContent = `${productsWithRecipe} / ${productsData.length}`;
       averageMargin.textContent = margins.length ? `${(margins.reduce((sum, value) => sum + value, 0) / margins.length).toFixed(1)}%` : "—";
       coverage.textContent = `${productsWithCompleteCost} / ${productsData.length}`;
       message.textContent = `Costs loaded. Hidden cost: ${settings.hiddenCostRate}% for all channels. Estimated platform fee: ${settings.platformFeeRate}% for Grab and LINE MAN; Direct has no platform fee. Low-margin warning: below ${settings.lowMarginThreshold}%.`;
     } catch (error) {
-      tbody.innerHTML = `<tr><td colspan="11" style="color:#b00020">${escapeHtml(error.message)}</td></tr>`;
+      tbody.innerHTML = `<div class="mc-margin-loading" style="color:#b00020">${escapeHtml(error.message)}</div>`;
       message.textContent = "Could not calculate recipe costs.";
       console.error("Margins & Recipes error:", error);
     }
@@ -5799,6 +5810,13 @@ ${errorText}`
     select.dispatchEvent(new Event("change"));
     document.getElementById("recipe-editor-form")?.scrollIntoView({behavior:"smooth", block:"start"});
   }
+
+  window.toggleAllMarginBreakdowns=function(id,button){
+    const panel=document.getElementById(id);if(!panel)return;
+    const opening=panel.hidden;panel.hidden=!opening;
+    if(button){button.setAttribute("aria-expanded",String(opening));button.textContent=opening?"Hide channel breakdowns⌃":"View 3 channel breakdowns⌄";}
+  };
+
 
   function exportMarginsCSV() {
     const rows = window.currentMarginExportRows || [];
@@ -7272,6 +7290,159 @@ function setOrderingSource(source){
 #margins-page .mc-recipe-editor-columns{grid-template-columns:minmax(0,3fr) minmax(0,2fr)!important}
 @media(max-width:900px){#margins-page .mc-recipe-editor-columns{grid-template-columns:1fr!important}}
 @media(max-width:520px){#margins-page .mc-recipe-product-picker-controls{align-items:stretch;flex-direction:column;max-width:none}#margins-page .mc-recipe-product-picker-controls select{width:100%;max-width:none}#margins-page .mc-recipe-product-picker-controls .mc-new-product-button{width:100%}}
+</style>
+
+
+<style id="mc-margin-table-expand-v18">
+#margins-page .mc-margin-compact-table{min-width:620px!important}
+#margins-page .mc-margin-product-heading td{padding:11px 13px!important;background:#fff4eb!important;border-top:1px solid #f0d9c8!important;border-bottom:1px solid #f0d9c8!important}
+#margins-page .mc-margin-product-title{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#4a3021;font-size:13px}
+#margins-page .mc-margin-product-title .margin-edit-btn{padding:5px 9px!important;font-size:10px!important}
+#margins-page .mc-margin-channel-row td{padding:10px 13px!important;border-bottom:1px solid #f2e8e1!important;vertical-align:middle}
+#margins-page .mc-margin-channel-name{display:inline-flex;min-width:74px;font-weight:700;color:#594437}
+#margins-page .mc-margin-status{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:3px 9px;min-width:150px}
+#margins-page .mc-margin-status>strong{font-size:13px;font-variant-numeric:tabular-nums}
+#margins-page .mc-margin-status>span{font-size:10px;font-weight:750}
+#margins-page .mc-margin-status .is-good{color:#23845d}
+#margins-page .mc-margin-status .is-warning{color:#b45320}
+#margins-page .mc-margin-expand{grid-column:1/-1;justify-self:start;border:0;background:transparent;color:#a95423;padding:2px 0;font-size:10px;font-weight:750;cursor:pointer}
+#margins-page .mc-margin-detail-row>td{padding:0 12px 12px!important;background:#fffaf6!important;border-bottom:1px solid #eedfd4!important}
+#margins-page .mc-margin-detail-panel{padding:13px;background:#fff;border:1px solid #f0e1d6;border-radius:10px}
+#margins-page .mc-margin-cost-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#margins-page .mc-margin-cost-grid>div{display:flex;flex-direction:column;gap:5px;padding:9px;background:#fff8f2;border-radius:8px;min-width:0}
+#margins-page .mc-margin-cost-grid span{font-size:10px;color:#88776c}
+#margins-page .mc-margin-cost-grid b{font-size:12px;color:#493326;font-variant-numeric:tabular-nums}
+#margins-page .mc-margin-cost-grid .mc-margin-final-profit{background:#fff0e5;border:1px solid #f1d8c6}
+#margins-page .mc-margin-final-profit b{font-size:16px;color:#b9541c}
+#margins-page .mc-margin-ingredient-list{margin-top:12px;padding-top:10px;border-top:1px solid #f0e5dc}
+#margins-page .mc-margin-ingredient-list>strong{display:block;margin-bottom:7px;font-size:11px;color:#5c4333}
+#margins-page .mc-margin-ingredient-list>div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #f5eee8;font-size:10px}
+#margins-page .mc-margin-ingredient-list b{white-space:nowrap}
+#margins-page .mc-margin-cost-warning{margin:10px 0 0;padding:8px;background:#fff4e8;border-radius:7px;color:#a64c18;font-size:10px}
+#margins-page .mc-margin-detail-row[hidden]{display:none!important}
+@media(max-width:700px){#margins-page .mc-margin-cost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+
+
+<style id="mc-margin-table-balance-v19">
+#margins-page .mc-margin-compact-table{
+  width:100%!important;min-width:760px!important;table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important;
+}
+#margins-page .mc-margin-compact-table thead th:nth-child(1),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(1){width:23%;text-align:left!important}
+#margins-page .mc-margin-compact-table thead th:nth-child(2),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(2){width:23%;text-align:right!important}
+#margins-page .mc-margin-compact-table thead th:nth-child(3),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(3){width:25%;text-align:right!important}
+#margins-page .mc-margin-compact-table thead th:nth-child(4),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(4){width:29%;text-align:left!important}
+#margins-page .mc-margin-compact-table thead th{padding:12px 16px!important;vertical-align:middle;white-space:nowrap}
+#margins-page .mc-margin-product-heading td{padding:0!important}
+#margins-page .mc-margin-product-title{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;width:100%;box-sizing:border-box;padding:12px 16px!important;min-height:48px}
+#margins-page .mc-margin-product-title strong{font-size:13px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+#margins-page .mc-margin-product-title .margin-edit-btn{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;
+  flex:0 0 auto!important;width:auto!important;min-width:66px!important;max-width:none!important;
+  white-space:nowrap!important;word-break:keep-all!important;line-height:1!important;padding:7px 10px!important;
+}
+#margins-page .mc-margin-channel-row td{padding:13px 16px!important;line-height:1.4!important}
+#margins-page .mc-margin-channel-name{min-width:0!important;font-size:12px!important}
+#margins-page .mc-margin-status{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px 9px!important;min-width:0!important}
+#margins-page .mc-margin-status>strong{min-width:43px;font-size:13px!important}
+#margins-page .mc-margin-status>span{font-size:10px!important;white-space:nowrap}
+#margins-page .mc-margin-expand{flex-basis:100%;margin-top:1px!important}
+#margins-page .mc-margin-detail-row>td{padding:0 16px 14px!important}
+#margins-page .mc-margin-detail-panel{width:100%;box-sizing:border-box}
+@media(max-width:800px){
+ #margins-page .mc-margin-compact-table{min-width:680px!important}
+ #margins-page .mc-margin-compact-table thead th{padding:10px 11px!important}
+ #margins-page .mc-margin-channel-row td{padding:11px!important}
+ #margins-page .mc-margin-product-title{padding:10px 11px!important}
+}
+</style>
+
+
+<style id="mc-margin-table-balance-v20">
+/* A narrower centered table keeps the four data columns visually grouped on iPad. */
+#margins-page .mc-margin-compact-table{
+  width:90%!important;min-width:620px!important;margin:0 auto!important;
+  table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important;
+}
+#margins-page .mc-margin-compact-table thead th:nth-child(1),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(1){width:25%;text-align:left!important}
+#margins-page .mc-margin-compact-table thead th:nth-child(2),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(2){width:19%;text-align:center!important}
+#margins-page .mc-margin-compact-table thead th:nth-child(3),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(3){width:21%;text-align:center!important}
+#margins-page .mc-margin-compact-table thead th:nth-child(4),
+#margins-page .mc-margin-compact-table tbody tr.mc-margin-channel-row td:nth-child(4){width:35%;text-align:left!important}
+#margins-page .mc-margin-compact-table thead th{padding:10px 10px!important;white-space:nowrap;vertical-align:middle}
+#margins-page .mc-margin-product-heading td{padding:0!important}
+#margins-page .mc-margin-product-title{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;width:100%;box-sizing:border-box;padding:9px 12px!important;min-height:40px}
+#margins-page .mc-margin-product-title strong{font-size:12px;line-height:1.3;min-width:0}
+#margins-page .mc-margin-product-title .margin-edit-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;min-width:58px!important;white-space:nowrap!important;line-height:1!important;padding:5px 8px!important;font-size:10px!important}
+#margins-page .mc-margin-channel-row td{padding:9px 10px!important;line-height:1.3!important}
+#margins-page .mc-margin-channel-name{min-width:0!important;font-size:11px!important}
+#margins-page .mc-margin-status{display:grid!important;grid-template-columns:auto auto!important;justify-content:start!important;align-items:center!important;gap:3px 7px!important;min-width:0!important}
+#margins-page .mc-margin-status>strong{font-size:12px!important;min-width:0!important}
+#margins-page .mc-margin-status>span{font-size:9px!important;white-space:nowrap}
+#margins-page .mc-margin-expand{grid-column:1/-1!important;justify-self:start!important;margin-top:0!important;padding:1px 0!important;font-size:9px!important}
+#margins-page .mc-margin-detail-row>td{padding:0 10px 10px!important}
+#margins-page .mc-margin-detail-panel{width:100%;box-sizing:border-box}
+@media(max-width:800px){
+ #margins-page .mc-margin-compact-table{width:100%!important;min-width:620px!important}
+ #margins-page .mc-margin-compact-table thead th,
+ #margins-page .mc-margin-channel-row td{padding:8px!important}
+ #margins-page .mc-margin-product-title{padding:8px!important}
+}
+</style>
+
+
+<style id="mc-margin-compact-product-cards-v21">
+#margins-page .mc-margin-card-list{display:flex;flex-direction:column;gap:12px;width:100%;min-width:0}
+#margins-page .mc-margin-loading{padding:18px;color:#806f63;font-size:12px}
+#margins-page .mc-margin-category-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 0;padding:9px 12px;background:#fff0e5;border:1px solid #f1ddce;border-radius:10px;color:#784426}
+#margins-page .mc-margin-category-heading strong{font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+#margins-page .mc-margin-category-heading span{font-size:10px;color:#9a7862}
+#margins-page .mc-margin-product-card{min-width:0;overflow:hidden;border:1px solid #efdfd4;border-radius:12px;background:#fffdfa;box-shadow:0 1px 2px rgba(92,57,32,.035)}
+#margins-page .mc-margin-product-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 13px;background:#fff7f0;border-bottom:1px solid #f1e5dc;color:#493326}
+#margins-page .mc-margin-product-title strong{font-size:13px;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+#margins-page .mc-margin-product-title .margin-edit-btn{flex:0 0 auto;min-width:58px;padding:6px 9px;border:1px solid #efd4c0;border-radius:8px;background:#fff;color:#a95423;font-size:10px;font-weight:700;white-space:nowrap}
+#margins-page .mc-margin-channel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+#margins-page .mc-margin-channel-card{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;padding:11px 13px 10px}
+#margins-page .mc-margin-channel-card+.mc-margin-channel-card{border-left:1px solid #f0e5dd}
+#margins-page .mc-margin-channel-name{font-size:10px;font-weight:800;letter-spacing:.055em;color:#8a6b57;text-transform:uppercase}
+#margins-page .mc-margin-channel-price{font-size:16px;line-height:1.25;color:#493326;font-variant-numeric:tabular-nums}
+#margins-page .mc-margin-channel-margin{font-size:19px;line-height:1.15;font-weight:800;font-variant-numeric:tabular-nums}
+#margins-page .mc-margin-channel-margin.is-good,#margins-page .mc-margin-channel-status.is-good{color:#27815d}
+#margins-page .mc-margin-channel-margin.is-warning,#margins-page .mc-margin-channel-status.is-warning{color:#b45320}
+#margins-page .mc-margin-channel-status{font-size:9px;font-weight:750}
+#margins-page .mc-margin-channel-profit{font-size:10px;color:#817064;font-variant-numeric:tabular-nums}
+#margins-page .mc-margin-expand{margin-top:2px;padding:5px 0;border:0;background:transparent;color:#a95423;font-size:10px;font-weight:800;cursor:pointer;text-align:left}
+#margins-page .mc-margin-detail-row{width:100%;padding:0 10px 10px;box-sizing:border-box}
+#margins-page .mc-margin-detail-row[hidden]{display:none!important}
+#margins-page .mc-margin-detail-panel{padding:11px;background:#fffaf6;border:1px solid #f0e1d6;border-radius:9px}
+#margins-page .mc-margin-cost-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#margins-page .mc-margin-cost-grid>div{padding:8px}
+#margins-page .mc-margin-product-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 13px;border-top:1px solid #f1e8e1;background:#fffdfa;color:#8b796d;font-size:10px}
+#margins-page .mc-margin-product-footer strong{color:#4d382a;font-size:11px;font-variant-numeric:tabular-nums}
+@media(max-width:700px){#margins-page .mc-margin-channel-card{padding:9px 8px}#margins-page .mc-margin-channel-margin{font-size:16px}#margins-page .mc-margin-channel-price{font-size:14px}#margins-page .mc-margin-cost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+
+
+<style id="mc-margin-all-channel-breakdowns-v22">
+#margins-page .mc-margin-all-details{grid-column:1/-1;width:100%;box-sizing:border-box;padding:0 12px 12px}
+#margins-page .mc-margin-all-details[hidden]{display:none!important}
+#margins-page .mc-margin-all-details:not([hidden]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#margins-page .mc-margin-all-details .mc-margin-detail-row{display:block!important;width:100%;min-width:0;padding:0!important;box-sizing:border-box}
+#margins-page .mc-margin-all-details .mc-margin-detail-panel{height:100%;box-sizing:border-box;padding:10px!important}
+#margins-page .mc-margin-all-details .mc-margin-cost-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+#margins-page .mc-margin-all-details .mc-margin-cost-grid>div{padding:7px!important}
+#margins-page .mc-margin-all-details .mc-margin-ingredient-list{grid-column:1/-1}
+#margins-page .mc-margin-product-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#margins-page .mc-margin-product-footer>span{display:flex;gap:8px;align-items:center}
+#margins-page .mc-margin-all-breakdown{border:0;background:#fff1e7;color:#a95423;border-radius:7px;padding:7px 10px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
+@media(max-width:800px){#margins-page .mc-margin-all-details:not([hidden]){grid-template-columns:1fr}#margins-page .mc-margin-all-details .mc-margin-cost-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 </style>
 
 </body>
