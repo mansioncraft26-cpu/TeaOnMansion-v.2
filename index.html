@@ -1409,6 +1409,60 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 @media(max-width:1050px){.ingredient-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ingredient-filters button{grid-column:auto}}
 @media(max-width:760px){.ingredient-list-heading{align-items:flex-start}.ingredient-header-actions{width:100%}.ingredient-header-actions .checkout-button{width:100%}.ingredient-filters{grid-template-columns:1fr 1fr}.ingredient-filters input{grid-column:1/-1}.ingredient-filters button{width:100%}.ingredient-action-grid{grid-template-columns:1fr}.ingredient-action-card{min-height:65px}}
 @media(max-width:430px){.ingredient-detail-panel{padding:13px!important}.ingredient-detail-stock-card{padding:9px 7px}.ingredient-detail-stock-card strong{font-size:15px}}
+
+/* iPad-friendly ingredient filter sizing */
+.ingredient-filters{
+  grid-template-columns:minmax(105px,1.05fr) minmax(92px,.82fr) minmax(105px,.92fr) auto auto;
+  gap:6px;
+}
+.ingredient-filters input{
+  width:100%;
+  min-width:0;
+  padding-left:10px;
+  padding-right:8px;
+}
+.ingredient-filters select{
+  min-width:0;
+  padding-left:8px;
+  padding-right:22px;
+}
+.ingredient-filters .ingredient-refresh-button,
+.ingredient-filters .ingredient-export-button{
+  padding-left:9px;
+  padding-right:9px;
+}
+@media (min-width:761px) and (max-width:1180px){
+  .ingredient-filters{
+    grid-template-columns:minmax(100px,.9fr) minmax(90px,.78fr) minmax(100px,.85fr) auto auto;
+    gap:5px;
+  }
+  .ingredient-filters input,
+  .ingredient-filters select,
+  .ingredient-filters button{
+    font-size:10px;
+  }
+  .ingredient-filters button{
+    padding-left:7px;
+    padding-right:7px;
+  }
+  .ingredient-filters .ingredient-refresh-button span,
+  .ingredient-filters .ingredient-export-button span{
+    display:none;
+  }
+}
+@media (max-width:760px){
+  .ingredient-filters{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:7px;
+  }
+  .ingredient-filters input{
+    grid-column:auto;
+  }
+  .ingredient-filters .ingredient-refresh-button,
+  .ingredient-filters .ingredient-export-button{
+    width:100%;
+  }
+}
 </style>
 </head>
 <body>
@@ -1468,8 +1522,8 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </select>
 </div>
 <label class="dashboard-month-filter" id="dashboard-month-wrap">Month
-              <input id="dashboard-month" onchange="onDashboardPeriodChange()" type="month">
-</input></label>
+              <input id="dashboard-month" onchange="onDashboardPeriodChange()" type="month"/>
+</label>
 <button class="dashboard-export-button" onclick="exportSellSummaryCSV()" type="button">↓ Export CSV</button>
 </div>
 </div>
@@ -1658,7 +1712,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <input aria-label="Search ingredients" id="inventory-search" oninput="renderInventoryTable()" placeholder="Search ingredients…" type="search"/>
 <select aria-label="Filter by category" id="inventory-category-filter" onchange="renderInventoryTable()"><option value="">All categories</option></select>
 <select aria-label="Filter by stock status" id="inventory-status-filter" onchange="renderInventoryTable()"><option value="">All stock levels</option><option value="low">Low stock</option><option value="ok">In stock</option></select>
-<button class="refresh-orders-button ingredient-refresh-button" onclick="loadInventory()" title="Refresh inventory" aria-label="Refresh inventory" type="button">↻ <span>Refresh</span></button>
+<button aria-label="Refresh inventory" class="refresh-orders-button ingredient-refresh-button" onclick="loadInventory()" title="Refresh inventory" type="button">↻ <span>Refresh</span></button>
 <button class="refresh-orders-button ingredient-export-button" onclick="exportInventoryCSV()" type="button">↓ <span>Export CSV</span></button>
 </div>
 <div class="ingredient-list-scroll">
@@ -1727,10 +1781,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </section>
 </div>
 <div class="inventory-support-grid">
-
-
 </div>
-
 </div><!-- /inventory-stock-workspace -->
 <section id="inventory-equipment-workspace" style="display:none;margin-top:20px">
 <div class="inventory-split equipment-split">
@@ -5593,7 +5644,6 @@ async function confirmBulkStockMapSave(){
 async function deleteOptionStockMap(id) {if(!confirm('Remove this stock mapping?')) return;try{await optionManagerFetch(`product_option_ingredients?id=eq.${id}`,{method:'DELETE',headers:{'Prefer':'return=minimal'}});await loadProductOptionsManager();}catch(e){alert('Could not remove mapping: '+e.message);}}
 
 </script>
-
 <!-- PRODUCT CUSTOMIZATION MODAL -->
 <div class="modal-overlay" id="product-modal" style="display: none;">
 <div class="product-modal">
