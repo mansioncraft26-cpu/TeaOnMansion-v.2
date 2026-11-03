@@ -1801,7 +1801,6 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <button aria-label="Inventory" class="nav-button" data-page="inventory-page" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')" title="Inventory"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg></span><span class="nav-label">Inventory</span></button>
 <button aria-label="Margins &amp; Recipes" class="nav-button" data-page="margins-page" onclick="showPage('margins-page','Margins &amp; Recipes','Track menu item profitability and build detailed recipe cost breakdowns')" title="Margins &amp; Recipes"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path><path d="M8 7h8M8 11h8"></path></svg></span><span class="nav-label">Margins &amp; Recipes</span></button>
 <button aria-label="Product Options" class="nav-button" data-page="product-options-page" onclick="showPage('product-options-page','Product Options','Manage option groups, drink add-ons, and ingredient stock mapping')" title="Product Options"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="nav-label">Product Options</span></button>
-<button aria-label="Purchases" class="nav-button" data-page="purchases-page" onclick="showPage('purchases-page','Purchases','Review ingredient purchases and spending')" title="Purchases"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6"></path><circle cx="10" cy="21" r="1"></circle><circle cx="18" cy="21" r="1"></circle></svg></span><span class="nav-label">Purchases</span></button>
 </nav>
 </aside>
 <div class="app-content">
@@ -2004,6 +2003,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <div aria-label="Inventory sections" class="inventory-tabs" role="tablist">
 <button class="inventory-tab active" id="inventory-tab-stock" onclick="switchInventoryTab('stock')" type="button">Stock Levels</button>
 <button class="inventory-tab" id="inventory-tab-equipment" onclick="switchInventoryTab('equipment')" type="button">Equipment</button>
+<button class="inventory-tab" id="inventory-tab-purchases" onclick="switchInventoryTab('purchases')" type="button">Purchase History</button>
 </div>
 <div id="inventory-stock-workspace">
 <div id="inventory-summary">Loading inventory...</div>
@@ -2089,6 +2089,18 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </div>
 <div class="inventory-support-grid">
 </div>
+<section class="inventory-panel" id="stock-movement-section" style="margin-top:20px">
+<div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">A permanent ledger of actual stock changes: purchases, order usage, opening balances, and manual corrections.</p></div><button class="refresh-orders-button" onclick="loadStockMovements()" type="button">↻ Refresh movements</button></div>
+<div class="stock-movement-filters stock-movement-filters-compact" id="stock-movement-filters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
+<label>From date<input id="movement-from" onchange="loadStockMovements()" type="date"/></label>
+<label>To date<input id="movement-to" onchange="loadStockMovements()" type="date"/></label>
+<label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
+<label>Rows<select id="movement-row-limit" onchange="renderStockMovements()"><option selected="" value="25">25 rows</option><option value="all">Show all</option></select></label>
+</div>
+<div class="orders-summary" id="stock-movement-summary" style="margin-bottom:12px">Loading stock movements…</div>
+<div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th><th>Actions</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="7">Loading stock movements…</td></tr></tbody></table></div>
+<p class="placeholder-note" style="margin-top:10px">Each row is recorded when stock changes. Historical movements begin after the ledger migration; older transactions are not reconstructed or deducted again.</p>
+</section>
 </div><!-- /inventory-stock-workspace -->
 <section class="equipment-workspace-redesign" id="inventory-equipment-workspace" style="display:none;margin-top:20px">
 <div class="equipment-redesign-grid">
@@ -2143,18 +2155,18 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </section>
 </div>
 </section>
-<section class="inventory-panel" id="stock-movement-section" style="margin-top:20px">
-<div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">A permanent ledger of actual stock changes: purchases, order usage, opening balances, and manual corrections.</p></div><button class="refresh-orders-button" onclick="loadStockMovements()" type="button">↻ Refresh movements</button></div>
-<div class="stock-movement-filters stock-movement-filters-compact" id="stock-movement-filters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
-<label>From date<input id="movement-from" onchange="loadStockMovements()" type="date"/></label>
-<label>To date<input id="movement-to" onchange="loadStockMovements()" type="date"/></label>
-<label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
-<label>Rows<select id="movement-row-limit" onchange="renderStockMovements()"><option selected="" value="25">25 rows</option><option value="all">Show all</option></select></label>
+
+<div id="inventory-purchases-workspace" style="display:none">
+<div class="section">
+<div class="orders-header"><div><h2>Purchase History</h2><p>Latest 100 ingredient purchases</p></div><button class="refresh-orders-button" onclick="loadPurchaseHistory()">Refresh</button></div>
+<div style="overflow-x:auto">
+<table class="inventory-table" style="width:100%;border-collapse:collapse">
+<thead><tr><th style="text-align:left">Purchase date</th><th style="text-align:left">Ingredient</th><th style="text-align:right">Quantity</th><th style="text-align:right">Unit cost</th><th style="text-align:right">Total</th><th style="text-align:left">Supplier</th><th>Actions</th></tr></thead>
+<tbody id="purchase-history-list"><tr><td colspan="7">Loading purchases...</td></tr></tbody>
+</table>
 </div>
-<div class="orders-summary" id="stock-movement-summary" style="margin-bottom:12px">Loading stock movements…</div>
-<div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th style="text-align:left">Date &amp; Time</th><th style="text-align:left">Ingredient</th><th style="text-align:left">Movement</th><th style="text-align:right">Quantity</th><th style="text-align:left">Reference</th><th style="text-align:left">Notes</th><th>Actions</th></tr></thead><tbody id="stock-movement-body"><tr><td colspan="7">Loading stock movements…</td></tr></tbody></table></div>
-<p class="placeholder-note" style="margin-top:10px">Each row is recorded when stock changes. Historical movements begin after the ledger migration; older transactions are not reconstructed or deducted again.</p>
-</section>
+</div>
+</div>
 </section>
 </section>
 <section class="page" id="margins-page">
@@ -2487,17 +2499,6 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
   </div>
 </div>
 </section>
-</div>
-</section>
-<section class="page" id="purchases-page">
-<div class="section">
-<div class="orders-header"><div><h2>Purchase History</h2><p>Latest 100 ingredient purchases</p></div><button class="refresh-orders-button" onclick="loadPurchaseHistory()">Refresh</button></div>
-<div style="overflow-x:auto">
-<table class="inventory-table" style="width:100%;border-collapse:collapse">
-<thead><tr><th style="text-align:left">Purchase date</th><th style="text-align:left">Ingredient</th><th style="text-align:right">Quantity</th><th style="text-align:right">Unit cost</th><th style="text-align:right">Total</th><th style="text-align:left">Supplier</th><th>Actions</th></tr></thead>
-<tbody id="purchase-history-list"><tr><td colspan="7">Loading purchases...</td></tr></tbody>
-</table>
-</div>
 </div>
 </section>
 </div>
@@ -4590,11 +4591,15 @@ ${errorText}`
 
   function switchInventoryTab(tab) {
     const stock = tab === "stock";
+    const equipment = tab === "equipment";
     document.getElementById("inventory-stock-workspace").style.display = stock ? "block" : "none";
-    document.getElementById("inventory-equipment-workspace").style.display = stock ? "none" : "block";
+    document.getElementById("inventory-equipment-workspace").style.display = equipment ? "block" : "none";
+    document.getElementById("inventory-purchases-workspace").style.display = tab === "purchases" ? "block" : "none";
     document.getElementById("inventory-tab-stock").classList.toggle("active", stock);
-    document.getElementById("inventory-tab-equipment").classList.toggle("active", !stock);
-    if (!stock) loadEquipment();
+    document.getElementById("inventory-tab-equipment").classList.toggle("active", equipment);
+    document.getElementById("inventory-tab-purchases").classList.toggle("active", tab === "purchases");
+    if (equipment) loadEquipment();
+    if (tab === "purchases") loadPurchaseHistory();
   }
 
   async function loadEquipment() {
@@ -5789,7 +5794,6 @@ ${errorText}`
     document.getElementById("page-subtitle").textContent = subtitle;
     document.querySelector(".app-header")?.classList.toggle("dashboard-header", pageId === "dashboard-page");
     if (pageId === "inventory-page") { loadInventory(); loadStockMovements(); }
-    if (pageId === "purchases-page") loadPurchaseHistory();
     if (pageId === "margins-page") loadMarginsAndRecipes();
     if (pageId === "product-options-page") loadProductOptionsManager();
     if (pageId === "dashboard-page") { setDashboardGreeting(); loadDashboardStats(); loadSalesAnalytics(); loadOrderLog(); loadDashboardStockAlerts(); }
