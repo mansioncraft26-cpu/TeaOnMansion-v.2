@@ -2339,47 +2339,152 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <p>Manage option groups, add-on prices, drink availability, and stock mapping in one place.</p>
 </div>
 </div>
-<section class="section" id="product-options-manager" style="margin-top:24px;background:#f8f7f3;border:1px solid var(--mc-line);border-radius:14px;padding:22px">
-<div class="product-options-manager-header"><div class="product-options-manager-title-row"><h3 class="product-options-page-subtitle" style="margin:0">Product Options Manager</h3><button class="refresh-orders-button" onclick="loadProductOptionsManager()" type="button">↻ Refresh</button></div><p>Manage sizes, sweetness, extra shots, and map each option to ingredient stock adjustments.</p></div>
-<p class="placeholder-note">Stock rule: the normal recipe is deducted first. Option mappings are additional quantity adjustments per cup: positive adds consumption; negative reduces consumption. Example: if the base recipe uses 20 ml syrup, Sweetness 50% can map syrup to -10 ml. Use the ingredient's own unit (g, ml, pcs).</p>
-<h3 style="margin:18px 0 12px">Option setup</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
-<form id="option-category-form" onsubmit="saveOptionCategory(event)" style="background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
-<h3 style="margin-top:0">1. Add option group</h3><label for="option-category-name">Group name</label><input id="option-category-name" placeholder="e.g. Size, Sweetness" required=""/>
-<button class="checkout-button" style="margin-top:12px" type="submit">Add group</button><div class="placeholder-note" id="option-category-message"></div>
-</form>
-<form id="product-option-form" onsubmit="saveProductOption(event)" style="background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
-<h3 style="margin-top:0">2. Add option</h3><label for="manager-option-category">Group</label><select id="manager-option-category" required=""><option value="">Load groups…</option></select>
-<label for="manager-option-name">Option name</label><input id="manager-option-name" placeholder="e.g. Large, 50% sweet" required=""/>
-<div class="option-channel-prices" style="display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:8px"><div><label for="manager-option-price-direct">Direct extra (฿)</label><input id="manager-option-price-direct" min="0" required="" step="0.01" type="number" value="0"/></div><div><label for="manager-option-price-grab">Grab extra (฿)</label><input id="manager-option-price-grab" min="0" required="" step="0.01" type="number" value="0"/></div><div><label for="manager-option-price-lineman">LINE MAN extra (฿)</label><input id="manager-option-price-lineman" min="0" required="" step="0.01" type="number" value="0"/></div></div><p class="placeholder-note">Set the add-on price separately for each sales channel.</p>
-<label><input id="manager-option-default" style="min-height:auto;width:auto" type="checkbox"/> Default selection</label>
-<button class="checkout-button" style="margin-top:12px" type="submit">Add option</button><div class="placeholder-note" id="product-option-message"></div>
-</form>
-<form id="option-attach-form" onsubmit="attachOptionGroup(event)" style="background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
-<h3 style="margin-top:0">3. Enable group for a drink</h3><label for="manager-option-product">Product</label><select id="manager-option-product" required=""><option value="">Load products…</option></select>
-<label for="manager-attach-category">Option group</label><select id="manager-attach-category" required=""><option value="">Load groups…</option></select>
-<button class="checkout-button" style="margin-top:12px" type="submit">Enable for product</button><div class="placeholder-note" id="option-attach-message"></div>
-</form>
+<section class="section mc-options-workspace" id="product-options-manager">
+<style>
+.mc-options-workspace{background:#f8f7f3;border:1px solid var(--mc-line);border-radius:14px;padding:20px}
+.mc-options-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.mc-options-intro p{max-width:760px}
+.mc-options-tabs{display:flex;gap:8px;margin:18px 0 16px;padding:5px;background:#eeeae2;border-radius:11px}
+.mc-options-tab{flex:1;border:0;border-radius:8px;padding:12px 16px;background:transparent;color:#665b50;font-weight:700;cursor:pointer}
+.mc-options-tab.active{background:#fff;color:#b95620;box-shadow:0 1px 4px #00000012}
+.mc-options-panel{display:none}
+.mc-options-panel.active{display:block}
+.mc-options-card{background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px;margin-bottom:14px;min-width:0}
+.mc-options-card h3{margin-top:0}
+.mc-options-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mc-options-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.mc-options-card form{min-width:0}
+.mc-options-card input,.mc-options-card select{max-width:100%}
+.mc-options-section-toggle span:last-child{color:#a75a2d}
+.mc-options-helper{padding:12px 14px;background:#f6f2eb;border-radius:9px;color:#74695e;font-size:12px;line-height:1.55;margin:10px 0 14px}
+
+.mc-options-product-picker-standalone{border:1px solid var(--mc-line);border-radius:12px;background:#fff;padding:16px;margin:14px 0}
+.mc-options-picker-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.mc-options-picker-actions{display:flex;gap:8px;flex-wrap:wrap}
+.mc-options-product-picker-standalone>input{width:100%;margin:0 0 12px}
+.mc-options-product-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;max-height:none;overflow:visible}
+
+.mc-options-map-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mc-options-map-grid>div:not(.mc-options-map-actions){min-width:0}
+.mc-options-map-grid>div:not(.mc-options-map-actions) input,.mc-options-map-grid>div:not(.mc-options-map-actions) select{width:100%;max-width:none;min-height:42px}
+.mc-options-map-actions{grid-column:1/-1}
+.mc-options-map-actions .checkout-button{min-width:220px}
+.mc-saved-mappings-list{display:flex;flex-direction:column;gap:12px}
+.mc-saved-product-card{border:1px solid var(--mc-line);border-radius:12px;background:#fff;overflow:hidden}
+.mc-saved-product-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;background:#f4f0e8}
+.mc-saved-product-title{font-weight:750;color:#49382d}
+.mc-saved-count{font-size:11px;color:#8a7768;background:#fff;border:1px solid #e8ded1;border-radius:20px;padding:4px 9px;white-space:nowrap}
+.mc-saved-map-row{display:grid;grid-template-columns:minmax(150px,1.15fr) minmax(150px,1.4fr) minmax(90px,.55fr) auto;gap:12px;align-items:center;padding:12px 15px;border-top:1px solid #f0ebe4}
+.mc-saved-map-row:first-child{border-top:0}
+.mc-saved-main{font-weight:700;color:#49382d}
+.mc-saved-sub{font-size:11px;color:#87796d;margin-top:3px;line-height:1.4}
+.mc-saved-qty{text-align:right;font-weight:750;white-space:nowrap;color:#49382d}
+.mc-saved-qty small{display:block;font-size:10px;font-weight:500;color:#87796d}
+.mc-saved-actions{display:flex;justify-content:flex-end}
+.mc-saved-actions button{white-space:nowrap}
+.mc-saved-empty{padding:18px;border:1px dashed var(--mc-line);border-radius:10px;color:#82766b;background:#fff;text-align:center}
+.mc-map-review-list{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto}
+.mc-map-review-row{display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1.3fr) minmax(100px,.7fr);gap:8px;padding:10px 12px;background:#fff;border:1px solid var(--mc-line);border-radius:9px;align-items:center}
+.mc-map-review-row strong{font-size:12px}
+.mc-map-review-row small{display:block;color:#87796d;font-size:10px;margin-top:3px}
+.mc-map-review-status{grid-column:1/-1;color:#8a5a2d;font-size:11px}
+@media(max-width:760px){
+ .mc-options-map-grid{grid-template-columns:1fr}
+ .mc-options-map-actions{grid-column:1}
+ .mc-saved-map-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+ .mc-saved-map-row .mc-saved-ingredient{grid-column:1}
+ .mc-saved-qty{grid-column:2;grid-row:1/3}
+ .mc-saved-actions{grid-column:1/-1;justify-content:flex-start}
+ .mc-map-review-row{grid-template-columns:1fr auto}
+ .mc-map-review-row .mc-review-ingredient{grid-column:1}
+ .mc-map-review-row .mc-review-quantity{grid-column:2;grid-row:1/3;text-align:right}
+}
+.mc-options-map-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+.mc-options-map-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.mc-options-table-wrap{overflow-x:auto}
+@media(max-width:900px){.mc-options-form-grid{grid-template-columns:1fr}.mc-options-map-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.mc-options-workspace{padding:12px}.mc-options-library-grid,.mc-options-map-grid{grid-template-columns:1fr}.mc-options-tabs{gap:4px}.mc-options-tab{padding:10px 7px;font-size:12px}.mc-options-map-grid .mc-options-product-picker,.mc-options-map-actions{grid-column:1}}
+</style>
+<div class="product-options-manager-header mc-options-intro">
+  <div><h3 class="product-options-page-subtitle" style="margin:0">Product Options Manager</h3><p>Manage product configurations and reusable option settings without keeping every tool open at once.</p></div>
+  <button class="refresh-orders-button" onclick="loadProductOptionsManager()" type="button">↻ Refresh</button>
 </div>
-<div style="margin-top:20px;background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
-<h3 style="margin-top:0">Stock mapping</h3><p class="placeholder-note">For a powder swap, choose the new powder under “Ingredient to deduct”, choose the default powder under “Replace this recipe ingredient”, and enter the new powder quantity per cup. The selected option will deduct the new powder instead of the default. Leave replacement blank for an extra ingredient or stock adjustment.</p>
-<div id="option-stock-map-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start">
-<div style="grid-column:1/-1;border:1px solid var(--mc-line);border-radius:10px;padding:12px">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><label style="margin:0">1. Select products <span class="placeholder-note" id="manager-map-selected-count">(0 selected)</span></label><div style="display:flex;gap:8px"><button class="refresh-orders-button" onclick="setBulkMapProducts(true)" type="button">Select all results</button><button class="refresh-orders-button" onclick="setBulkMapProducts(false)" type="button">Clear</button></div></div>
-<input id="manager-map-product-search" oninput="renderBulkMapProducts()" placeholder="Search drinks…" style="width:100%;margin:10px 0" type="search"/>
-<div id="manager-map-products" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;max-height:220px;overflow:auto"><span class="placeholder-note">Loading products…</span></div>
+<div class="mc-options-helper"><strong>Stock rule:</strong> The normal recipe is deducted first. Option mappings are additional quantity adjustments per cup: positive adds consumption; negative reduces consumption. Use the ingredient's own unit (g, ml, pcs).</div>
+<div class="mc-options-tabs" role="tablist" aria-label="Product options sections">
+  <button class="mc-options-tab active" type="button" role="tab" aria-selected="true" aria-controls="mc-options-products" onclick="switchProductOptionsTab('mc-options-products',this)">Product Configuration</button>
+  <button class="mc-options-tab" type="button" role="tab" aria-selected="false" aria-controls="mc-options-stock" onclick="switchProductOptionsTab('mc-options-stock',this)">Stock Mapping</button>
+  <button class="mc-options-tab" type="button" role="tab" aria-selected="false" aria-controls="mc-options-library" onclick="switchProductOptionsTab('mc-options-library',this)">Option Library</button>
 </div>
+
+<div class="mc-options-panel active" id="mc-options-products" role="tabpanel">
+  <div class="mc-options-card">
+    <h3>Enable option groups for a product</h3>
+    <p class="placeholder-note">Choose a drink and attach an existing group. This keeps reusable option groups separate from individual product setup.</p>
+    <form id="option-attach-form" onsubmit="attachOptionGroup(event)" class="mc-options-form-grid">
+      <div><label for="manager-option-product">Product</label><select id="manager-option-product" required=""><option value="">Load products…</option></select></div>
+      <div><label for="manager-attach-category">Option group</label><select id="manager-attach-category" required=""><option value="">Load groups…</option></select></div>
+      <div style="display:flex;align-items:end"><button class="checkout-button" style="width:100%" type="submit">Enable for product</button></div>
+      <div class="placeholder-note" id="option-attach-message" style="grid-column:1/-1"></div>
+    </form>
+  </div>
+
+</div>
+
+<div class="mc-options-panel" id="mc-options-stock" role="tabpanel" hidden>
+  <div class="mc-options-card">
+    <h3>Stock Mapping</h3>
+    <p class="placeholder-note">Manage ingredient deductions and substitutions for menu options. Select products, choose an option and ingredient, then review the changes before saving.</p>
+    <div id="mc-options-stock-content">
+      <p class="placeholder-note">For a powder swap, choose the new powder under “Ingredient to deduct”, choose the default powder under “Replace this recipe ingredient”, and enter the new powder quantity per cup. Leave replacement blank for an extra ingredient or stock adjustment.</p>
+      <div class="mc-options-product-picker mc-options-product-picker-standalone">
+        <div class="mc-options-picker-heading">
+          <div><strong>1. Select products</strong> <span class="placeholder-note" id="manager-map-selected-count">(0 selected)</span></div>
+          <div class="mc-options-picker-actions"><button class="refresh-orders-button" onclick="setBulkMapProducts(true)" type="button">Select all results</button><button class="refresh-orders-button" onclick="setBulkMapProducts(false)" type="button">Clear</button></div>
+        </div>
+        <input id="manager-map-product-search" oninput="renderBulkMapProducts()" placeholder="Search drinks…" type="search"/>
+        <div id="manager-map-products" class="mc-options-product-list"><span class="placeholder-note">Loading products…</span></div>
+      </div>
+      <div id="option-stock-map-form" class="mc-options-map-grid">
 <div><label for="manager-map-option">2. Option</label><select id="manager-map-option" required=""><option value="">Load options…</option></select></div>
-<div><label for="manager-map-ingredient">3. Ingredient to deduct</label><select id="manager-map-ingredient" required=""><option value="">Load ingredients…</option></select></div>
-<div><label for="manager-map-replaces">Replace this recipe ingredient (optional)</label><select id="manager-map-replaces"><option value="">No replacement — adjustment only</option></select></div>
-<div><label for="manager-map-quantity">Quantity per cup</label><input id="manager-map-quantity" placeholder="e.g. 4" required="" step="any" type="number"/></div>
-<div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap"><button class="checkout-button" onclick="previewBulkStockMap()" type="button">Review selected mappings</button><button class="refresh-orders-button" onclick="resetBulkMapReview()" type="button">Cancel / reset</button></div>
+        <div><label for="manager-map-ingredient">3. Ingredient to deduct</label><select id="manager-map-ingredient" required=""><option value="">Load ingredients…</option></select></div>
+        <div><label for="manager-map-replaces">Replace this recipe ingredient (optional)</label><select id="manager-map-replaces"><option value="">No replacement — adjustment only</option></select></div>
+        <div><label for="manager-map-quantity">Quantity per cup</label><input id="manager-map-quantity" placeholder="e.g. 4" required="" step="any" type="number"/></div>
+        <div class="mc-options-map-actions"><button class="checkout-button" onclick="previewBulkStockMap()" type="button">Review selected mappings</button><button class="refresh-orders-button" onclick="resetBulkMapReview()" type="button">Cancel / reset</button></div>
+      </div>
+      <div aria-live="polite" class="placeholder-note" id="option-stock-map-message" role="status"></div>
+      <div id="bulk-stock-map-review" style="display:none;margin-top:14px;border:1px solid var(--mc-line);border-radius:12px;padding:14px;background:#fffdf9"><h4 style="margin-top:0">Review before saving</h4><p class="placeholder-note" id="bulk-stock-map-review-summary"></p><div id="bulk-stock-map-review-body" class="mc-map-review-list"></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="checkout-button" id="bulk-stock-map-confirm" onclick="confirmBulkStockMapSave()" type="button">Confirm and save mappings</button><button class="refresh-orders-button" onclick="resetBulkMapReview()" type="button">Back to edit</button></div></div>
+      <h4 style="margin:18px 0 8px">Saved mappings</h4>
+      <div id="option-stock-map-body" class="mc-saved-mappings-list" aria-live="polite"><div class="mc-saved-empty">Loading mappings…</div></div>
+  </div>
 </div>
-<div aria-live="polite" class="placeholder-note" id="option-stock-map-message" role="status"></div>
-<div id="bulk-stock-map-review" style="display:none;margin-top:14px;border:1px solid var(--mc-line);border-radius:12px;padding:14px;background:#fffdf9"><h4 style="margin-top:0">Review before saving</h4><p class="placeholder-note" id="bulk-stock-map-review-summary"></p><div style="overflow:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Product</th><th>Option</th><th>Ingredient</th><th>Replaces</th><th>Quantity</th><th>Result</th></tr></thead><tbody id="bulk-stock-map-review-body"></tbody></table></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="checkout-button" id="bulk-stock-map-confirm" onclick="confirmBulkStockMapSave()" type="button">Confirm and save mappings</button><button class="refresh-orders-button" onclick="resetBulkMapReview()" type="button">Back to edit</button></div></div>
-<div style="overflow-x:auto;margin-top:14px"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Product</th><th>Option</th><th>Deduct ingredient</th><th>Replaces</th><th>Qty / cup</th><th></th></tr></thead><tbody id="option-stock-map-body"><tr><td colspan="6">Loading mappings…</td></tr></tbody></table></div>
-</div>
-<div style="margin-top:20px;background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px">
-<div class="product-options-existing-heading"><h3 style="margin:0">Existing options</h3><p class="placeholder-note" style="margin:5px 0 0">Search or filter by option group to find settings quickly.</p></div><div style="display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,220px);gap:10px;margin-bottom:12px"><input id="existing-options-search" oninput="renderProductOptionManagerTables()" placeholder="Search option name…" type="search"/><select id="existing-options-group" onchange="renderProductOptionManagerTables()"><option value="">All option groups</option></select></div><div style="overflow-x:auto"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Group</th><th>Option name</th><th>Direct extra (฿)</th><th>Grab extra (฿)</th><th>LINE MAN extra (฿)</th><th>Default</th><th>Active</th><th></th></tr></thead><tbody id="product-options-manager-body"><tr><td colspan="8">Loading options…</td></tr></tbody></table></div>
+
+<div class="mc-options-panel" id="mc-options-library" role="tabpanel" hidden>
+  <div class="mc-options-library-grid">
+    <div class="mc-options-card">
+      <h3>Option groups</h3>
+      <p class="placeholder-note">Create reusable groups such as Size, Sweetness, or Milk.</p>
+      <form id="option-category-form" onsubmit="saveOptionCategory(event)">
+        <label for="option-category-name">Group name</label><input id="option-category-name" placeholder="e.g. Size, Sweetness" required=""/>
+        <button class="checkout-button" style="margin-top:12px;width:100%" type="submit">Add group</button><div class="placeholder-note" id="option-category-message"></div>
+      </form>
+    </div>
+    <div class="mc-options-card">
+      <h3>Add an option</h3>
+      <p class="placeholder-note">Set the option name and additional price for each sales channel.</p>
+      <form id="product-option-form" onsubmit="saveProductOption(event)">
+        <label for="manager-option-category">Group</label><select id="manager-option-category" required=""><option value="">Load groups…</option></select>
+        <label for="manager-option-name">Option name</label><input id="manager-option-name" placeholder="e.g. Large, 50% sweet" required=""/>
+        <div class="option-channel-prices" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><div><label for="manager-option-price-direct">Direct extra (฿)</label><input id="manager-option-price-direct" min="0" required="" step="0.01" type="number" value="0"/></div><div><label for="manager-option-price-grab">Grab extra (฿)</label><input id="manager-option-price-grab" min="0" required="" step="0.01" type="number" value="0"/></div><div><label for="manager-option-price-lineman">LINE MAN extra (฿)</label><input id="manager-option-price-lineman" min="0" required="" step="0.01" type="number" value="0"/></div></div>
+        <label style="margin-top:10px"><input id="manager-option-default" style="min-height:auto;width:auto" type="checkbox"/> Default selection</label>
+        <button class="checkout-button" style="margin-top:12px;width:100%" type="submit">Add option</button><div class="placeholder-note" id="product-option-message"></div>
+      </form>
+    </div>
+  </div>
+  <div class="mc-options-card">
+    <div class="product-options-existing-heading"><h3 style="margin:0">Existing options</h3><p class="placeholder-note" style="margin:5px 0 0">Search or filter options only when you need to edit them.</p></div>
+    <div style="display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,220px);gap:10px;margin:12px 0"><input id="existing-options-search" oninput="renderProductOptionManagerTables()" placeholder="Search option name…" type="search"/><select id="existing-options-group" onchange="renderProductOptionManagerTables()"><option value="">All option groups</option></select></div>
+    <div class="mc-options-table-wrap"><table class="inventory-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Group</th><th>Option name</th><th>Direct extra (฿)</th><th>Grab extra (฿)</th><th>LINE MAN extra (฿)</th><th>Default</th><th>Active</th><th></th></tr></thead><tbody id="product-options-manager-body"><tr><td colspan="8">Loading options…</td></tr></tbody></table></div>
+  </div>
 </div>
 </section>
 </div>
@@ -6131,6 +6236,12 @@ ${errorText}`
 
 
 
+
+function switchProductOptionsTab(panelId,button){
+  document.querySelectorAll('.mc-options-workspace .mc-options-panel').forEach(panel=>{panel.classList.toggle('active',panel.id===panelId);panel.hidden=panel.id!==panelId;});
+  document.querySelectorAll('.mc-options-workspace .mc-options-tab').forEach(tab=>{const active=tab===button;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));});
+}
+
 // Product options manager: options can change price and ingredient usage.
 let managerOptionCategories = [], managerProductOptions = [], managerOptionIngredients = [], managerOptionProducts = [], managerStockMaps = [];
 async function optionManagerFetch(path, options={}) {
@@ -6183,7 +6294,16 @@ function renderProductOptionManagerTables() {
     body.innerHTML = groupedRows + uncategorizedRows || '<tr><td colspan="8">No options yet. Add an option group and options above.</td></tr>';
   }
   const mapBody=document.getElementById('option-stock-map-body');
-  if(mapBody) mapBody.innerHTML=managerStockMaps.map(m=>{const o=managerProductOptions.find(x=>Number(x.id)===Number(m.option_id));const i=managerOptionIngredients.find(x=>Number(x.id)===Number(m.ingredient_id));const old=managerOptionIngredients.find(x=>Number(x.id)===Number(m.replaces_ingredient_id));const p=managerOptionProducts.find(x=>Number(x.id)===Number(m.product_id));return `<tr><td>${escapeHtml(p?.name||p?.product_name||`Product #${m.product_id}`)}</td><td>${escapeHtml(o?.name||`Option #${m.option_id}`)}</td><td>${escapeHtml(i?.name||`Ingredient #${m.ingredient_id}`)} (${escapeHtml(i?.unit||'unit')})</td><td>${old?escapeHtml(old.name):'—'}</td><td>${Number(m.quantity_delta)} ${escapeHtml(i?.unit||'')}</td><td><button type="button" class="refresh-orders-button" onclick="deleteOptionStockMap(${Number(m.id)})">Remove</button></td></tr>`;}).join('') || '<tr><td colspan="6">No stock mappings yet.</td></tr>';
+  if(mapBody){
+    const groups=new Map();
+    managerStockMaps.forEach(m=>{const p=managerOptionProducts.find(x=>Number(x.id)===Number(m.product_id));const name=p?.name||p?.product_name||`Product #${m.product_id}`;if(!groups.has(name))groups.set(name,[]);groups.get(name).push(m);});
+    mapBody.innerHTML=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([productName,maps])=>{
+      const rows=maps.map(m=>{const o=managerProductOptions.find(x=>Number(x.id)===Number(m.option_id));const i=managerOptionIngredients.find(x=>Number(x.id)===Number(m.ingredient_id));const old=managerOptionIngredients.find(x=>Number(x.id)===Number(m.replaces_ingredient_id));const unit=i?.unit||'unit';
+        return `<div class="mc-saved-map-row"><div><div class="mc-saved-main">${escapeHtml(o?.name||`Option #${m.option_id}`)}</div><div class="mc-saved-sub">${old?`Replaces ${escapeHtml(old.name)}`:'Additional ingredient'}</div></div><div class="mc-saved-ingredient"><div class="mc-saved-main">${escapeHtml(i?.name||`Ingredient #${m.ingredient_id}`)}</div><div class="mc-saved-sub">Ingredient deducted · ${escapeHtml(unit)}</div></div><div class="mc-saved-qty">${Number(m.quantity_delta)}<small>${escapeHtml(unit)} / cup</small></div><div class="mc-saved-actions"><button type="button" class="refresh-orders-button" onclick="deleteOptionStockMap(${Number(m.id)})">Remove</button></div></div>`;
+      }).join('');
+      return `<section class="mc-saved-product-card"><div class="mc-saved-product-head"><span class="mc-saved-product-title">${escapeHtml(productName)}</span><span class="mc-saved-count">${maps.length} mapping${maps.length===1?'':'s'}</span></div>${rows}</section>`;
+    }).join('') || '<div class="mc-saved-empty">No stock mappings yet. Create a mapping above to see it here.</div>';
+  }
 }
 async function saveOptionCategory(event) { event.preventDefault(); try {const name=document.getElementById('option-category-name').value.trim(); if(!name) throw new Error('Enter a group name.'); await optionManagerFetch('option_categories',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({name,is_active:true})}); document.getElementById('option-category-name').value=''; document.getElementById('option-category-message').textContent='Group added.'; await loadProductOptionsManager();} catch(e){document.getElementById('option-category-message').textContent='Could not save group: '+e.message;}}
 async function saveProductOption(event) {event.preventDefault(); try {const category_id=Number(document.getElementById('manager-option-category').value),name=document.getElementById('manager-option-name').value.trim(),direct_price=Number(document.getElementById('manager-option-price-direct').value),grab_price=Number(document.getElementById('manager-option-price-grab').value),lineman_price=Number(document.getElementById('manager-option-price-lineman').value),is_default=document.getElementById('manager-option-default').checked;if(!category_id||!name||![direct_price,grab_price,lineman_price].every(n=>Number.isFinite(n)&&n>=0)) throw new Error('Complete the group, option name, and valid non-negative prices.'); if(is_default){await optionManagerFetch(`product_options?category_id=eq.${category_id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({is_default:false})});} await optionManagerFetch('product_options',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({category_id,name,price_adjustment:direct_price,direct_price,grab_price,lineman_price,is_default,is_active:true})}); document.getElementById('manager-option-name').value=''; ['direct','grab','lineman'].forEach(k=>document.getElementById(`manager-option-price-${k}`).value='0'); document.getElementById('manager-option-default').checked=false; document.getElementById('product-option-message').textContent='Option added.'; await loadProductOptionsManager();}catch(e){document.getElementById('product-option-message').textContent='Could not save option: '+e.message;}}
@@ -6221,7 +6341,7 @@ function previewBulkStockMap(){
     if(replaces_ingredient_id===ingredient_id)throw new Error('The replacement ingredient must be different from the ingredient being deducted.');
     bulkMapPendingRows=productIds.map(product_id=>({product_id,option_id,ingredient_id,replaces_ingredient_id,quantity_delta}));
     const rows=bulkMapPendingRows.map(row=>{const p=managerOptionProducts.find(x=>Number(x.id)===row.product_id),o=managerProductOptions.find(x=>Number(x.id)===row.option_id),i=managerOptionIngredients.find(x=>Number(x.id)===row.ingredient_id),old=managerOptionIngredients.find(x=>Number(x.id)===row.replaces_ingredient_id);const existing=managerStockMaps.find(m=>Number(m.product_id)===row.product_id&&Number(m.option_id)===row.option_id&&Number(m.ingredient_id)===row.ingredient_id);const otherIngredient=managerStockMaps.find(m=>Number(m.product_id)===row.product_id&&Number(m.option_id)===row.option_id&&Number(m.ingredient_id)!==row.ingredient_id);const conflict=existing&&(Number(existing.quantity_delta)!==row.quantity_delta||Number(existing.replaces_ingredient_id||0)!==Number(row.replaces_ingredient_id||0));return {...row,productName:p?.name||`Product #${row.product_id}`,optionName:o?.name||`Option #${row.option_id}`,ingredientName:i?.name||`Ingredient #${row.ingredient_id}`,unit:i?.unit||'',replaceName:old?.name||'—',result:otherIngredient?'Check: this option already maps another ingredient':conflict?'Will update existing rule':existing?'Already matches — no change':'New mapping'};});
-    const reviewBody=document.getElementById('bulk-stock-map-review-body');reviewBody.innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.productName)}</td><td>${escapeHtml(r.optionName)}</td><td>${escapeHtml(r.ingredientName)}</td><td>${escapeHtml(r.replaceName)}</td><td>${r.quantity_delta} ${escapeHtml(r.unit)}</td><td>${escapeHtml(r.result)}</td></tr>`).join('');
+    const reviewBody=document.getElementById('bulk-stock-map-review-body');reviewBody.innerHTML=rows.map(r=>`<div class="mc-map-review-row"><div><strong>${escapeHtml(r.productName)}</strong><small>${escapeHtml(r.optionName)}</small></div><div class="mc-review-ingredient"><strong>${escapeHtml(r.ingredientName)}</strong><small>${r.replaceName!=='—'?`Replaces ${escapeHtml(r.replaceName)}`:'Additional ingredient'}</small></div><div class="mc-review-quantity"><strong>${r.quantity_delta} ${escapeHtml(r.unit)}</strong><small>per cup</small></div><div class="mc-map-review-status">${escapeHtml(r.result)}</div></div>`).join('');
     const summary=document.getElementById('bulk-stock-map-review-summary');summary.textContent=`${rows.length} product(s) selected. ${rows.filter(r=>r.result==='New mapping').length} new, ${rows.filter(r=>r.result==='Will update existing rule').length} existing rule(s) will be updated, ${rows.filter(r=>r.result==='Already matches — no change').length} already match. Review carefully before confirming.`;
     document.getElementById('bulk-stock-map-review').style.display='block';message.textContent='Review the full list below. Nothing has been saved yet.';
   }catch(e){message.textContent=e.message;}
