@@ -2201,25 +2201,49 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 
   <div class="mc-workspace-panel" data-mc-panel="recipes" hidden>
     <div class="mc-recipe-editor-heading"><div><div class="stat-label">PRODUCT SETUP</div><h3>Recipe Editor</h3><p>Select a drink, set its channel prices, and define ingredients per serving.</p></div></div>
-    <form id="recipe-editor-form" onsubmit="saveRecipeEditor(event)">
-      <label for="recipe-product">Product</label><select id="recipe-product" required=""><option value="">Loading products…</option></select><p class="placeholder-note">Choose an existing product to edit it, or choose “+ New product” to create a product and its recipe.</p>
-      <label for="recipe-product-name">Product name</label><input id="recipe-product-name" placeholder="e.g. Matcha Latte" required="" type="text"/>
-      <label for="recipe-product-price">Direct price (฿)</label><input id="recipe-product-price" min="0.01" required="" step="0.01" type="number"/>
-      <div class="pricing-channel-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px">
-        <div><label for="recipe-product-grab-price">Grab price (฿)</label><input id="recipe-product-grab-price" min="0.01" required="" step="0.01" type="number"/></div>
-        <div><label for="recipe-product-lineman-price">LINE MAN price (฿)</label><input id="recipe-product-lineman-price" min="0.01" required="" step="0.01" type="number"/></div>
+    <form id="recipe-editor-form" class="mc-recipe-editor-form" onsubmit="saveRecipeEditor(event)">
+      <div class="mc-recipe-product-picker">
+        <label for="recipe-product">Product</label>
+        <div class="mc-recipe-product-picker-controls">
+          <select id="recipe-product" required=""><option value="">Loading products…</option></select>
+          <button type="button" class="mc-new-product-button" onclick="startNewRecipeProduct()">＋ New Product</button>
+        </div>
+        <p class="placeholder-note">Select an existing product to edit its details and recipe.</p>
       </div>
-      <p class="placeholder-note">Set each channel's price manually. Direct price remains the default base price for costing and existing product compatibility.</p>
-      <label for="recipe-product-category">Menu category</label><div class="recipe-category-control"><select id="recipe-product-category" required=""><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha &amp; Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option><option value="__custom__">＋ Add a new category…</option></select><input aria-label="New menu category" id="recipe-product-category-custom" maxlength="60" placeholder="Type new menu category" style="display:none" type="text"/></div>
-      <p class="placeholder-note">Choose the menu category used to group this item in Menu Margin Table.</p>
-      <div class="recipe-photo-panel">
-        <div class="recipe-photo-heading"><div><label for="recipe-product-photo">Product photo</label><p class="placeholder-note">Upload a JPG, PNG, or WebP image (max 5 MB). The photo appears on the Ordering page.</p></div><div class="recipe-photo-preview" id="recipe-photo-preview"><span>☕</span></div></div>
-        <input accept="image/jpeg,image/png,image/webp" id="recipe-product-photo" type="file"/>
-        <div aria-live="polite" class="placeholder-note" id="recipe-photo-message">Choose a product to see its current photo.</div>
+      <div class="mc-recipe-editor-columns">
+        <section class="mc-recipe-info-card">
+          <div class="mc-recipe-section-heading"><span>01</span><div><h4>Product information</h4><p>Name, category and product photo</p></div></div>
+          <label for="recipe-product-name">Product name</label>
+          <input id="recipe-product-name" placeholder="e.g. Matcha Latte" required="" type="text"/>
+          <label for="recipe-product-category">Menu category</label>
+          <div class="recipe-category-control"><select id="recipe-product-category" required=""><option value="">Select category…</option><option value="Coffee">Coffee</option><option value="Matcha &amp; Tea">Matcha &amp; Tea</option><option value="Non-coffee">Non-coffee</option><option value="Other">Other</option><option value="__custom__">＋ Add a new category…</option></select><input aria-label="New menu category" id="recipe-product-category-custom" maxlength="60" placeholder="Type new menu category" style="display:none" type="text"/></div>
+          <div class="recipe-photo-panel mc-recipe-photo-compact">
+            <div class="recipe-photo-heading"><div><label for="recipe-product-photo">Product photo</label><p class="placeholder-note">JPG, PNG or WebP · Max 5 MB</p></div><div class="recipe-photo-preview" id="recipe-photo-preview"><span>☕</span></div></div>
+            <input accept="image/jpeg,image/png,image/webp" id="recipe-product-photo" type="file"/>
+            <div aria-live="polite" class="placeholder-note" id="recipe-photo-message">Choose a product to see its current photo.</div>
+          </div>
+          <div class="mc-recipe-section-heading mc-pricing-heading"><span>02</span><div><h4>Selling prices</h4><p>Set each sales channel separately</p></div></div>
+          <div class="mc-recipe-prices-grid">
+            <div><label for="recipe-product-price">Direct (฿)</label><input id="recipe-product-price" min="0.01" required="" step="0.01" type="number"/></div>
+            <div><label for="recipe-product-grab-price">Grab (฿)</label><input id="recipe-product-grab-price" min="0.01" required="" step="0.01" type="number"/></div>
+            <div><label for="recipe-product-lineman-price">LINE MAN (฿)</label><input id="recipe-product-lineman-price" min="0.01" required="" step="0.01" type="number"/></div>
+          </div>
+          <p class="placeholder-note">Direct price remains the default base price for costing and existing product compatibility.</p>
+        </section>
+        <section class="mc-recipe-ingredients-card">
+          <div class="mc-recipe-section-heading"><span>03</span><div><h4>Recipe ingredients</h4><p>Ingredient usage for one serving</p></div></div>
+          <div class="mc-recipe-ingredient-head"><span>Ingredient</span><span>Amount</span><span>Cost / serving</span><span></span></div>
+          <div id="recipe-editor-lines"></div>
+          <button class="refresh-orders-button mc-add-recipe-ingredient" onclick="addRecipeEditorLine()" type="button">＋ Add ingredient</button>
+          <div class="mc-recipe-cost-summary" id="mc-recipe-cost-summary">
+            <div><span>Ingredient cost / serving</span><strong id="mc-recipe-total-cost">฿0.00</strong></div>
+            <div><span>Direct selling price</span><strong id="mc-recipe-summary-price">฿0.00</strong></div>
+            <div class="mc-recipe-margin-line"><span>Gross margin</span><strong id="mc-recipe-summary-margin">—</strong></div>
+            <p>Based on ingredient cost only. Hidden costs and delivery platform fees are calculated separately in Margin Table.</p>
+          </div>
+        </section>
       </div>
-      <div id="recipe-editor-lines"></div>
-      <div class="mc-recipe-form-actions"><button class="refresh-orders-button" onclick="addRecipeEditorLine()" type="button">＋ Add ingredient</button><button class="checkout-button" id="recipe-save-button" type="submit">Save product &amp; recipe</button></div>
-      <div id="recipe-editor-message" style="margin-top:12px"></div>
+      <div class="mc-recipe-form-footer"><div id="recipe-editor-message" aria-live="polite"></div><button class="checkout-button" id="recipe-save-button" type="submit">Save product &amp; recipe</button></div>
     </form>
   </div>
 
@@ -5933,16 +5957,34 @@ ${errorText}`
       const ingredient = recipeEditorIngredients.find(i => Number(i.id) === Number(select.value));
       const cost = ingredient ? Number(ingredient.cost_per_unit || 0) * Number(input.value || 0) : 0;
       row.querySelector(".mc-line-cost").textContent = `฿${cost.toFixed(2)}`;
+      if (window.updateRecipeEditorSummary) window.updateRecipeEditorSummary();
     };
     select.value = ingredientId === null ? "" : String(ingredientId);
     input.value = quantity;
     select.addEventListener("change", updateCost);
     input.addEventListener("input", updateCost);
-    row.querySelector("button").onclick = () => row.remove();
+    row.querySelector("button").onclick = () => { row.remove(); if (window.updateRecipeEditorSummary) window.updateRecipeEditorSummary(); };
     wrap.appendChild(row);
     updateCost();
   }
 
+  window.updateRecipeEditorSummary = function(){
+    const total=[...document.querySelectorAll("#recipe-editor-lines .recipe-editor-row")].reduce((sum,row)=>{
+      const id=Number(row.querySelector(".recipe-line-ingredient")?.value);
+      const qty=Number(row.querySelector(".recipe-line-quantity")?.value||0);
+      const ingredient=recipeEditorIngredients.find(i=>Number(i.id)===id);
+      return sum+(ingredient?Number(ingredient.cost_per_unit||0)*qty:0);
+    },0);
+    const price=Number(document.getElementById("recipe-product-price")?.value||0);
+    const money=n=>`฿${n.toFixed(2)}`;
+    const totalEl=document.getElementById("mc-recipe-total-cost");
+    const priceEl=document.getElementById("mc-recipe-summary-price");
+    const marginEl=document.getElementById("mc-recipe-summary-margin");
+    if(totalEl)totalEl.textContent=money(total);
+    if(priceEl)priceEl.textContent=money(price);
+    if(marginEl)marginEl.textContent=price>0?`${((price-total)/price*100).toFixed(1)}%`:"—";
+  };
+  document.addEventListener("input",e=>{if(e.target?.id==="recipe-product-price")window.updateRecipeEditorSummary();});
   async function saveRecipeEditor(event) {
     event.preventDefault();
     const message = document.getElementById("recipe-editor-message");
@@ -7172,6 +7214,64 @@ function setOrderingSource(source){
 #margins-page .mc-category-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;border-radius:99px;background:#f4e5d9;color:#8c542f;font-size:10px;font-weight:750}
 #margins-page .mc-product-category-group[hidden]{display:none!important}
 #margins-page .mc-product-row[hidden]{display:none!important}
+</style>
+
+
+<style id="mc-recipe-editor-v16-layout">
+#margins-page .mc-recipe-editor-form{display:flex!important;flex-direction:column!important;gap:14px!important}
+#margins-page .mc-recipe-product-picker{padding:13px 15px;background:#fffaf6;border:1px solid #f0e2d8;border-radius:12px}
+#margins-page .mc-recipe-product-picker label{display:block;margin-bottom:6px}
+#margins-page .mc-recipe-product-picker select{width:100%;min-height:38px}
+#margins-page .mc-recipe-product-picker .placeholder-note{margin:6px 0 0}
+#margins-page .mc-recipe-editor-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:13px;align-items:start}
+#margins-page .mc-recipe-info-card,#margins-page .mc-recipe-ingredients-card{min-width:0;padding:15px;border:1px solid #eee1d7;border-radius:13px;background:#fff}
+#margins-page .mc-recipe-section-heading{display:flex;align-items:center;gap:10px;margin:0 0 13px;padding-bottom:11px;border-bottom:1px solid #f0e6df}
+#margins-page .mc-recipe-section-heading>span{display:flex;align-items:center;justify-content:center;width:29px;height:29px;flex:0 0 29px;border-radius:9px;background:#fff0e5;color:#bd5d22;font-size:11px;font-weight:800}
+#margins-page .mc-recipe-section-heading h4{margin:0;color:#3f2b20;font-size:14px;font-weight:800}
+#margins-page .mc-recipe-section-heading p{margin:3px 0 0;color:#8a7a70;font-size:11px}
+#margins-page .mc-recipe-info-card>label{display:block;margin:11px 0 5px;font-size:11px;font-weight:750;color:#735b4a}
+#margins-page .mc-recipe-info-card>input,#margins-page .mc-recipe-info-card .recipe-category-control select,#margins-page .mc-recipe-info-card .recipe-category-control input{width:100%;box-sizing:border-box;min-height:37px;height:37px;font-size:12px}
+#margins-page .mc-recipe-photo-compact{margin-top:12px;padding:10px!important}
+#margins-page .mc-recipe-photo-compact .recipe-photo-heading{align-items:center}
+#margins-page .mc-recipe-photo-compact .recipe-photo-preview{width:58px;height:58px;min-width:58px}
+#margins-page .mc-recipe-photo-compact input[type=file]{max-width:100%;font-size:11px}
+#margins-page .mc-recipe-photo-compact .placeholder-note{font-size:10px}
+#margins-page .mc-pricing-heading{margin-top:17px}
+#margins-page .mc-recipe-prices-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#margins-page .mc-recipe-prices-grid label{display:block;margin:0 0 5px;font-size:10px;font-weight:750;color:#806958}
+#margins-page .mc-recipe-prices-grid input{width:100%;min-width:0;box-sizing:border-box;min-height:36px;height:36px;padding:0 8px;font-size:12px}
+#margins-page .mc-recipe-info-card>.placeholder-note{font-size:10px;line-height:1.45;margin:8px 0 0}
+#margins-page .mc-recipe-ingredient-head{display:grid;grid-template-columns:minmax(0,1fr) 76px 94px 28px;gap:7px;padding:0 8px 7px;color:#88796f;font-size:10px;font-weight:750}
+#margins-page #recipe-editor-lines{display:flex;flex-direction:column;gap:7px}
+#margins-page .mc-recipe-ingredient-row{display:grid!important;grid-template-columns:minmax(0,1fr) 76px 94px 28px!important;gap:7px!important;align-items:center!important;margin:0!important;padding:8px!important;border:1px solid #efe5dd!important;border-radius:9px!important;background:#fffdfb!important}
+#margins-page .mc-recipe-ingredient-row>div label{display:none!important}
+#margins-page .mc-recipe-ingredient-row select,#margins-page .mc-recipe-ingredient-row input{width:100%;min-width:0;box-sizing:border-box;height:35px!important;min-height:35px!important;padding:0 7px!important;font-size:11px!important}
+#margins-page .mc-recipe-ingredient-cost strong{min-height:35px;font-size:11px!important}
+#margins-page .mc-recipe-ingredient-row .mc-remove-ingredient{height:31px!important;min-height:31px!important;width:28px!important}
+#margins-page .mc-add-recipe-ingredient{margin-top:10px;min-height:34px;padding:6px 11px;font-size:11px}
+#margins-page .mc-recipe-cost-summary{margin-top:15px;padding:12px;background:#fff7f1;border:1px solid #f1dfd2;border-radius:11px}
+#margins-page .mc-recipe-cost-summary>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;color:#76665c;font-size:11px}
+#margins-page .mc-recipe-cost-summary strong{color:#38291f;font-size:13px;font-variant-numeric:tabular-nums}
+#margins-page .mc-recipe-cost-summary .mc-recipe-margin-line{margin-top:5px;padding-top:10px;border-top:1px solid #ead8ca;color:#533323;font-weight:800}
+#margins-page .mc-recipe-cost-summary .mc-recipe-margin-line strong{color:#b95824;font-size:20px}
+#margins-page .mc-recipe-cost-summary p{margin:8px 0 0;color:#89786d;font-size:10px;line-height:1.45}
+#margins-page .mc-recipe-form-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:3px}
+#margins-page .mc-recipe-form-footer #recipe-editor-message{font-size:12px}
+#margins-page .mc-recipe-form-footer #recipe-save-button{width:auto;min-width:210px;min-height:40px;padding:8px 18px}
+@media(max-width:900px){#margins-page .mc-recipe-editor-columns{grid-template-columns:1fr}}
+@media(max-width:520px){#margins-page .mc-recipe-prices-grid{grid-template-columns:1fr 1fr}#margins-page .mc-recipe-ingredient-head,#margins-page .mc-recipe-ingredient-row{grid-template-columns:minmax(0,1fr) 65px 78px 25px!important;gap:5px!important}#margins-page .mc-recipe-form-footer{align-items:stretch;flex-direction:column}#margins-page .mc-recipe-form-footer #recipe-save-button{width:100%}}
+</style>
+
+
+<style id="mc-recipe-editor-v17-adjustments">
+#margins-page .mc-recipe-product-picker{padding:10px 13px}
+#margins-page .mc-recipe-product-picker-controls{display:flex;align-items:center;gap:9px;max-width:570px}
+#margins-page .mc-recipe-product-picker-controls select{width:min(100%,390px);max-width:390px;min-width:0;height:34px;min-height:34px;padding:5px 10px;font-size:11px}
+#margins-page .mc-recipe-product-picker-controls .mc-new-product-button{flex:0 0 auto;width:auto;min-width:112px;height:34px;min-height:34px;padding:6px 11px;border:1px solid #df8b55;border-radius:8px;background:#fff8f2;color:#a94e1b;font-size:11px;font-weight:750;white-space:nowrap}
+#margins-page .mc-recipe-product-picker-controls .mc-new-product-button:hover{background:#fff0e4}
+#margins-page .mc-recipe-editor-columns{grid-template-columns:minmax(0,3fr) minmax(0,2fr)!important}
+@media(max-width:900px){#margins-page .mc-recipe-editor-columns{grid-template-columns:1fr!important}}
+@media(max-width:520px){#margins-page .mc-recipe-product-picker-controls{align-items:stretch;flex-direction:column;max-width:none}#margins-page .mc-recipe-product-picker-controls select{width:100%;max-width:none}#margins-page .mc-recipe-product-picker-controls .mc-new-product-button{width:100%}}
 </style>
 
 </body>
