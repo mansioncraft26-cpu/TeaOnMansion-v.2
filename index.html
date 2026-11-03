@@ -1513,7 +1513,67 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
   #stock-movement-section .orders-header{align-items:flex-start;flex-direction:column;}
 }
 </style>
-</head>
+<style id="stock-movement-ipad-fix">
+/* Final override: keep Stock Movement controls inside their own grid cells. */
+#stock-movement-section #stock-movement-filters,
+#stock-movement-section .stock-movement-filters-compact {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+#stock-movement-section #stock-movement-filters > label {
+  display: block !important;
+  position: relative !important;
+  float: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+#stock-movement-section #stock-movement-filters > label > input,
+#stock-movement-section #stock-movement-filters > label > select {
+  display: block !important;
+  position: static !important;
+  float: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 5px 0 0 !important;
+  padding: 5px 6px !important;
+  box-sizing: border-box !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+#stock-movement-section #stock-movement-filters input[type="date"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  overflow: hidden !important;
+}
+@media (max-width: 1100px) {
+  #stock-movement-section #stock-movement-filters,
+  #stock-movement-section .stock-movement-filters-compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+@media (max-width: 520px) {
+  #stock-movement-section #stock-movement-filters,
+  #stock-movement-section .stock-movement-filters-compact {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+</style></head>
 <body>
 <div aria-labelledby="auth-title" aria-modal="true" class="auth-overlay" id="auth-overlay" role="dialog">
 <form class="auth-card" id="auth-form">
@@ -1865,7 +1925,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </section>
 <section class="inventory-panel" id="stock-movement-section" style="margin-top:20px">
 <div class="orders-header"><div><h3 style="margin:0">Stock Movement</h3><p class="placeholder-note">A permanent ledger of actual stock changes: purchases, order usage, opening balances, and manual corrections.</p></div><button class="refresh-orders-button" onclick="loadStockMovements()" type="button">↻ Refresh movements</button></div>
-<div class="stock-movement-filters" id="stock-movement-filters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
+<div class="stock-movement-filters stock-movement-filters-compact" id="stock-movement-filters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0">
 <label>From date<input id="movement-from" onchange="loadStockMovements()" type="date"/></label>
 <label>To date<input id="movement-to" onchange="loadStockMovements()" type="date"/></label>
 <label>Movement type<select id="movement-type" onchange="renderStockMovements()"><option value="">All movements</option><option value="purchase">Purchase / Restock</option><option value="sale_usage">Order usage</option><option value="manual_adjustment">Manual adjustment</option><option value="opening_balance">Opening balance</option></select></label>
