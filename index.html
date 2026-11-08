@@ -2552,13 +2552,6 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 </section>
 <section class="page" id="product-options-page">
 <div class="section" style="padding:0;border:0;background:transparent">
-<div class="orders-header" style="margin-bottom:16px">
-<div>
-<div class="stat-label">MENU CONFIGURATION</div>
-<h2>Product Options</h2>
-<p>Manage option groups, add-on prices, drink availability, and stock mapping in one place.</p>
-</div>
-</div>
 <section class="section mc-options-workspace" id="product-options-manager">
 <style>
 .mc-options-workspace{background:#f8f7f3;border:1px solid var(--mc-line);border-radius:14px;padding:20px}
@@ -2569,6 +2562,10 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 .mc-options-tab.active{background:#fff;color:#b95620;box-shadow:0 1px 4px #00000012}
 .mc-options-panel{display:none}
 .mc-options-panel.active{display:block}
+.mc-options-workspace .mc-options-panel[hidden]{display:none!important}
+.mc-options-workspace .mc-options-panel.active:not([hidden]){display:block!important}
+#product-options-manager #mc-options-library.active:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;min-height:240px!important;overflow:visible!important}
+#product-options-manager #mc-options-library.active:not([hidden])>*{visibility:visible!important;opacity:1!important}
 .mc-options-card{background:#fff;border:1px solid var(--mc-line);border-radius:12px;padding:16px;margin-bottom:14px;min-width:0}
 .mc-options-card h3{margin-top:0}
 .mc-options-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -2626,7 +2623,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 @media(max-width:620px){.mc-options-workspace{padding:12px}.mc-options-library-grid,.mc-options-map-grid{grid-template-columns:1fr}.mc-options-tabs{gap:4px}.mc-options-tab{padding:10px 7px;font-size:12px}.mc-options-map-grid .mc-options-product-picker,.mc-options-map-actions{grid-column:1}}
 </style>
 <div class="product-options-manager-header mc-options-intro">
-  <div><h3 class="product-options-page-subtitle" style="margin:0">Product Options Manager</h3><p>Manage product configurations and reusable option settings without keeping every tool open at once.</p></div>
+  <div><h3 class="product-options-page-subtitle" style="margin:0">Options Manager</h3><p>Manage product configurations and reusable option settings without keeping every tool open at once.</p></div>
   <button class="refresh-orders-button" onclick="loadProductOptionsManager()" type="button">↻ Refresh</button>
 </div>
 <div class="mc-options-helper"><strong>Stock rule:</strong> The normal recipe is deducted first. Option mappings are additional quantity adjustments per cup: positive adds consumption; negative reduces consumption. Use the ingredient's own unit (g, ml, pcs).</div>
@@ -6619,8 +6616,29 @@ ${errorText}`
 
 
 function switchProductOptionsTab(panelId,button){
-  document.querySelectorAll('.mc-options-workspace .mc-options-panel').forEach(panel=>{panel.classList.toggle('active',panel.id===panelId);panel.hidden=panel.id!==panelId;});
-  document.querySelectorAll('.mc-options-workspace .mc-options-tab').forEach(tab=>{const active=tab===button;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));});
+  const workspace = document.getElementById('product-options-manager');
+  if (!workspace) return;
+  const panels = workspace.querySelectorAll('.mc-options-panel');
+  panels.forEach(panel => {
+    const active = panel.id === panelId;
+    panel.classList.toggle('active', active);
+    if (active) panel.removeAttribute('hidden');
+    else panel.setAttribute('hidden', '');
+    // Explicit display prevents stale/overriding CSS from leaving the selected tab blank.
+    panel.style.setProperty('display', active ? 'block' : 'none', 'important');
+    panel.style.setProperty('visibility', active ? 'visible' : 'hidden', 'important');
+    panel.style.setProperty('opacity', active ? '1' : '0', 'important');
+  });
+  workspace.querySelectorAll('.mc-options-tab').forEach(tab => {
+    const active = tab === button;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-selected', String(active));
+  });
+  if (panelId === 'mc-options-library') {
+    // Re-render after the panel becomes visible so the table and form controls
+    // calculate their layout at the correct width.
+    if (typeof renderProductOptionManagerTables === 'function') renderProductOptionManagerTables();
+  }
 }
 
 // Product options manager: options can change price and ingredient usage.
