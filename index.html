@@ -1969,6 +1969,62 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 .sidebar-settings-button .nav-icon{display:flex!important;align-items:center!important;justify-content:center!important}
 </style>
 
+
+<style id="mc-order-details-compact-v2">
+@media (min-width:761px){#orders-page .product-card-image{height:148px!important}}
+#orders-page .order-details-pane{padding:18px 18px 16px!important;background:#fffaf5!important;gap:0!important}
+#orders-page .mc-order-details-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 13px;margin:0 0 10px;border-bottom:1px solid #efdfd1}
+#orders-page .mc-order-details-heading h2{display:block!important;margin:0!important;font-size:21px!important;line-height:1.25;color:#38271e}
+#orders-page .mc-order-details-heading .ordering-clear-top{margin:0!important;padding:6px 10px!important;background:transparent!important;color:#b65320!important;font-weight:700}
+#orders-page .customer-details-collapsible{display:block!important;margin:0 0 8px!important;border:1px solid #efdfd1!important;border-radius:12px!important;background:#fffdfb!important;overflow:hidden!important}
+#orders-page .customer-details-collapsible>summary{display:flex!important;align-items:center!important;gap:9px!important;min-height:48px!important;padding:10px 13px!important;cursor:pointer!important;list-style:none!important;color:#493124!important;font-size:13px!important;font-weight:750!important}
+#orders-page .customer-details-collapsible>summary::-webkit-details-marker{display:none!important}
+#orders-page .customer-details-collapsible>summary small{padding:4px 8px;border-radius:99px;background:#f7eee7;color:#927e6e;font-size:10px;font-weight:600}
+#orders-page .mc-summary-chevron{margin-left:auto;color:#8a6148;font-size:19px;transition:transform .15s}
+#orders-page .customer-details-collapsible[open] .mc-summary-chevron{transform:rotate(180deg)}
+#orders-page .mc-customer-fields{padding:0 13px 13px!important}
+#orders-page .mc-customer-fields label{display:block!important;margin:11px 0 5px!important;font-size:10px!important;color:#806b5d!important}
+#orders-page .mc-customer-fields input,#orders-page .mc-customer-fields select,#orders-page .mc-customer-fields textarea{width:100%!important;min-height:39px!important;padding:9px 11px!important;box-sizing:border-box!important}
+#orders-page .mc-customer-fields .placeholder-note{margin:5px 0 8px!important}
+#orders-page .discount-collapsible{margin:0 0 8px!important;border-radius:12px!important}
+#orders-page .discount-collapsible>.discount-summary{min-height:48px!important;padding:9px 13px!important}
+#orders-page .mc-platform-fee-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-height:46px!important;padding:0 13px!important;margin:0 0 10px!important;border:1px solid #efdfd1!important;border-radius:12px!important;background:#fffdfb!important;color:#493124!important;font-size:13px!important;font-weight:700!important}
+#orders-page .mc-platform-fee-row strong{display:flex;align-items:center;gap:2px;color:#493124;font-size:13px}
+#orders-page .mc-platform-fee-row input{width:62px!important;min-height:28px!important;padding:2px 0!important;border:0!important;background:transparent!important;text-align:right!important;font-size:13px!important;font-weight:750!important;box-shadow:none!important}
+#orders-page .order-details-pane>.placeholder-note{display:none!important}
+#orders-page .ordering-cart-heading{margin:4px 0 10px!important;padding:12px 0!important;min-height:0!important;border-top:1px solid #efdfd1!important;border-bottom:1px solid #efdfd1!important}
+#orders-page .ordering-cart-heading h3{font-size:18px!important}
+#orders-page #cart{min-height:90px!important;max-height:260px!important;margin:0 0 10px!important;border:1px dashed #ead8c8!important;border-radius:12px!important;background:#fffdfb!important;padding:0 12px!important}
+#orders-page #cart .empty-cart{padding:24px 8px!important;font-size:12px!important}
+#orders-page .order-details-pane #order-notes{min-height:48px!important;margin:0 0 8px!important;padding:10px 12px!important}
+#orders-page .order-details-pane .cart-total{margin-top:0!important;padding:13px 2px!important;border-top:1px solid #efdfd1!important;border-bottom:1px solid #efdfd1!important;font-size:20px!important}
+#orders-page .order-details-pane #checkout-button{min-height:50px!important;margin:12px 0 0!important;border-radius:11px!important;font-size:15px!important}
+#orders-page .order-details-pane>.clear-button:not(.ordering-clear-top){display:none!important}
+@media(max-width:760px){#orders-page .product-card-image{height:125px!important}#orders-page .order-details-pane{padding:16px!important}#orders-page .mc-order-details-heading h2{font-size:19px!important}}
+</style>
+
+
+<style id="mc-order-panel-alignment-v3">
+/* Refine Order Details hierarchy and align the clear action with the cart heading. */
+#orders-page .order-details-pane { box-sizing:border-box!important; min-width:0!important; }
+#orders-page .mc-order-details-heading { display:flex!important; align-items:center!important; justify-content:flex-start!important; width:100%!important; min-height:44px!important; padding:0 0 12px!important; margin:0 0 10px!important; border-bottom:1px solid #efdfd1!important; }
+#orders-page .mc-order-details-heading h2 { margin:0!important; padding:0!important; white-space:nowrap!important; line-height:1.25!important; }
+#orders-page .ordering-cart-heading { display:flex!important; align-items:center!important; justify-content:space-between!important; gap:10px!important; width:100%!important; min-height:42px!important; box-sizing:border-box!important; }
+#orders-page .ordering-cart-heading h3 { display:flex!important; align-items:center!important; gap:8px!important; min-width:0!important; margin:0!important; white-space:nowrap!important; line-height:1.3!important; }
+#orders-page .ordering-cart-heading .ordering-clear-top { display:inline-flex!important; align-items:center!important; justify-content:center!important; flex:0 0 auto!important; width:auto!important; min-height:28px!important; margin:0!important; padding:5px 9px!important; border:1px solid #f0dfd0!important; border-radius:7px!important; background:#fffaf5!important; color:#a65b35!important; font-size:10px!important; font-weight:650!important; line-height:1!important; }
+#orders-page .ordering-cart-heading .ordering-clear-top:hover { background:#fff0e5!important; border-color:#e8c5ad!important; }
+#orders-page .mc-order-details-heading .ordering-clear-top { display:none!important; }
+#orders-page .order-details-pane > .clear-button:not(.ordering-clear-top) { display:none!important; }
+#orders-page .customer-details-collapsible>summary, #orders-page .discount-collapsible>.discount-summary, #orders-page .mc-platform-fee-row { box-sizing:border-box!important; width:100%!important; }
+#orders-page .mc-platform-fee-row { min-height:44px!important; }
+#orders-page #cart { width:100%!important; box-sizing:border-box!important; }
+#orders-page .order-details-pane #order-notes { width:100%!important; box-sizing:border-box!important; }
+@media(max-width:760px) {
+ #orders-page .mc-order-details-heading { min-height:40px!important; }
+ #orders-page .ordering-cart-heading h3 { font-size:15px!important; }
+}
+</style>
+
 </head>
 <body>
 <div aria-labelledby="auth-title" aria-modal="true" class="auth-overlay" id="auth-overlay" role="dialog">
@@ -2158,16 +2214,23 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <div class="add-order-layout">
 <section class="order-menu-pane"><div class="order-menu-heading"><div><h3>Menu</h3><p>Tap a product to add or customize it.</p></div><input aria-label="Search menu" id="order-menu-search" oninput="filterOrderMenu()" placeholder="Search menu…" type="search"/></div><div aria-label="Filter menu by category" class="order-menu-categories" id="order-menu-categories" role="group"></div><div id="products">Loading products...</div></section>
 <section class="order-details-pane" id="new-order-section">
-<h2>New Order</h2>
+<div class="mc-order-details-heading"><h2>Order Details</h2></div>
+<details class="customer-details-collapsible">
+<summary><span>Customer Details</span><small>Optional</small><span class="mc-summary-chevron" aria-hidden="true">⌄</span></summary>
+<div class="mc-customer-fields">
 <label>Sale Date (actual date)</label>
 <input aria-label="Actual sale date" id="order-sale-date" type="date"/>
-<p class="placeholder-note">Choose the date the sale actually happened. This is useful for entering historical orders.</p>
+<p class="placeholder-note">Choose the actual sale date for historical orders.</p>
 <label>Customer Name</label>
 <input id="customer-name" placeholder="Customer name" type="text"/>
 <label>Address</label>
-<textarea class="notes" id="customer-address" placeholder="Delivery address" rows="3"></textarea>
+<textarea class="notes" id="customer-address" placeholder="Delivery address" rows="2"></textarea>
 <label>Delivery App Order Number</label>
-<input id="platform-order-number" placeholder="Optional for Direct orders" type="text"/>
+<input id="platform-order-number" placeholder="Delivery app order number" type="text"/>
+<label>Payment Method</label>
+<select id="payment-method"><option value="cash">Cash</option><option value="promptpay">PromptPay / Bank transfer</option><option value="grab_payment">Grab payment</option><option value="lineman_payment">LINE MAN payment</option></select>
+</div>
+</details>
 <details class="discount-panel discount-collapsible" style="margin:14px 0;padding:0;border:1px solid var(--mc-line,#e8e2d8);border-radius:10px;background:#fcfbf8">
 <summary class="discount-summary"><span><strong>Discount</strong><small>Optional</small></span><span class="discount-summary-action">Add discount <span aria-hidden="true">⌄</span></span></summary>
 <div class="discount-fields" style="padding:0 13px 13px">
@@ -2188,13 +2251,9 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <div aria-live="polite" class="placeholder-note" id="discount-net-preview" style="margin-top:7px">Estimated café net after platform fee: ฿0.00</div>
 </div>
 </details>
-<label>Estimated Platform Fee (฿)</label>
-<input aria-readonly="true" id="platform-fee-input" min="0" readonly="" step="0.01" type="number" value="0"/>
-<p class="placeholder-note">Automatically estimated at 33% of the order subtotal for Grab and LINE MAN. Direct orders have ฿0 fee. This is an estimate; use the platform settlement statement for exact fees.</p>
-<div aria-live="polite" class="placeholder-note" id="order-net-estimate">Estimated net after platform fee: ฿0.00</div>
-<label>Payment Method</label>
-<select id="payment-method"><option value="cash">Cash</option><option value="promptpay">PromptPay / Bank transfer</option><option value="grab_payment">Grab payment</option><option value="lineman_payment">LINE MAN payment</option></select>
-<div class="ordering-cart-heading"><h3>Current Order <span class="ordering-cart-count" id="ordering-cart-count">0</span></h3><button class="clear-button ordering-clear-top" onclick="clearCart()" type="button">Clear</button></div>
+<div class="mc-platform-fee-row"><span>Platform Fee</span><strong>฿<input aria-label="Estimated platform fee" aria-readonly="true" id="platform-fee-input" min="0" readonly="" step="0.01" type="number" value="0"/></strong></div>
+<div aria-live="polite" class="placeholder-note" id="order-net-estimate" hidden>Estimated net after platform fee: ฿0.00</div>
+<div class="ordering-cart-heading"><h3>Current Order <span class="ordering-cart-count" id="ordering-cart-count">0</span></h3><button class="clear-button ordering-clear-top" onclick="clearCart()" type="button" aria-label="Clear current order">Clear order</button></div>
 <div id="cart"><div class="empty-cart">No items in order</div></div>
 <textarea class="notes" id="order-notes" placeholder="Order notes (optional)" rows="3"></textarea>
 <div class="cart-total"><span>Total</span><span id="cart-total">฿0.00</span></div>
@@ -2958,7 +3017,7 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
       const cardCategory = (card.dataset.category || "").trim();
       const matchesCategory = activeOrderMenuCategory === "All" || cardCategory === activeOrderMenuCategory;
       const matchesQuery = card.textContent.toLowerCase().includes(query);
-      card.style.display = matchesCategory && matchesQuery ? "" : "none";
+      card.hidden = !(matchesCategory && matchesQuery);
     });
   }
 
@@ -8046,6 +8105,254 @@ function setOrderingSource(source){
 @media(max-width:800px){#margins-page .mc-margin-all-details:not([hidden]){grid-template-columns:1fr}#margins-page .mc-margin-all-details .mc-margin-cost-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 </style>
 
+
+
+<style id="mansion-ordering-v4-polish">
+/* Ordering v4: cleaner cart controls and slightly larger product photography. */
+#orders-page #products .product-card-image {
+  height: 132px !important;
+  min-height: 132px !important;
+}
+#orders-page #products .product-card-image-empty {
+  font-size: 34px !important;
+}
+#orders-page #cart .quantity-controls {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+}
+#orders-page #cart .quantity-controls button:not(.remove-button) {
+  flex: 0 0 27px !important;
+  width: 27px !important;
+  height: 27px !important;
+  min-width: 27px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid #eadfd4 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #76513b !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+#orders-page #cart .quantity-controls .quantity {
+  min-width: 18px !important;
+  text-align: center !important;
+  color: #493124 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+#orders-page #cart .quantity-controls .remove-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 26px !important;
+  width: auto !important;
+  margin-left: 5px !important;
+  padding: 0 9px !important;
+  border: 1px solid #f0d8ca !important;
+  border-radius: 7px !important;
+  background: #fff8f3 !important;
+  color: #a65335 !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+#orders-page #cart .quantity-controls .remove-button:hover {
+  border-color: #d7a58c !important;
+  background: #fff0e7 !important;
+  color: #8f3e25 !important;
+}
+@media (min-width: 1101px) and (max-width: 1450px) {
+  #orders-page #products .product-card-image {
+    height: 122px !important;
+    min-height: 122px !important;
+  }
+}
+@media (max-width: 700px) {
+  #orders-page #products .product-card-image {
+    height: 112px !important;
+    min-height: 112px !important;
+  }
+}
+</style>
+
+
+<style id="mansion-order-menu-filter-fix">
+/* Ensure category/search filtering wins over the product card's flex display styling. */
+#orders-page #products .product[hidden] {
+  display: none !important;
+}
+</style>
+
+
+<style id="mansion-ordering-v6-square-product-photos">
+/* Product photography: square 1:1 tiles across the Ordering menu. */
+#orders-page #products .product-card-image,
+#orders-page #products .product-card-image-empty {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+#orders-page #products .product-card-image-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+</style>
+
+
+<style id="mansion-ordering-v7-soft-portrait-photos">
+/* Product photography: slightly taller than landscape, but not square (4:3). */
+#orders-page #products .product-card-image,
+#orders-page #products .product-card-image-empty {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 4 / 3 !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+#orders-page #products .product-card-image-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+</style>
+
+
+<style id="mansion-ordering-v8-near-square-photos">
+/* Near-square 5:4 product photo tiles; explicit height overrides inherited image sizing. */
+#orders-page #products .product-card-image,
+#orders-page #products .product-card-image-empty {
+  display: block !important;
+  width: 100% !important;
+  height: 155px !important;
+  min-height: 155px !important;
+  max-height: 155px !important;
+  aspect-ratio: auto !important;
+  object-fit: cover !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+#orders-page #products .product-card-image-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+@media (min-width: 1101px) and (max-width: 1450px) {
+  #orders-page #products .product-card-image,
+  #orders-page #products .product-card-image-empty {
+    height: 145px !important;
+    min-height: 145px !important;
+    max-height: 145px !important;
+  }
+}
+@media (max-width: 700px) {
+  #orders-page #products .product-card-image,
+  #orders-page #products .product-card-image-empty {
+    height: 125px !important;
+    min-height: 125px !important;
+    max-height: 125px !important;
+  }
+}
+</style>
+
+
+<style id="mansion-ordering-v9-true-square-photos">
+/* True 1:1 product photo frame. Width determines height at every card size. */
+#orders-page #products .product img.product-card-image,
+#orders-page #products .product .product-card-image-empty {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  border-radius: 10px !important;
+}
+#orders-page #products .product .product-card-image-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+</style>
+
+
+<style id="mansion-ordering-v10-smaller-square-photos">
+/* Keep the true square shape, but make the photo tile a little smaller within each card. */
+#orders-page #products .product img.product-card-image,
+#orders-page #products .product .product-card-image-empty {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 88% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  margin: 0 auto !important;
+  border-radius: 10px !important;
+}
+#orders-page #products .product .product-card-image-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+</style>
+
+
+<style id="mansion-ordering-v11-4x3-landscape-photos">
+/* Product photos: landscape 4:3, not square. Keep full card width. */
+#orders-page #products .product img.product-card-image,
+#orders-page #products .product .product-card-image-empty {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 4 / 3 !important;
+  object-fit: cover !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+}
+#orders-page #products .product .product-card-image-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+</style>
+
+
+<style id="mansion-ordering-v12-hide-global-orders-header">
+/* Hide the redundant global "Orders" title/subtitle only while the Ordering workspace is active. */
+.app-content:has(#orders-page.active) > .app-header {
+  display: none !important;
+}
+</style>
+
+
+<style id="mansion-global-header-hidden-v13">
+/* Remove the global page title/subtitle header on every page. */
+.app-content > .app-header {
+  display: none !important;
+}
+</style>
+
 </body>
 </html>
 <style id="orders-ipad-date-range-header">
@@ -8099,4 +8406,86 @@ function setOrderingSource(source){
 .mc-settings-save-button span{font-size:16px}
 @media(max-width:900px){.mc-settings-grid{grid-template-columns:1fr 1fr}.mc-setting-option:last-child{grid-column:1/-1}}
 @media(max-width:600px){.mc-settings-page{padding:14px;gap:14px}.mc-settings-grid{grid-template-columns:1fr}.mc-setting-option:last-child{grid-column:auto}.mc-setting-description{min-height:0}.mc-settings-footer{align-items:stretch;flex-direction:column}.mc-settings-save-button{width:100%}}
+</style>
+<style id="mansion-ordering-ipad-landscape-v1">
+/* Mansion.craft Ordering — approved iPad landscape layout */
+#orders-page .order-workspace-section {
+  padding: 22px !important;
+  background: #faf8f4 !important;
+  border: 1px solid #eee5db !important;
+  border-radius: 16px !important;
+}
+#orders-page .ordering-redesign-header {
+  display:flex !important; align-items:center !important; justify-content:space-between !important;
+  gap:20px !important; padding:2px 2px 18px !important; margin-bottom:18px !important;
+  border-bottom:1px solid #eee5db !important; background:transparent !important;
+}
+#orders-page .ordering-heading-copy h2 { margin:3px 0 5px !important; color:#38271e !important; font-size:27px !important; font-weight:750 !important; letter-spacing:-.04em !important; }
+#orders-page .ordering-heading-copy p { margin:0 !important; color:#89786b !important; font-size:12px !important; }
+#orders-page .eyebrow { color:#b76539 !important; font-size:10px !important; font-weight:750 !important; letter-spacing:.13em !important; }
+#orders-page .ordering-source-control { display:flex !important; gap:8px !important; align-items:center !important; }
+#orders-page .ordering-source-btn { min-width:94px !important; min-height:46px !important; padding:7px 13px !important; display:flex !important; flex-direction:row !important; justify-content:center !important; align-items:center !important; gap:7px !important; border:1px solid #eadfd4 !important; border-radius:11px !important; background:#fffdf9 !important; color:#725b4b !important; font-size:12px !important; font-weight:650 !important; }
+#orders-page .ordering-source-btn small { display:none !important; }
+#orders-page .ordering-source-btn.active { background:#c96b35 !important; border-color:#c96b35 !important; color:#fff !important; }
+#orders-page .add-order-layout { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(340px,390px) !important; align-items:start !important; gap:20px !important; background:transparent !important; }
+#orders-page .order-menu-pane { min-width:0 !important; padding:0 !important; border:0 !important; background:transparent !important; }
+#orders-page .order-menu-heading { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:16px !important; margin:0 0 15px !important; }
+#orders-page .order-menu-heading h3 { margin:0 0 4px !important; color:#38271e !important; font-size:17px !important; font-weight:750 !important; }
+#orders-page .order-menu-heading p { margin:0 !important; color:#927f70 !important; font-size:11px !important; }
+#orders-page #order-menu-search { width:min(260px,48%) !important; min-height:40px !important; border:1px solid #eadfd4 !important; border-radius:10px !important; background:#fffdf9 !important; padding:9px 12px !important; }
+#orders-page .order-menu-categories { display:flex !important; gap:7px !important; overflow-x:auto !important; padding:2px 1px 12px !important; margin-bottom:8px !important; scrollbar-width:thin; }
+#orders-page .order-menu-category-btn { flex:0 0 auto !important; min-height:35px !important; padding:7px 13px !important; border:1px solid #eadfd4 !important; border-radius:999px !important; background:#fffdf9 !important; color:#765f4e !important; font-size:11px !important; font-weight:650 !important; }
+#orders-page .order-menu-category-btn.active { background:#c96b35 !important; border-color:#c96b35 !important; color:white !important; }
+#orders-page #products { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:13px !important; align-items:stretch !important; }
+#orders-page #products .product { min-width:0 !important; padding:9px !important; border:1px solid #eee5db !important; border-radius:14px !important; background:#fffdf9 !important; overflow:hidden !important; display:flex !important; flex-direction:column !important; gap:0 !important; box-shadow:0 2px 8px rgba(83,54,34,.035) !important; }
+#orders-page #products .product-card-image { display:block !important; width:100% !important; height:116px !important; min-height:116px !important; object-fit:cover !important; border-radius:10px !important; background:#f3e7da !important; }
+#orders-page #products .product-card-image-empty { display:flex !important; align-items:center !important; justify-content:center !important; color:#bd815d !important; font-size:30px !important; }
+#orders-page .product-card-content { display:flex !important; flex:1 !important; flex-direction:column !important; align-items:stretch !important; padding:10px 2px 2px !important; }
+#orders-page .product-card-content h3 { margin:0 0 3px !important; color:#38271e !important; font-size:13px !important; font-weight:700 !important; line-height:1.35 !important; }
+#orders-page .product-card-content .category { min-height:15px !important; margin:0 0 7px !important; color:#9a8677 !important; font-size:10px !important; }
+#orders-page .product-card-content .price { margin:0 0 9px !important; color:#38271e !important; font-size:14px !important; font-weight:800 !important; }
+#orders-page #products .add-button { width:100% !important; min-height:35px !important; margin-top:auto !important; border:0 !important; border-radius:8px !important; background:#c96b35 !important; color:#fff !important; font-size:11px !important; font-weight:700 !important; }
+#orders-page #products .add-button:hover { background:#a95329 !important; }
+#orders-page .order-details-pane { position:sticky !important; top:16px !important; max-height:calc(100vh - 32px) !important; overflow-y:auto !important; overscroll-behavior:contain !important; padding:17px !important; border:1px solid #eee3d8 !important; border-radius:15px !important; background:#fffdf9 !important; box-shadow:0 5px 18px rgba(83,54,34,.055) !important; scrollbar-width:thin; }
+#orders-page .order-details-pane > h2 { margin:0 0 12px !important; padding-bottom:12px !important; border-bottom:1px solid #eee5db !important; color:#38271e !important; font-size:17px !important; font-weight:750 !important; }
+#orders-page .ordering-cart-heading { display:flex !important; align-items:center !important; justify-content:space-between !important; margin:0 0 7px !important; }
+#orders-page .ordering-cart-heading h3 { margin:0 !important; color:#38271e !important; font-size:13px !important; font-weight:750 !important; }
+#orders-page .ordering-cart-count { display:inline-flex !important; align-items:center !important; justify-content:center !important; min-width:21px !important; height:21px !important; margin-left:5px !important; border-radius:99px !important; background:#fff0e5 !important; color:#a95329 !important; font-size:10px !important; }
+#orders-page #cart { max-height:245px !important; overflow-y:auto !important; padding:0 10px !important; border:1px solid #f0e5db !important; border-radius:10px !important; background:#fffaf5 !important; }
+#orders-page #cart .cart-item { gap:10px !important; padding:11px 0 !important; border-bottom:1px solid #f0e5db !important; font-size:11px !important; }
+#orders-page #cart .cart-item-name { color:#38271e !important; font-size:12px !important; font-weight:700 !important; }
+#orders-page #cart .cart-item-price { color:#8d796a !important; font-size:10px !important; }
+#orders-page #cart .quantity-controls { gap:5px !important; }
+#orders-page #cart .quantity-controls button { width:25px !important; height:25px !important; border:1px solid #eadfd4 !important; border-radius:7px !important; background:#fff !important; color:#634b3a !important; }
+#orders-page .order-details-pane > label { margin:12px 0 5px !important; color:#806b5d !important; font-size:10px !important; }
+#orders-page .order-details-pane > input, #orders-page .order-details-pane > select, #orders-page .order-details-pane > textarea { width:100% !important; min-height:37px !important; padding:8px 10px !important; border:1px solid #eadfd4 !important; border-radius:8px !important; background:#fff !important; font-size:11px !important; }
+#orders-page .order-details-pane .placeholder-note { color:#9a8879 !important; font-size:10px !important; line-height:1.45 !important; }
+#orders-page .order-details-pane .notes { min-height:55px !important; }
+#orders-page .order-details-pane .cart-total { display:flex !important; align-items:center !important; justify-content:space-between !important; margin-top:12px !important; padding:12px 0 !important; border-top:1px solid #eee5db !important; color:#38271e !important; font-size:14px !important; font-weight:750 !important; }
+#orders-page .order-details-pane #cart-total { color:#a95329 !important; font-size:20px !important; }
+#orders-page .order-details-pane .checkout-button { width:100% !important; min-height:46px !important; margin-top:8px !important; border:0 !important; border-radius:10px !important; background:#c96b35 !important; color:#fff !important; font-size:13px !important; font-weight:750 !important; }
+#orders-page .order-details-pane .checkout-button:hover:not(:disabled) { background:#a95329 !important; }
+#orders-page .order-details-pane .checkout-button:disabled { background:#d9c9bc !important; color:#fff !important; }
+#orders-page .order-details-pane .clear-button { min-height:34px !important; border:1px solid #eadfd4 !important; border-radius:8px !important; background:#fff !important; color:#8b6b57 !important; font-size:10px !important; }
+#orders-page .order-details-pane .discount-collapsible { border-color:#eee3d8 !important; border-radius:9px !important; background:#fffaf5 !important; }
+#orders-page .order-details-pane .discount-summary { padding:10px 11px !important; color:#634b3a !important; font-size:11px !important; }
+@media (min-width:1101px) and (max-width:1450px) {
+ #orders-page .add-order-layout { grid-template-columns:minmax(0,1fr) 350px !important; gap:16px !important; }
+ #orders-page #products { gap:10px !important; }
+ #orders-page #products .product-card-image { height:100px !important; min-height:100px !important; }
+}
+@media (max-width:1100px) {
+ #orders-page .add-order-layout { grid-template-columns:minmax(0,1fr) !important; }
+ #orders-page .order-details-pane { position:relative !important; top:auto !important; max-height:none !important; overflow:visible !important; }
+}
+@media (max-width:700px) {
+ #orders-page .order-workspace-section { padding:12px !important; }
+ #orders-page .ordering-redesign-header { align-items:flex-start !important; flex-direction:column !important; }
+ #orders-page .ordering-source-control { width:100% !important; }
+ #orders-page .ordering-source-btn { flex:1 !important; min-width:0 !important; }
+ #orders-page .order-menu-heading { align-items:stretch !important; flex-direction:column !important; }
+ #orders-page #order-menu-search { width:100% !important; }
+ #orders-page #products { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+ #orders-page #products .product-card-image { height:105px !important; min-height:105px !important; }
+}
 </style>
