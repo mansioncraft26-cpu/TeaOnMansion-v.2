@@ -6639,11 +6639,35 @@ async function loadProductOptionsManager() {
     const [cats, opts, ingredients, products, maps] = await Promise.all([
       optionManagerFetch('option_categories?select=*&order=id.asc'),
       optionManagerFetch('product_options?select=*&order=category_id.asc,id.asc'),
-      optionManagerFetch('ingredients?select=id,name,unit,is_active&order=name.asc'),
+      optionManagerFetch('ingredients?select=id,name,unit,category,is_active&order=name.asc'),
       optionManagerFetch('products?select=*&order=name.asc'),
       optionManagerFetch('product_option_ingredients?select=*&order=option_id.asc,id.asc')
     ]);
     managerOptionCategories = cats || []; managerProductOptions = opts || []; managerOptionIngredients = (ingredients||[]).filter(i=>i.is_active!==false); managerOptionProducts = products || []; managerStockMaps = maps || [];
+
+    // Keep the Matcha option library in sync with active Inventory ingredients
+    // assigned to the Matcha category. Existing options/prices are never overwritten.
+    const matchaGroup = managerOptionCategories.find(c => String(c.name||'').trim().toLowerCase() === 'matcha' && c.is_active !== false);
+    if (matchaGroup) {
+      const matchaIngredients = managerOptionIngredients.filter(i => String(i.category||'').trim().toLowerCase() === 'matcha');
+      const existingMatchaNames = new Set(managerProductOptions
+        .filter(o => Number(o.category_id) === Number(matchaGroup.id))
+        .map(o => String(o.name||'').trim().toLowerCase()));
+      const missingMatchaIngredients = matchaIngredients.filter(i => !existingMatchaNames.has(String(i.name||'').trim().toLowerCase()));
+      for (const ingredient of missingMatchaIngredients) {
+        const created = await optionManagerFetch('product_options', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','Prefer':'return=representation'},
+          body: JSON.stringify({
+            category_id: Number(matchaGroup.id), name: ingredient.name,
+            price_adjustment: 0, direct_price: 0, grab_price: 0, lineman_price: 0,
+            is_default: false, is_active: true
+          })
+        });
+        if (Array.isArray(created) && created[0]) managerProductOptions.push(created[0]);
+      }
+    }
+
     const catOptions = '<option value="">Select group…</option>' + managerOptionCategories.filter(c=>c.is_active!==false).map(c=>`<option value="${Number(c.id)}">${escapeHtml(c.name)}</option>`).join('');
     ['manager-option-category','manager-attach-category'].forEach(id=>{const el=document.getElementById(id); if(el) el.innerHTML=catOptions;}); const existingGroup=document.getElementById('existing-options-group'); if(existingGroup){const prior=existingGroup.value;existingGroup.innerHTML='<option value="">All option groups</option>'+managerOptionCategories.map(c=>`<option value="${Number(c.id)}">${escapeHtml(c.name)}</option>`).join('');existingGroup.value=prior;}
     const productEl=document.getElementById('manager-option-product'); if(productEl) productEl.innerHTML='<option value="">Select product…</option>'+managerOptionProducts.map(p=>`<option value="${Number(p.id)}">${escapeHtml(p.name||p.product_name||`Product #${p.id}`)}</option>`).join('');
