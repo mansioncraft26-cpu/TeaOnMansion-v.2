@@ -2049,13 +2049,83 @@ th { font-size: 11px !important; font-weight: 600 !important; white-space: nowra
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="m9 18 6-6-6-6"></path></svg><span class="sidebar-toggle-label">Collapse menu</span>
 </button>
 <div class="sidebar-label">WORKSPACE</div>
-<nav aria-label="Main navigation">
-<button aria-label="Sell Summary" class="nav-button active" data-page="dashboard-page" onclick="showPage('dashboard-page','Sell Summary','Revenue, performance, and order history')" title="Sell Summary"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><rect height="7" rx="1.5" width="7" x="3" y="3"></rect><rect height="7" rx="1.5" width="7" x="14" y="3"></rect><rect height="7" rx="1.5" width="7" x="3" y="14"></rect><rect height="7" rx="1.5" width="7" x="14" y="14"></rect></svg></span><span class="nav-label">Sell Summary</span></button>
-<button aria-label="Ordering" class="nav-button" data-page="orders-page" onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')" title="Ordering"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4-8 4V5a2 2 0 0 1 2-2Z"></path><path d="M9 8h6M9 12h6"></path></svg></span><span class="nav-label">Ordering</span></button>
-<button aria-label="Orders" class="nav-button" data-page="order-history-page" onclick="showPage('order-history-page','Orders','Manage orders and review order history')" title="Orders"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M6 3h12v18l-2-1.5L12 21l-4-1.5L6 21z"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg></span><span class="nav-label">Orders</span></button>
-<button aria-label="Inventory" class="nav-button" data-page="inventory-page" onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')" title="Inventory"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg></span><span class="nav-label">Inventory</span></button>
-<button aria-label="Margins &amp; Recipes" class="nav-button" data-page="margins-page" onclick="showPage('margins-page','Margins &amp; Recipes','Track menu item profitability and build detailed recipe cost breakdowns')" title="Margins &amp; Recipes"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path><path d="M8 7h8M8 11h8"></path></svg></span><span class="nav-label">Margins &amp; Recipes</span></button>
-<button aria-label="Product Options" class="nav-button" data-page="product-options-page" onclick="showPage('product-options-page','Product Options','Manage option groups, drink add-ons, and ingredient stock mapping')" title="Product Options"><span aria-hidden="true" class="nav-icon"><svg viewbox="0 0 24 24"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="nav-label">Product Options</span></button>
+<nav aria-label="Main navigation" class="mc-sidebar-navigation">
+  <button aria-label="Dashboard" class="nav-button mc-dashboard-link active" data-page="dashboard-page"
+    onclick="showPage('dashboard-page','Dashboard','Your café overview')" title="Dashboard">
+    <span aria-hidden="true" class="nav-icon"><svg viewBox="0 0 24 24"><rect height="7" rx="1.5" width="7" x="3" y="3"></rect><rect height="7" rx="1.5" width="7" x="14" y="3"></rect><rect height="7" rx="1.5" width="7" x="3" y="14"></rect><rect height="7" rx="1.5" width="7" x="14" y="14"></rect></svg></span>
+    <span class="nav-label">Dashboard</span>
+  </button>
+
+  <section class="mc-nav-group" data-nav-group="reports">
+    <button class="mc-nav-group-toggle" type="button" aria-expanded="false" aria-controls="mc-nav-reports"
+      onclick="toggleSidebarGroup('reports')" title="Reports">
+      <span class="mc-nav-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10m5 10V4m5 16v-7m5 7V7"></path></svg></span>
+      <span class="mc-nav-group-label">Reports</span><svg class="mc-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+    </button>
+    <div class="mc-nav-submenu" id="mc-nav-reports" hidden>
+      <button class="nav-button mc-subnav-button" type="button" onclick="openSidebarDestination('dashboard-page','dashboard-trend-chart','Sales Trend')" title="Sales Trend">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h17M7 15l4-4 3 2 5-7"></path></svg></span><span class="nav-label">Sales Trend</span>
+      </button>
+      <button class="nav-button mc-subnav-button" type="button" onclick="openSidebarDestination('dashboard-page','monthly-report-details','Monthly Reports')" title="Monthly Reports">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"></rect><path d="M8 3v4m8-4v4M4 10h16"></path></svg></span><span class="nav-label">Monthly Reports</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="mc-nav-group is-open" data-nav-group="sales">
+    <button class="mc-nav-group-toggle" type="button" aria-expanded="true" aria-controls="mc-nav-sales"
+      onclick="toggleSidebarGroup('sales')" title="Sales">
+      <span class="mc-nav-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6"></path><circle cx="10" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg></span>
+      <span class="mc-nav-group-label">Sales</span><svg class="mc-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+    </button>
+    <div class="mc-nav-submenu" id="mc-nav-sales">
+      <button aria-label="Ordering" class="nav-button mc-subnav-button" data-page="orders-page"
+        onclick="showPage('orders-page','Orders','Select products, manage today’s orders, and create new orders')" title="Ordering">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4-8 4V5a2 2 0 0 1 2-2Z"></path><path d="M9 8h6M9 12h6"></path></svg></span><span class="nav-label">Ordering</span>
+      </button>
+      <button aria-label="Orders" class="nav-button mc-subnav-button" data-page="order-history-page"
+        onclick="showPage('order-history-page','Orders','Manage orders and review order history')" title="Orders">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5L12 21l-4-1.5L6 21z"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg></span><span class="nav-label">Orders</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="mc-nav-group" data-nav-group="inventory">
+    <button class="mc-nav-group-toggle" type="button" aria-expanded="false" aria-controls="mc-nav-inventory"
+      onclick="toggleSidebarGroup('inventory')" title="Inventory">
+      <span class="mc-nav-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg></span>
+      <span class="mc-nav-group-label">Inventory</span><svg class="mc-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+    </button>
+    <div class="mc-nav-submenu" id="mc-nav-inventory" hidden>
+      <button aria-label="Inventory" class="nav-button mc-subnav-button" data-page="inventory-page"
+        onclick="showPage('inventory-page','Inventory','Track ingredients and stock levels')" title="Inventory">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg></span><span class="nav-label">Inventory</span>
+      </button>
+      <button aria-label="Margins &amp; Recipes" class="nav-button mc-subnav-button" data-page="margins-page"
+        onclick="showPage('margins-page','Margins &amp; Recipes','Track menu item profitability and build detailed recipe cost breakdowns')" title="Margins &amp; Recipes">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path><path d="M8 7h8M8 11h8"></path></svg></span><span class="nav-label">Margins &amp; Recipes</span>
+      </button>
+      <button aria-label="Product Options" class="nav-button mc-subnav-button" data-page="product-options-page"
+        onclick="showPage('product-options-page','Product Options','Manage option groups, drink add-ons, and ingredient stock mapping')" title="Product Options">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="nav-label">Product Options</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="mc-nav-group" data-nav-group="management">
+    <button class="mc-nav-group-toggle" type="button" aria-expanded="false" aria-controls="mc-nav-management"
+      onclick="toggleSidebarGroup('management')" title="Management">
+      <span class="mc-nav-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg></span>
+      <span class="mc-nav-group-label">Management</span><svg class="mc-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+    </button>
+    <div class="mc-nav-submenu" id="mc-nav-management" hidden>
+      <button class="nav-button mc-subnav-button" type="button" onclick="openSidebarDestination('inventory-page','inventory-equipment-workspace','Equipment')" title="Equipment">
+        <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h18v10H3zM7 7V4h10v3M7 17v3m10-3v3M6 11h3m3 0h6"></path></svg></span><span class="nav-label">Equipment</span>
+      </button>
+    </div>
+  </section>
+
+  
 </nav>
 <div class="sidebar-bottom">
 <button aria-label="Settings" class="nav-button sidebar-settings-button" data-page="settings-page" onclick="showPage('settings-page','Settings','Manage your café and system preferences')" title="Settings">
@@ -8350,6 +8420,294 @@ function setOrderingSource(source){
 /* Remove the global page title/subtitle header on every page. */
 .app-content > .app-header {
   display: none !important;
+}
+</style>
+
+
+<style id="mansion-grouped-sidebar-v14">
+/* Mansion.craft grouped navigation — warm, compact and touch-friendly. */
+.sidebar { overflow-x:hidden; }
+.mc-sidebar-navigation {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  gap:8px !important;
+  width:100% !important;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:4px 0 12px !important;
+  scrollbar-width:thin;
+}
+.mc-sidebar-navigation > .nav-button,
+.mc-sidebar-navigation .mc-nav-group-toggle {
+  min-height:44px !important;
+}
+.mc-sidebar-navigation .mc-dashboard-link {
+  margin:0 0 2px !important;
+}
+.mc-nav-group {
+  width:100%;
+  border:1px solid #f0e3d8;
+  border-radius:14px;
+  background:rgba(255,255,255,.48);
+  overflow:hidden;
+  transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.mc-nav-group.is-open {
+  background:#fffaf6;
+  border-color:#edddcf;
+  box-shadow:0 3px 12px rgba(93,55,29,.035);
+}
+.mc-nav-group-toggle {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  width:100%;
+  min-height:46px;
+  padding:9px 12px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#4b382b;
+  text-align:left;
+  cursor:pointer;
+  font:inherit;
+  font-size:13px;
+  font-weight:750;
+  letter-spacing:.01em;
+}
+.mc-nav-group-toggle:hover { background:#fff1e5; }
+.mc-nav-group-icon {
+  width:22px;
+  height:22px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 22px;
+  color:#c96832;
+}
+.mc-nav-group-icon svg,
+.mc-nav-chevron {
+  width:19px;
+  height:19px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.mc-nav-group-label { flex:1; }
+.mc-nav-chevron {
+  width:16px;
+  height:16px;
+  color:#9b806d;
+  transition:transform .18s ease;
+}
+.mc-nav-group.is-open .mc-nav-chevron { transform:rotate(180deg); color:#c96832; }
+.mc-nav-submenu {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding:0 8px 8px 12px;
+}
+.mc-nav-submenu[hidden] { display:none !important; }
+.mc-sidebar-navigation .mc-subnav-button {
+  width:100% !important;
+  min-height:39px !important;
+  padding:7px 9px !important;
+  gap:10px !important;
+  border-radius:9px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  font-size:12px !important;
+}
+.mc-sidebar-navigation .mc-subnav-button .nav-icon {
+  width:20px !important;
+  flex:0 0 20px !important;
+  color:#8c705c !important;
+}
+.mc-sidebar-navigation .mc-subnav-button .nav-icon svg {
+  width:17px !important;
+  height:17px !important;
+}
+.mc-sidebar-navigation .mc-subnav-button .nav-label {
+  display:inline !important;
+  color:#584638 !important;
+  font-weight:600 !important;
+}
+.mc-sidebar-navigation .mc-subnav-button:hover {
+  background:#fff1e6 !important;
+}
+.mc-sidebar-navigation .mc-subnav-button.active {
+  background:#ffead9 !important;
+  color:#b95722 !important;
+}
+.mc-sidebar-navigation .mc-subnav-button.active .nav-label,
+.mc-sidebar-navigation .mc-subnav-button.active .nav-icon {
+  color:#b95722 !important;
+}
+.mc-sidebar-navigation .mc-dashboard-link.active {
+  background:#ffead9 !important;
+  color:#b95722 !important;
+}
+.mc-sidebar-navigation .mc-dashboard-link.active .nav-label,
+.mc-sidebar-navigation .mc-dashboard-link.active .nav-icon {
+  color:#b95722 !important;
+}
+.mc-sidebar-navigation .nav-button::before { display:none !important; }
+.sidebar-bottom { margin-top:auto !important; flex-shrink:0; }
+.sidebar { gap:8px; }
+@media (max-width:1000px) {
+  .mc-sidebar-navigation { max-height:none; }
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation { align-items:center !important; }
+.app-shell.sidebar-collapsed .mc-nav-group {
+  width:44px !important;
+  border-color:transparent !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+.app-shell.sidebar-collapsed .mc-nav-group-toggle {
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  justify-content:center !important;
+  padding:0 !important;
+  border-radius:10px !important;
+}
+.app-shell.sidebar-collapsed .mc-nav-group-label,
+.app-shell.sidebar-collapsed .mc-nav-chevron,
+.app-shell.sidebar-collapsed .mc-nav-submenu { display:none !important; }
+.app-shell.sidebar-collapsed .mc-nav-group-icon { color:#c96832 !important; }
+.app-shell.sidebar-collapsed .mc-dashboard-link {
+  width:44px !important;
+  min-width:44px !important;
+  justify-content:center !important;
+  padding:0 !important;
+}
+.app-shell.sidebar-collapsed .mc-dashboard-link .nav-label { display:none !important; }
+</style>
+
+
+<script id="mansion-grouped-sidebar-behavior-v14">
+function toggleSidebarGroup(groupName) {
+  const group = document.querySelector('[data-nav-group="' + groupName + '"]');
+  if (!group) return;
+
+  const shell = document.querySelector('.app-shell');
+  const wasCollapsed = !!(shell && shell.classList.contains('sidebar-collapsed'));
+
+  // In icon-only mode, open the sidebar first so the submenu can be seen and selected.
+  if (wasCollapsed && typeof toggleSidebar === 'function') {
+    toggleSidebar();
+    document.querySelectorAll('.mc-nav-group').forEach(item => {
+      if (item !== group) {
+        item.classList.remove('is-open');
+        const otherToggle = item.querySelector('.mc-nav-group-toggle');
+        const otherMenu = item.querySelector('.mc-nav-submenu');
+        if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
+        if (otherMenu) otherMenu.hidden = true;
+      }
+    });
+    group.classList.add('is-open');
+    const toggle = group.querySelector('.mc-nav-group-toggle');
+    const submenu = group.querySelector('.mc-nav-submenu');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    if (submenu) submenu.hidden = false;
+    return;
+  }
+
+  const toggle = group.querySelector('.mc-nav-group-toggle');
+  const submenu = group.querySelector('.mc-nav-submenu');
+  const willOpen = !group.classList.contains('is-open');
+  group.classList.toggle('is-open', willOpen);
+  if (toggle) toggle.setAttribute('aria-expanded', String(willOpen));
+  if (submenu) submenu.hidden = !willOpen;
+}
+function openSidebarDestination(pageId, targetId, label) {
+  const pageTitles = {
+    'dashboard-page': ['Dashboard', 'Your café overview'],
+    'inventory-page': ['Inventory', 'Track ingredients and stock levels']
+  };
+  const copy = pageTitles[pageId] || [label || 'Dashboard', ''];
+  showPage(pageId, copy[0], copy[1]);
+  window.setTimeout(() => {
+    const target = document.getElementById(targetId);
+    if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    if (target && target.tagName === 'DETAILS') target.open = true;
+  }, 80);
+}
+(function initializeGroupedSidebar() {
+  const activePage = document.querySelector('.page.active')?.id || 'dashboard-page';
+  const groupByPage = {
+    'orders-page': 'sales',
+    'order-history-page': 'sales',
+    'inventory-page': 'inventory',
+    'margins-page': 'inventory',
+    'product-options-page': 'inventory'
+  };
+  const groupName = groupByPage[activePage];
+  if (groupName) {
+    const group = document.querySelector('[data-nav-group="' + groupName + '"]');
+    const toggle = group?.querySelector('.mc-nav-group-toggle');
+    const submenu = group?.querySelector('.mc-nav-submenu');
+    group?.classList.add('is-open');
+    toggle?.setAttribute('aria-expanded','true');
+    if (submenu) submenu.hidden = false;
+  }
+  document.querySelectorAll('.mc-nav-group').forEach(group => {
+    const toggle = group.querySelector('.mc-nav-group-toggle');
+    const submenu = group.querySelector('.mc-nav-submenu');
+    if (toggle && submenu) {
+      toggle.setAttribute('aria-expanded', String(!submenu.hidden));
+    }
+  });
+})();
+</script>
+
+
+<style id="mansion-sidebar-collapsed-click-fix-v15">
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group {
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  margin:0 auto !important;
+  overflow:visible !important;
+  pointer-events:auto !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group-toggle {
+  display:flex !important;
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  padding:0 !important;
+  margin:0 !important;
+  justify-content:center !important;
+  align-items:center !important;
+  cursor:pointer !important;
+  pointer-events:auto !important;
+  border-radius:11px !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group-toggle .mc-nav-group-icon {
+  display:inline-flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group-toggle .mc-nav-group-label,
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group-toggle .mc-nav-chevron,
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-submenu {
+  display:none !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group-toggle:hover,
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group-toggle:focus-visible {
+  background:#ffead9 !important;
+  outline:2px solid #e9b58f !important;
+  outline-offset:2px !important;
 }
 </style>
 
