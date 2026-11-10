@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Mansion.craft POS v2</title>
+<title>Mansion.craft POS</title>
 <style>
 
     /* PRODUCT CUSTOMIZATION MODAL — clean, compact cafe style */
@@ -8598,30 +8598,24 @@ function toggleSidebarGroup(groupName) {
   if (!group) return;
 
   const shell = document.querySelector('.app-shell');
-  const wasCollapsed = !!(shell && shell.classList.contains('sidebar-collapsed'));
+  const isCollapsed = !!(shell && shell.classList.contains('sidebar-collapsed'));
+  const toggle = group.querySelector('.mc-nav-group-toggle');
+  const submenu = group.querySelector('.mc-nav-submenu');
 
-  // In icon-only mode, open the sidebar first so the submenu can be seen and selected.
-  if (wasCollapsed && typeof toggleSidebar === 'function') {
-    toggleSidebar();
+  if (isCollapsed) {
+    // In icon-only mode, show a flyout beside the icon. Keep the sidebar collapsed.
+    const willOpen = !group.classList.contains('is-open');
     document.querySelectorAll('.mc-nav-group').forEach(item => {
-      if (item !== group) {
-        item.classList.remove('is-open');
-        const otherToggle = item.querySelector('.mc-nav-group-toggle');
-        const otherMenu = item.querySelector('.mc-nav-submenu');
-        if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
-        if (otherMenu) otherMenu.hidden = true;
-      }
+      const itemToggle = item.querySelector('.mc-nav-group-toggle');
+      const itemMenu = item.querySelector('.mc-nav-submenu');
+      const itemIsOpen = item === group && willOpen;
+      item.classList.toggle('is-open', itemIsOpen);
+      if (itemToggle) itemToggle.setAttribute('aria-expanded', String(itemIsOpen));
+      if (itemMenu) itemMenu.hidden = !itemIsOpen;
     });
-    group.classList.add('is-open');
-    const toggle = group.querySelector('.mc-nav-group-toggle');
-    const submenu = group.querySelector('.mc-nav-submenu');
-    if (toggle) toggle.setAttribute('aria-expanded', 'true');
-    if (submenu) submenu.hidden = false;
     return;
   }
 
-  const toggle = group.querySelector('.mc-nav-group-toggle');
-  const submenu = group.querySelector('.mc-nav-submenu');
   const willOpen = !group.classList.contains('is-open');
   group.classList.toggle('is-open', willOpen);
   if (toggle) toggle.setAttribute('aria-expanded', String(willOpen));
@@ -8710,6 +8704,75 @@ function openSidebarDestination(pageId, targetId, label) {
   outline-offset:2px !important;
 }
 </style>
+
+
+<style id="mansion-sidebar-collapsed-flyout-v16">
+/* In collapsed mode, group links open as a compact flyout beside the icon rail. */
+.app-shell.sidebar-collapsed .sidebar,
+.app-shell.sidebar-collapsed .mc-sidebar-navigation,
+.app-shell.sidebar-collapsed .mc-nav-group {
+  overflow:visible !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation {
+  position:relative !important;
+  z-index:1000 !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group {
+  position:relative !important;
+  z-index:1001 !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group.is-open {
+  background:transparent !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group .mc-nav-submenu:not([hidden]) {
+  display:flex !important;
+  position:absolute !important;
+  left:calc(100% + 9px) !important;
+  top:0 !important;
+  width:194px !important;
+  min-width:194px !important;
+  padding:8px !important;
+  gap:4px !important;
+  border:1px solid #efdfd2 !important;
+  border-radius:13px !important;
+  background:#fffaf6 !important;
+  box-shadow:0 10px 30px rgba(70,43,25,.16) !important;
+  z-index:2000 !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group .mc-nav-submenu[hidden] {
+  display:none !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group .mc-nav-submenu .mc-subnav-button {
+  display:flex !important;
+  width:100% !important;
+  min-height:40px !important;
+  justify-content:flex-start !important;
+  padding:8px 10px !important;
+  white-space:nowrap !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group .mc-nav-submenu .mc-subnav-button .nav-label {
+  display:inline !important;
+}
+.app-shell.sidebar-collapsed .mc-sidebar-navigation .mc-nav-group .mc-nav-submenu .mc-subnav-button .nav-icon {
+  display:inline-flex !important;
+}
+</style>
+<script id="mansion-sidebar-flyout-dismiss-v16">
+document.addEventListener('click', function(event) {
+  const shell = document.querySelector('.app-shell');
+  if (!shell || !shell.classList.contains('sidebar-collapsed')) return;
+  if (event.target.closest('.mc-nav-group')) return;
+  document.querySelectorAll('.mc-nav-group').forEach(group => {
+    group.classList.remove('is-open');
+    const toggle = group.querySelector('.mc-nav-group-toggle');
+    const submenu = group.querySelector('.mc-nav-submenu');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    if (submenu) submenu.hidden = true;
+  });
+});
+</script>
 
 </body>
 </html>
